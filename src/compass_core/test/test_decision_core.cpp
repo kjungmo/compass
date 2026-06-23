@@ -192,3 +192,36 @@ TEST(DecisionCore, FullStepSmoke) {
   EXPECT_GE(o.v_target, 0.0);
   EXPECT_EQ(o.c_star.size(), 1u);
 }
+
+// 회귀(행동): 기본 노브(λ=0.97)에서 지속된 중간 우위(D≈0.30)는 유계 주기 내 전환을 일으키고,
+// 약한 우위(D≈0.10)는 절대 전환되지 않는다 (재튜닝 전 λ=0.9 에서는 D=0.30 도 전환 불가였음).
+// 정상상태 증거 e_ss=(D-Δ_floor)·dt/(1-λ): D=0.30 -> 0.4167>E0=0.30 (전환), D=0.10 -> 0.083<E0 (불가).
+// v_in=0 으로 ρ=0 고정 -> E_th(0)=E0=0.30. dt=0.05 는 기본 노브 정합.
+TEST(DecisionCore, DefaultKnobsSwitchOnSustainedModerateAdvantage) {
+  Knobs k;  // 기본값 (λ=0.97)
+  const double dt = 0.05;
+  const double J_cstar = 0.50;
+
+  auto switch_cycle = [&](double D) -> int {
+    DecisionCore core(k);
+    DecisionState s; s.c_star.set(7, Side::R);
+    const double J_cprime = J_cstar - D;            // 7L 이 D 만큼 더 좋음
+    for (int i = 0; i < 1000; ++i) {
+      std::vector<ClassEval> evals = {
+        mk({{7, Side::R}}, J_cstar), mk({{7, Side::L}}, J_cprime)
+      };
+      DecisionOutput o = core.step_evals(evals, s, /*ttc=*/5.0, /*v_in=*/0.0,
+                                         /*now=*/i * dt, dt);
+      if (o.c_star.side(7).value() == Side::L) return i + 1;  // 전환 발생
+    }
+    return -1;  // 전환 안 됨
+  };
+
+  // 중간 우위: 유계 주기(넉넉히 200) 내 전환.
+  int cyc = switch_cycle(/*D=*/0.30);
+  EXPECT_GT(cyc, 0);
+  EXPECT_LE(cyc, 200);
+
+  // 약한 우위: 1000 주기 내 절대 전환 없음 (e_ss<E0).
+  EXPECT_EQ(switch_cycle(/*D=*/0.10), -1);
+}

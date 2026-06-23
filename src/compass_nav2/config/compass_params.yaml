@@ -21,7 +21,7 @@ controller_server:
       E0: 0.30                   # 누적기 기준 임계 E_th(0)
       k_rho: 1.0                 # 진행 경화 계수
       p: 2                       # 진행 경화 지수
-      lambda: 0.9                # 누수 계수
+      lambda: 0.97               # 누수 계수 (τ_leak≈1.64s)
       e_max_fwd: 1.0             # 정방향 누적기 상한
       e_max_rev: 0.50            # 역방향 누적기 상한
       d_safe: 0.5                # 하드 안전 거리 (m)

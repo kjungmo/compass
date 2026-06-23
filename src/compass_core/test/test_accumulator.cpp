@@ -77,3 +77,15 @@ TEST(Accumulator, P1SwitchRateDecreasesWithMargin) {
   int sw_high_E0 = count_switches(0.05, 0.45);
   EXPECT_GT(sw_low_E0, sw_high_E0);
 }
+
+// 회귀: 기본 노브가 현실적 도전자에 대해 비공허해야 한다 (λ=0.97 재튜닝).
+// 정상상태 증거: e_ss = (D-Δ_floor)·dt/(1-λ).  비공허 = e_ss > E0.
+//   기본값 dt=0.05, E0=0.30, Δ_floor=0.05, λ=0.97:
+//   D=0.30 -> e_ss = (0.30-0.05)*0.05/0.03 = 0.4167 > 0.30  => 전환 가능 (TRUE)
+//   D=0.10 -> e_ss = (0.10-0.05)*0.05/0.03 = 0.0833 < 0.30  => 전환 불가 (FALSE)
+// 구 기본값 λ=0.9 였다면 D=0.30 의 e_ss = 0.25*0.05/0.1 = 0.125 < 0.30 -> 아래 EXPECT_TRUE 가 실패.
+TEST(Accumulator, DefaultKnobsNonVacuousForModerateChallenger) {
+  Knobs k;  // 기본값 (λ=0.97 포함)
+  EXPECT_TRUE(is_non_vacuous(/*D_max=*/0.30, /*dt=*/0.05, k));   // 중간 우위는 전환 가능
+  EXPECT_FALSE(is_non_vacuous(/*D_max=*/0.10, /*dt=*/0.05, k));  // 약한 우위는 전환 불가
+}

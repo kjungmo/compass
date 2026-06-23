@@ -7,7 +7,8 @@ struct Knobs {
   double E0 = 0.30;            // 누적기 기준 임계 E_th(0)=E0
   double k_rho = 1.0;         // 진행 경화 계수
   int p = 2;                  // 진행 경화 지수 (p>=1)
-  double lambda = 0.9;        // 누수 계수 ∈ (0,1]
+  // λ: leak factor. Switch needs sustained (D-Delta_floor) > E_0*(1-lambda)/dt; tau_leak=-dt/ln lambda.
+  double lambda = 0.97;       // 누수 계수 ∈ (0,1] (τ_leak≈1.64s @ dt=0.05)
   double e_max_fwd = 1.0;     // 정방향 누적기 상한 (O4: > E0(1+k_rho))
   double e_max_rev = 0.50;    // 역방향 누적기 상한 (P4: ∈ (E0, E0(1+k_rho)])
   double d_safe = 0.5;        // 하드 안전 거리 (m)
