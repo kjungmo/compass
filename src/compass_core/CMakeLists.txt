@@ -6,7 +6,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 add_library(compass_core
   src/version.cpp
-  src/topo_class.cpp)
+  src/topo_class.cpp
+  src/accumulator.cpp)
 target_include_directories(compass_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -22,5 +23,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_topo_class compass_core)
   ament_add_gtest(test_state test/test_state.cpp)
   target_link_libraries(test_state compass_core)
+  ament_add_gtest(test_accumulator test/test_accumulator.cpp)
+  target_link_libraries(test_accumulator compass_core)
 endif()
 ament_package()
