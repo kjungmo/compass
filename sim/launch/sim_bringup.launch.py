@@ -100,6 +100,16 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(use_pedestrian),
     )
 
+    # 보행자 지상 진실을 /people 로 발행 (컨트롤러의 사람 입력 경로 가동).
+    people_gt = Node(
+        package="compass_sim",
+        executable="people_gt_publisher",
+        name="people_gt_publisher",
+        parameters=[{"use_sim_time": True, "frame_id": "odom"}],
+        output="screen",
+        condition=IfCondition(use_pedestrian),
+    )
+
     controller_server = Node(
         package="nav2_controller",
         executable="controller_server",
@@ -124,6 +134,6 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         declare_headless, declare_use_nav2, declare_use_ped,
         declare_world, declare_params,
-        gz_sim, rsp, spawn, bridge, pedestrian,
+        gz_sim, rsp, spawn, bridge, pedestrian, people_gt,
         controller_server, lifecycle_manager,
     ])

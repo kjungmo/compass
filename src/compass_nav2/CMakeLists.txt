@@ -8,6 +8,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(compass_core REQUIRED)
+find_package(compass_msgs REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_util REQUIRED)
@@ -20,6 +21,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
 set(dependencies
+  compass_msgs
   nav2_core
   nav2_costmap_2d
   nav2_util
@@ -39,7 +41,8 @@ set(dependencies
 # =============================================================================
 add_library(compass_controller SHARED
   src/compass_controller.cpp
-  src/costmap_env_query.cpp)
+  src/costmap_env_query.cpp
+  src/people_conversion.cpp)
 target_include_directories(compass_controller PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -64,6 +67,12 @@ if(BUILD_TESTING)
   # 런타임 스모크: 플러그인을 pluginlib 로 로드 (설치 필요).
   ament_add_gtest(test_plugin_load test/test_plugin_load.cpp)
   ament_target_dependencies(test_plugin_load pluginlib nav2_core)
+
+  # toPersons 변환 단위 테스트 (node 불필요, 좌표·속도 규약 회귀).
+  ament_add_gtest(test_people_conversion test/test_people_conversion.cpp)
+  target_link_libraries(test_people_conversion compass_controller)
+  ament_target_dependencies(test_people_conversion
+    compass_msgs compass_core tf2_ros)
 endif()
 
 ament_export_include_directories(include)

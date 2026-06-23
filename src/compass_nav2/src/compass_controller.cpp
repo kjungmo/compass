@@ -24,6 +24,8 @@
 #include "pluginlib/class_list_macros.hpp"
 #include "tf2/utils.hpp"
 
+#include "compass_nav2/people_conversion.hpp"
+
 namespace compass_nav2
 {
 
@@ -54,14 +56,28 @@ void CompassController::configure(
   logger_ = node->get_logger();
   clock_ = node->get_clock();
   base_frame_ = costmap_ros_->getBaseFrameID();
+  global_frame_ = costmap_ros_->getGlobalFrameID();
 
   loadKnobs(node, name);
   core_ = std::make_unique<compass::DecisionCore>(knobs_);
   state_ = compass::DecisionState{};
 
+  // /people 구독 — 외부 트래커(또는 시뮬 지상 진실)가 보내는 추적 사람 목록.
+  // sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
+  people_sub_ = node->create_subscription<compass_msgs::msg::People>(
+    "/people", rclcpp::SensorDataQoS(),
+    std::bind(&CompassController::peopleCallback, this, std::placeholders::_1));
+
   RCLCPP_INFO(
-    logger_, "CompassController '%s' 구성 완료 (E0=%.3f, e_max_rev=%.3f, max_v=%.3f).",
-    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_);
+    logger_, "CompassController '%s' 구성 완료 (E0=%.3f, e_max_rev=%.3f, max_v=%.3f, "
+    "global_frame=%s, /people 구독).",
+    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_, global_frame_.c_str());
+}
+
+void CompassController::peopleCallback(const compass_msgs::msg::People::SharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(people_mutex_);
+  latest_people_ = msg;
 }
 
 void CompassController::loadKnobs(
@@ -99,6 +115,11 @@ void CompassController::loadKnobs(
 void CompassController::cleanup()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 정리.", plugin_name_.c_str());
+  people_sub_.reset();
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    latest_people_.reset();
+  }
   core_.reset();
   costmap_ros_.reset();
   tf_.reset();
@@ -158,12 +179,26 @@ compass::Point2D CompassController::computeLocalGoal(const compass::SE2 & robot)
 
 std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot) const
 {
-  // 외부 트래커가 없으므로 사람 목록은 비워 둔다 (보존적). 동적 클러스터를
-  // costmap 에서 사람으로 추정하면 정적 벽까지 사람으로 오인하여 결정이 왜곡
-  // 되므로, 전용 트래커(/people, dynamic_obstacle_tracker)가 붙기 전까지는 빈
-  // 목록이 안전한 기본값이다. 컨트롤러는 사람 0명이어도 명령을 산출한다.
+  // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
+  // 변환한다. 메시지가 없으면 빈 목록(보존적) — 컨트롤러는 사람 0명이어도
+  // 명령을 산출한다. 변환·프레임 처리는 단위 테스트 가능한 toPersons 에 위임.
   (void)robot;
-  return {};
+  compass_msgs::msg::People::SharedPtr msg;
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    msg = latest_people_;
+  }
+  if (!msg) {
+    return {};
+  }
+  std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_);
+
+  // 사람 수를 throttle 로그로 남겨 스모크가 수신을 확인할 수 있게 한다.
+  RCLCPP_INFO_THROTTLE(
+    logger_, *clock_, 2000, "CompassController: /people 수신 — %zu 명 적용.",
+    people.size());
+
+  return people;
 }
 
 geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(

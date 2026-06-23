@@ -18,4 +18,11 @@ install(
   RENAME reactive_pedestrian
 )
 
+# 보행자 지상 진실 /people 발행 노드(파이썬) 설치.
+install(
+  PROGRAMS scripts/people_gt_publisher.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME people_gt_publisher
+)
+
 ament_package()

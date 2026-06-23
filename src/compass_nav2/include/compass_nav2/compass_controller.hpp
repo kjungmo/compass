@@ -29,6 +29,8 @@
 #include "nav_msgs/msg/path.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "compass_msgs/msg/people.hpp"
+
 #include "compass_core/decision_core.hpp"
 #include "compass_core/decision_state.hpp"
 #include "compass_core/knobs.hpp"
@@ -76,8 +78,12 @@ protected:
   // 전역 계획의 마지막 점(또는 robot 전방 lookahead)을 로컬 목표로 환산.
   compass::Point2D computeLocalGoal(const compass::SE2 & robot) const;
 
-  // costmap 동적 클러스터를 사람 후보로 환산 (단순 근사; 트래커 부재 시 빈 목록).
+  // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
+  // 환산 (트래커 미수신 시 빈 목록). 변환은 toPersons 자유 함수에 위임한다.
   std::vector<compass::Person> extractPeople(const compass::SE2 & robot) const;
+
+  // /people 구독 콜백 — 최신 메시지를 뮤텍스 보호 하에 저장.
+  void peopleCallback(const compass_msgs::msg::People::SharedPtr msg);
 
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
   std::shared_ptr<tf2_ros::Buffer> tf_;
@@ -88,6 +94,12 @@ protected:
   std::string base_frame_;
 
   nav_msgs::msg::Path global_plan_;
+
+  // /people 구독 + 최신 메시지 (people_mutex_ 보호).
+  rclcpp::Subscription<compass_msgs::msg::People>::SharedPtr people_sub_;
+  compass_msgs::msg::People::SharedPtr latest_people_;
+  std::string global_frame_;       // costmap global_frame (변환 대상 프레임).
+  mutable std::mutex people_mutex_;
 
   // 결정 계층 상태 (주기 간 보존).
   compass::Knobs knobs_;
