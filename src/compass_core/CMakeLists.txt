@@ -8,7 +8,8 @@ add_library(compass_core
   src/version.cpp
   src/topo_class.cpp
   src/accumulator.cpp
-  src/tie_breaker.cpp)
+  src/tie_breaker.cpp
+  src/safety.cpp)
 target_include_directories(compass_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -28,5 +29,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_accumulator compass_core)
   ament_add_gtest(test_tie_breaker test/test_tie_breaker.cpp)
   target_link_libraries(test_tie_breaker compass_core)
+  ament_add_gtest(test_safety test/test_safety.cpp)
+  target_link_libraries(test_safety compass_core)
 endif()
 ament_package()
