@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.8)
+project(compass_core)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+find_package(ament_cmake REQUIRED)
+add_library(compass_core src/version.cpp)
+target_include_directories(compass_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+install(DIRECTORY include/ DESTINATION include)
+install(TARGETS compass_core EXPORT export_compass_core
+  ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+ament_export_targets(export_compass_core HAS_LIBRARY_TARGET)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_smoke test/test_smoke.cpp)
+  target_link_libraries(test_smoke compass_core)
+endif()
+ament_package()
