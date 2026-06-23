@@ -110,7 +110,13 @@ protected:
   // 속도 한계 (setSpeedLimit).
   double speed_limit_{0.0};        // m/s; 0 == 무제한
   bool speed_limit_is_pct_{false};
-  double max_linear_speed_{0.5};   // m/s; v_target 상한
+  double max_linear_speed_{0.5};   // m/s; 하드 상한 (hard cap)
+
+  // 궤적 계층 ②: 경로 추종 cruise (결정 코어가 정지 상태에서 전진 속도를
+  // 산출하지 못하므로 플러그인이 부트스트랩한다).
+  double cruise_speed_{0.45};      // m/s; NORMAL 기본 순항 속도
+  double max_angular_speed_{1.0};  // rad/s; yaw rate 상한
+  double goal_decel_dist_{0.6};    // m; 목표 근처 감속 시작 거리
   double last_now_{0.0};
   bool has_last_now_{false};
 

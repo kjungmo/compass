@@ -38,7 +38,12 @@ controller_server:
       plugin: "compass_nav2::CompassController"
 
       # ---- 출력 제한 ----
-      max_linear_speed: 0.5      # m/s; v_target 상한
+      max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
+
+      # ---- 궤적 계층 ② (경로 추종 cruise) ----
+      cruise_speed: 0.45         # m/s; NORMAL 기본 순항 속도
+      max_angular_speed: 1.0     # rad/s; yaw rate 상한
+      goal_decel_dist: 0.6       # m; 목표 근처 감속 시작 거리
 
       # ---- Commit-and-Cross 노브 (compass::Knobs) ----
       delta_floor: 0.05          # 순간 전환 마진 (무차원)

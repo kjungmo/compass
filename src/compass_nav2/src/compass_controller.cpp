@@ -110,6 +110,10 @@ void CompassController::loadKnobs(
   getParam(node, name, "eps_out", k.eps_out, k.eps_out);
   knobs_ = k;
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
+  // 궤적 계층 ② 노브 (경로 추종 cruise).
+  getParam(node, name, "cruise_speed", cruise_speed_, cruise_speed_);
+  getParam(node, name, "max_angular_speed", max_angular_speed_, max_angular_speed_);
+  getParam(node, name, "goal_decel_dist", goal_decel_dist_, goal_decel_dist_);
 }
 
 void CompassController::cleanup()
@@ -251,14 +255,38 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     return cmd;
   }
 
-  // NORMAL: 전진 + 선택된 class 의 측면으로 향하도록 yaw 명령.
-  double v = std::max(0.0, out.v_target);
-  // 속도 한계 적용.
+  // NORMAL: 궤적 계층 ② — 경로 추종 cruise 로 전진을 생성한다.
+  //
+  // 결정 코어의 out.v_target 은 *현재 실측 속도*의 pass-through/감속이라
+  // 정지 상태에서는 매 주기 0 이다. 따라서 cruise_speed_ 를 부트스트랩 기본
+  // 속도로 쓰고, 목표(global_plan_ 최종 자세) 근처에서 선형 테이퍼로 0 까지
+  // 줄여 목표에서 멈춘다. 이어서 max_linear_speed_(하드 상한)·speed_limit_
+  // 으로 캡한다.
+  double v = cruise_speed_;
+
+  // 목표 근처 선형 감속: global_plan_ 의 최종 자세까지 거리가 goal_decel_dist_
+  // 미만이면 비율만큼 cruise 를 줄인다 (거리 0 -> v 0).
+  if (!global_plan_.poses.empty() && goal_decel_dist_ > 0.0) {
+    const auto & gp = global_plan_.poses.back().pose.position;
+    const double dist_to_goal = std::hypot(gp.x - robot.x, gp.y - robot.y);
+    if (dist_to_goal < goal_decel_dist_) {
+      v *= (dist_to_goal / goal_decel_dist_);
+    }
+  }
+
+  // 능동 안전 감속 존중: 코어가 *양의* 감속 상한(out.v_target > 0.05)을 보고할
+  // 때만 그것으로 cruise 를 클램프한다. 정지 상태의 0 이 cruise 를 죽이지
+  // 않도록 0(혹은 미세값)은 무시한다.
+  if (out.v_target > 0.05) {
+    v = std::min(v, out.v_target);
+  }
+
+  // 하드 상한 및 속도 한계 적용.
   double v_cap = max_linear_speed_;
   if (speed_limit_ > 0.0) {
     v_cap = speed_limit_is_pct_ ? max_linear_speed_ * (speed_limit_ / 100.0) : speed_limit_;
   }
-  v = std::min(v, v_cap);
+  v = std::clamp(v, 0.0, v_cap);
 
   // 로컬 목표 방향과 class 측면을 향하는 보존적 yaw rate.
   const double dgx = in.local_goal.x - robot.x;
@@ -279,8 +307,10 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   constexpr double kYawGain = 1.0;
   constexpr double kSideGain = 0.3;
   cmd.twist.linear.x = v;
+  // yaw rate 는 max_angular_speed_(rad/s)로 클램프한다. (이전 코드는 knobs_.W
+  // 로 클램프했으나 W 는 스래시 *시간 창*(s)이지 각속도 한계가 아니다 — 버그.)
   cmd.twist.angular.z = std::clamp(
-    kYawGain * yaw_err + kSideGain * side_bias, -knobs_.W, knobs_.W);
+    kYawGain * yaw_err + kSideGain * side_bias, -max_angular_speed_, max_angular_speed_);
   return cmd;
 }
 
