@@ -1,4 +1,4 @@
-# Commit-and-Cross
+# COMPASS
 
 서비스 로봇의 **사회적 경로 결정(social path decision)** 플래너 연구·구현 저장소입니다. 핵심 아이디어는 사람을 좌·우 어느 쪽으로 지나갈지에 대한 통과 결정의 **시간 일관성(temporal consistency)** 을 1급 설계 목표로 두는 것입니다. 탐욕적 재최적화가 일으키는 진동(우왕좌왕)과 freezing을, 누수 증거 누적(leaky evidence accumulation) 기반 커밋 전환 규칙 + 사전식 안전 오버라이드로 억제합니다.
 
@@ -20,7 +20,7 @@
 ## 저장소 구조
 
 ```
-commit_and_cross/
+compass/
 ├─ README.md              # 이 문서
 ├─ CLAUDE.md              # Claude Code 세션용 프로젝트 컨텍스트(진실 원천 포인터)
 ├─ paper/
@@ -61,3 +61,5 @@ commit_and_cross/
 3. **실험(R1~R4)** — ablation·비교군·실시간성·time-to-legible. `paper_draft.md`의 `[TBD]`를 측정값으로 교체.
 4. **그림 4종** — decision_flow / oscillation_compare / social_cost_field / class_lifecycle.
 5. **실로봇 + AR 데모** — BungP 플랫폼, FSD식 AR 궤적 오버레이.
+
+> **COMPASS** = *COMmitment-based PASSing for Social navigation*. 코드·저장소는 COMPASS로 통일했고, 논문 메서드명 통일(현 제목 Commit-and-Cross)은 후속 개정(v0.6)에서 반영 예정입니다.
