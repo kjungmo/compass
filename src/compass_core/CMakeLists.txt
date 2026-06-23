@@ -10,7 +10,8 @@ add_library(compass_core
   src/accumulator.cpp
   src/tie_breaker.cpp
   src/safety.cpp
-  src/cost_evaluator.cpp)
+  src/cost_evaluator.cpp
+  src/decision_core.cpp)
 target_include_directories(compass_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -34,5 +35,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_safety compass_core)
   ament_add_gtest(test_cost test/test_cost.cpp)
   target_link_libraries(test_cost compass_core)
+  ament_add_gtest(test_decision_core test/test_decision_core.cpp)
+  target_link_libraries(test_decision_core compass_core)
 endif()
 ament_package()
