@@ -144,7 +144,7 @@
     </model>
     <model name="pillar_center">
       <static>true</static>
-      <pose>2.000000 0.000000 0.600000 0.000000 0.000000 0.000000</pose>
+      <pose>2.000000 3.000000 0.600000 0.000000 0.000000 0.000000</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -222,7 +222,7 @@
     <!-- 반응형 보행자: 자체 DiffDrive 를 가진 동적 원기둥 "사람".
          reactive_pedestrian 노드가 ped/cmd_vel 로 조향하고 ped/odom 으로 위치를 읽는다. -->
     <model name="pedestrian">
-      <pose>1.0 0.0 0.0 0 0 0</pose>
+      <pose>4.0 -2.0 0.0 0 0 1.5708</pose>
       <link name="ped_base">
         <pose>0 0 0.6 0 0 0</pose>
         <inertial>

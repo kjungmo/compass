@@ -76,11 +76,15 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
 
+    # 로봇을 월드 원점에 스폰한다. 로봇 odom 은 스폰 상대 프레임이라 odom 원점이
+    # 월드 원점과 일치해야 /people(보행자 ped/odom = 월드 좌표)이 컨트롤러의
+    # global_frame=odom 과 같은 좌표계에 놓인다. (예전 -3.5 스폰은 보행자를
+    # 컨트롤러 시점에서 +3.5 m 어긋나게 했다.)
     spawn = Node(
         package="ros_gz_sim",
         executable="create",
         arguments=["-name", "diff_bot", "-string", robot_desc,
-                   "-x", "-3.5", "-y", "0.0", "-z", "0.05"],
+                   "-x", "0.0", "-y", "0.0", "-z", "0.05"],
         output="screen",
     )
 
