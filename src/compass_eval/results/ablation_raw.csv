@@ -1,0 +1,1501 @@
+variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,censored
+"full (제안)",near_tie,0,0,0,0,0.05,0
+"full (제안)",near_tie,1,0,0,0,0.05,0
+"full (제안)",near_tie,2,0,0,0,0.05,0
+"full (제안)",near_tie,3,0,0,0,0.05,0
+"full (제안)",near_tie,4,0,0,0,0.05,0
+"full (제안)",near_tie,5,0,0,0,0.05,0
+"full (제안)",near_tie,6,0,0,0,0.05,0
+"full (제안)",near_tie,7,0,0,0,0.05,0
+"full (제안)",near_tie,8,0,0,0,0.05,0
+"full (제안)",near_tie,9,0,0,0,0.05,0
+"full (제안)",near_tie,10,0,0,0,0.05,0
+"full (제안)",near_tie,11,0,0,0,0.05,0
+"full (제안)",near_tie,12,0,0,0,0.05,0
+"full (제안)",near_tie,13,0,0,0,0.05,0
+"full (제안)",near_tie,14,0,0,0,0.05,0
+"full (제안)",near_tie,15,0,0,0,0.05,0
+"full (제안)",near_tie,16,0,0,0,0.05,0
+"full (제안)",near_tie,17,0,0,0,0.05,0
+"full (제안)",near_tie,18,0,0,0,0.05,0
+"full (제안)",near_tie,19,0,0,0,0.05,0
+"full (제안)",near_tie,20,0,0,0,0.05,0
+"full (제안)",near_tie,21,0,0,0,0.05,0
+"full (제안)",near_tie,22,0,0,0,0.05,0
+"full (제안)",near_tie,23,0,0,0,0.05,0
+"full (제안)",near_tie,24,0,0,0,0.05,0
+"full (제안)",near_tie,25,0,0,0,0.05,0
+"full (제안)",near_tie,26,0,0,0,0.05,0
+"full (제안)",near_tie,27,0,0,0,0.05,0
+"full (제안)",near_tie,28,0,0,0,0.05,0
+"full (제안)",near_tie,29,0,0,0,0.05,0
+"full (제안)",near_tie,30,0,0,0,0.05,0
+"full (제안)",near_tie,31,0,0,0,0.05,0
+"full (제안)",near_tie,32,0,0,0,0.05,0
+"full (제안)",near_tie,33,0,0,0,0.05,0
+"full (제안)",near_tie,34,0,0,0,0.05,0
+"full (제안)",near_tie,35,0,0,0,0.05,0
+"full (제안)",near_tie,36,0,0,0,0.05,0
+"full (제안)",near_tie,37,0,0,0,0.05,0
+"full (제안)",near_tie,38,0,0,0,0.05,0
+"full (제안)",near_tie,39,0,0,0,0.05,0
+"full (제안)",near_tie,40,0,0,0,0.05,0
+"full (제안)",near_tie,41,0,0,0,0.05,0
+"full (제안)",near_tie,42,0,0,0,0.05,0
+"full (제안)",near_tie,43,0,0,0,0.05,0
+"full (제안)",near_tie,44,0,0,0,0.05,0
+"full (제안)",near_tie,45,0,0,0,0.05,0
+"full (제안)",near_tie,46,0,0,0,0.05,0
+"full (제안)",near_tie,47,0,0,0,0.05,0
+"full (제안)",near_tie,48,0,0,0,0.05,0
+"full (제안)",near_tie,49,0,0,0,0.05,0
+"full (제안)",transient_spike,0,0,0,0,0.05,0
+"full (제안)",transient_spike,1,0,0,0,0.05,0
+"full (제안)",transient_spike,2,0,0,0,0.05,0
+"full (제안)",transient_spike,3,0,0,0,0.05,0
+"full (제안)",transient_spike,4,0,0,0,0.05,0
+"full (제안)",transient_spike,5,0,0,0,0.05,0
+"full (제안)",transient_spike,6,0,0,0,0.05,0
+"full (제안)",transient_spike,7,0,0,0,0.05,0
+"full (제안)",transient_spike,8,0,0,0,0.05,0
+"full (제안)",transient_spike,9,0,0,0,0.05,0
+"full (제안)",transient_spike,10,0,0,0,0.05,0
+"full (제안)",transient_spike,11,0,0,0,0.05,0
+"full (제안)",transient_spike,12,0,0,0,0.05,0
+"full (제안)",transient_spike,13,0,0,0,0.05,0
+"full (제안)",transient_spike,14,0,0,0,0.05,0
+"full (제안)",transient_spike,15,0,0,0,0.05,0
+"full (제안)",transient_spike,16,0,0,0,0.05,0
+"full (제안)",transient_spike,17,0,0,0,0.05,0
+"full (제안)",transient_spike,18,0,0,0,0.05,0
+"full (제안)",transient_spike,19,0,0,0,0.05,0
+"full (제안)",transient_spike,20,0,0,0,0.05,0
+"full (제안)",transient_spike,21,0,0,0,0.05,0
+"full (제안)",transient_spike,22,0,0,0,0.05,0
+"full (제안)",transient_spike,23,0,0,0,0.05,0
+"full (제안)",transient_spike,24,0,0,0,0.05,0
+"full (제안)",transient_spike,25,0,0,0,0.05,0
+"full (제안)",transient_spike,26,0,0,0,0.05,0
+"full (제안)",transient_spike,27,0,0,0,0.05,0
+"full (제안)",transient_spike,28,0,0,0,0.05,0
+"full (제안)",transient_spike,29,0,0,0,0.05,0
+"full (제안)",transient_spike,30,0,0,0,0.05,0
+"full (제안)",transient_spike,31,0,0,0,0.05,0
+"full (제안)",transient_spike,32,0,0,0,0.05,0
+"full (제안)",transient_spike,33,0,0,0,0.05,0
+"full (제안)",transient_spike,34,0,0,0,0.05,0
+"full (제안)",transient_spike,35,0,0,0,0.05,0
+"full (제안)",transient_spike,36,0,0,0,0.05,0
+"full (제안)",transient_spike,37,0,0,0,0.05,0
+"full (제안)",transient_spike,38,0,0,0,0.05,0
+"full (제안)",transient_spike,39,0,0,0,0.05,0
+"full (제안)",transient_spike,40,0,0,0,0.05,0
+"full (제안)",transient_spike,41,0,0,0,0.05,0
+"full (제안)",transient_spike,42,0,0,0,0.05,0
+"full (제안)",transient_spike,43,0,0,0,0.05,0
+"full (제안)",transient_spike,44,0,0,0,0.05,0
+"full (제안)",transient_spike,45,0,0,0,0.05,0
+"full (제안)",transient_spike,46,0,0,0,0.05,0
+"full (제안)",transient_spike,47,0,0,0,0.05,0
+"full (제안)",transient_spike,48,0,0,0,0.05,0
+"full (제안)",transient_spike,49,0,0,0,0.05,0
+"full (제안)",mid_reversal,0,0,0,0,0.05,0
+"full (제안)",mid_reversal,1,0,0,0,0.05,0
+"full (제안)",mid_reversal,2,0,0,0,0.05,0
+"full (제안)",mid_reversal,3,0,0,0,0.05,0
+"full (제안)",mid_reversal,4,0,0,0,0.05,0
+"full (제안)",mid_reversal,5,0,0,0,0.05,0
+"full (제안)",mid_reversal,6,0,0,0,0.05,0
+"full (제안)",mid_reversal,7,0,0,0,0.05,0
+"full (제안)",mid_reversal,8,0,0,0,0.05,0
+"full (제안)",mid_reversal,9,0,0,0,0.05,0
+"full (제안)",mid_reversal,10,0,0,0,0.05,0
+"full (제안)",mid_reversal,11,0,0,0,0.05,0
+"full (제안)",mid_reversal,12,0,0,0,0.05,0
+"full (제안)",mid_reversal,13,0,0,0,0.05,0
+"full (제안)",mid_reversal,14,0,0,0,0.05,0
+"full (제안)",mid_reversal,15,0,0,0,0.05,0
+"full (제안)",mid_reversal,16,0,0,0,0.05,0
+"full (제안)",mid_reversal,17,0,0,0,0.05,0
+"full (제안)",mid_reversal,18,0,0,0,0.05,0
+"full (제안)",mid_reversal,19,0,0,0,0.05,0
+"full (제안)",mid_reversal,20,0,0,0,0.05,0
+"full (제안)",mid_reversal,21,0,0,0,0.05,0
+"full (제안)",mid_reversal,22,0,0,0,0.05,0
+"full (제안)",mid_reversal,23,0,0,0,0.05,0
+"full (제안)",mid_reversal,24,0,0,0,0.05,0
+"full (제안)",mid_reversal,25,0,0,0,0.05,0
+"full (제안)",mid_reversal,26,0,0,0,0.05,0
+"full (제안)",mid_reversal,27,0,0,0,0.05,0
+"full (제안)",mid_reversal,28,0,0,0,0.05,0
+"full (제안)",mid_reversal,29,0,0,0,0.05,0
+"full (제안)",mid_reversal,30,0,0,0,0.05,0
+"full (제안)",mid_reversal,31,0,0,0,0.05,0
+"full (제안)",mid_reversal,32,0,0,0,0.05,0
+"full (제안)",mid_reversal,33,0,0,0,0.05,0
+"full (제안)",mid_reversal,34,0,0,0,0.05,0
+"full (제안)",mid_reversal,35,0,0,0,0.05,0
+"full (제안)",mid_reversal,36,0,0,0,0.05,0
+"full (제안)",mid_reversal,37,0,0,0,0.05,0
+"full (제안)",mid_reversal,38,0,0,0,0.05,0
+"full (제안)",mid_reversal,39,0,0,0,0.05,0
+"full (제안)",mid_reversal,40,0,0,0,0.05,0
+"full (제안)",mid_reversal,41,0,0,0,0.05,0
+"full (제안)",mid_reversal,42,0,0,0,0.05,0
+"full (제안)",mid_reversal,43,0,0,0,0.05,0
+"full (제안)",mid_reversal,44,0,0,0,0.05,0
+"full (제안)",mid_reversal,45,0,0,0,0.05,0
+"full (제안)",mid_reversal,46,0,0,0,0.05,0
+"full (제안)",mid_reversal,47,0,0,0,0.05,0
+"full (제안)",mid_reversal,48,0,0,0,0.05,0
+"full (제안)",mid_reversal,49,0,0,0,0.05,0
+"full (제안)",clean_commit,0,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,1,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,2,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,3,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,4,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,5,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,6,1,0.1,0.0456065,2.25,0
+"full (제안)",clean_commit,7,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,8,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,9,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,10,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,11,1,0.1,0.0456065,2.55,0
+"full (제안)",clean_commit,12,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,13,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,14,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,15,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,16,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,17,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,18,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,19,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,20,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,21,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,22,1,0.1,0.0456065,2.25,0
+"full (제안)",clean_commit,23,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,24,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,25,1,0.1,0.0456065,2.25,0
+"full (제안)",clean_commit,26,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,27,1,0.1,0.0456065,2.25,0
+"full (제안)",clean_commit,28,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,29,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,30,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,31,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,32,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,33,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,34,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,35,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,36,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,37,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,38,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,39,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,40,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,41,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,42,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,43,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,44,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,45,1,0.1,0.0456065,2.25,0
+"full (제안)",clean_commit,46,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,47,1,0.1,0.0456065,2.45,0
+"full (제안)",clean_commit,48,1,0.1,0.0456065,2.35,0
+"full (제안)",clean_commit,49,1,0.1,0.0456065,2.35,0
+"full (제안)",intermittent,0,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,1,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,2,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,3,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,4,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,5,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,6,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,7,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,8,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,9,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,10,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,11,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,12,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,13,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,14,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,15,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,16,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,17,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,18,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,19,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,20,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,21,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,22,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,23,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,24,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,25,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,26,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,27,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,28,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,29,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,30,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,31,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,32,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,33,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,34,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,35,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,36,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,37,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,38,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,39,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,40,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,41,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,42,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,43,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,44,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,45,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,46,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,47,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,48,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,49,1,0.1,0.0456065,10,1
+"-hysteresis",near_tie,0,0,0,0,0.05,0
+"-hysteresis",near_tie,1,0,0,0,0.05,0
+"-hysteresis",near_tie,2,0,0,0,0.05,0
+"-hysteresis",near_tie,3,0,0,0,0.05,0
+"-hysteresis",near_tie,4,0,0,0,0.05,0
+"-hysteresis",near_tie,5,0,0,0,0.05,0
+"-hysteresis",near_tie,6,0,0,0,0.05,0
+"-hysteresis",near_tie,7,0,0,0,0.05,0
+"-hysteresis",near_tie,8,0,0,0,0.05,0
+"-hysteresis",near_tie,9,0,0,0,0.05,0
+"-hysteresis",near_tie,10,0,0,0,0.05,0
+"-hysteresis",near_tie,11,0,0,0,0.05,0
+"-hysteresis",near_tie,12,0,0,0,0.05,0
+"-hysteresis",near_tie,13,0,0,0,0.05,0
+"-hysteresis",near_tie,14,0,0,0,0.05,0
+"-hysteresis",near_tie,15,0,0,0,0.05,0
+"-hysteresis",near_tie,16,0,0,0,0.05,0
+"-hysteresis",near_tie,17,0,0,0,0.05,0
+"-hysteresis",near_tie,18,0,0,0,0.05,0
+"-hysteresis",near_tie,19,0,0,0,0.05,0
+"-hysteresis",near_tie,20,0,0,0,0.05,0
+"-hysteresis",near_tie,21,0,0,0,0.05,0
+"-hysteresis",near_tie,22,0,0,0,0.05,0
+"-hysteresis",near_tie,23,0,0,0,0.05,0
+"-hysteresis",near_tie,24,0,0,0,0.05,0
+"-hysteresis",near_tie,25,0,0,0,0.05,0
+"-hysteresis",near_tie,26,0,0,0,0.05,0
+"-hysteresis",near_tie,27,0,0,0,0.05,0
+"-hysteresis",near_tie,28,0,0,0,0.05,0
+"-hysteresis",near_tie,29,0,0,0,0.05,0
+"-hysteresis",near_tie,30,0,0,0,0.05,0
+"-hysteresis",near_tie,31,0,0,0,0.05,0
+"-hysteresis",near_tie,32,0,0,0,0.05,0
+"-hysteresis",near_tie,33,0,0,0,0.05,0
+"-hysteresis",near_tie,34,0,0,0,0.05,0
+"-hysteresis",near_tie,35,0,0,0,0.05,0
+"-hysteresis",near_tie,36,0,0,0,0.05,0
+"-hysteresis",near_tie,37,0,0,0,0.05,0
+"-hysteresis",near_tie,38,0,0,0,0.05,0
+"-hysteresis",near_tie,39,0,0,0,0.05,0
+"-hysteresis",near_tie,40,0,0,0,0.05,0
+"-hysteresis",near_tie,41,0,0,0,0.05,0
+"-hysteresis",near_tie,42,0,0,0,0.05,0
+"-hysteresis",near_tie,43,0,0,0,0.05,0
+"-hysteresis",near_tie,44,0,0,0,0.05,0
+"-hysteresis",near_tie,45,0,0,0,0.05,0
+"-hysteresis",near_tie,46,0,0,0,0.05,0
+"-hysteresis",near_tie,47,0,0,0,0.05,0
+"-hysteresis",near_tie,48,0,0,0,0.05,0
+"-hysteresis",near_tie,49,0,0,0,0.05,0
+"-hysteresis",transient_spike,0,0,0,0,0.05,0
+"-hysteresis",transient_spike,1,0,0,0,0.05,0
+"-hysteresis",transient_spike,2,0,0,0,0.05,0
+"-hysteresis",transient_spike,3,0,0,0,0.05,0
+"-hysteresis",transient_spike,4,0,0,0,0.05,0
+"-hysteresis",transient_spike,5,0,0,0,0.05,0
+"-hysteresis",transient_spike,6,0,0,0,0.05,0
+"-hysteresis",transient_spike,7,0,0,0,0.05,0
+"-hysteresis",transient_spike,8,0,0,0,0.05,0
+"-hysteresis",transient_spike,9,0,0,0,0.05,0
+"-hysteresis",transient_spike,10,0,0,0,0.05,0
+"-hysteresis",transient_spike,11,0,0,0,0.05,0
+"-hysteresis",transient_spike,12,0,0,0,0.05,0
+"-hysteresis",transient_spike,13,0,0,0,0.05,0
+"-hysteresis",transient_spike,14,0,0,0,0.05,0
+"-hysteresis",transient_spike,15,0,0,0,0.05,0
+"-hysteresis",transient_spike,16,0,0,0,0.05,0
+"-hysteresis",transient_spike,17,0,0,0,0.05,0
+"-hysteresis",transient_spike,18,0,0,0,0.05,0
+"-hysteresis",transient_spike,19,0,0,0,0.05,0
+"-hysteresis",transient_spike,20,0,0,0,0.05,0
+"-hysteresis",transient_spike,21,0,0,0,0.05,0
+"-hysteresis",transient_spike,22,0,0,0,0.05,0
+"-hysteresis",transient_spike,23,0,0,0,0.05,0
+"-hysteresis",transient_spike,24,0,0,0,0.05,0
+"-hysteresis",transient_spike,25,0,0,0,0.05,0
+"-hysteresis",transient_spike,26,0,0,0,0.05,0
+"-hysteresis",transient_spike,27,0,0,0,0.05,0
+"-hysteresis",transient_spike,28,0,0,0,0.05,0
+"-hysteresis",transient_spike,29,0,0,0,0.05,0
+"-hysteresis",transient_spike,30,0,0,0,0.05,0
+"-hysteresis",transient_spike,31,0,0,0,0.05,0
+"-hysteresis",transient_spike,32,0,0,0,0.05,0
+"-hysteresis",transient_spike,33,0,0,0,0.05,0
+"-hysteresis",transient_spike,34,0,0,0,0.05,0
+"-hysteresis",transient_spike,35,0,0,0,0.05,0
+"-hysteresis",transient_spike,36,0,0,0,0.05,0
+"-hysteresis",transient_spike,37,0,0,0,0.05,0
+"-hysteresis",transient_spike,38,0,0,0,0.05,0
+"-hysteresis",transient_spike,39,0,0,0,0.05,0
+"-hysteresis",transient_spike,40,0,0,0,0.05,0
+"-hysteresis",transient_spike,41,0,0,0,0.05,0
+"-hysteresis",transient_spike,42,0,0,0,0.05,0
+"-hysteresis",transient_spike,43,0,0,0,0.05,0
+"-hysteresis",transient_spike,44,0,0,0,0.05,0
+"-hysteresis",transient_spike,45,0,0,0,0.05,0
+"-hysteresis",transient_spike,46,0,0,0,0.05,0
+"-hysteresis",transient_spike,47,0,0,0,0.05,0
+"-hysteresis",transient_spike,48,0,0,0,0.05,0
+"-hysteresis",transient_spike,49,0,0,0,0.05,0
+"-hysteresis",mid_reversal,0,0,0,0,0.05,0
+"-hysteresis",mid_reversal,1,0,0,0,0.05,0
+"-hysteresis",mid_reversal,2,0,0,0,0.05,0
+"-hysteresis",mid_reversal,3,0,0,0,0.05,0
+"-hysteresis",mid_reversal,4,0,0,0,0.05,0
+"-hysteresis",mid_reversal,5,0,0,0,0.05,0
+"-hysteresis",mid_reversal,6,0,0,0,0.05,0
+"-hysteresis",mid_reversal,7,0,0,0,0.05,0
+"-hysteresis",mid_reversal,8,0,0,0,0.05,0
+"-hysteresis",mid_reversal,9,0,0,0,0.05,0
+"-hysteresis",mid_reversal,10,0,0,0,0.05,0
+"-hysteresis",mid_reversal,11,0,0,0,0.05,0
+"-hysteresis",mid_reversal,12,0,0,0,0.05,0
+"-hysteresis",mid_reversal,13,0,0,0,0.05,0
+"-hysteresis",mid_reversal,14,0,0,0,0.05,0
+"-hysteresis",mid_reversal,15,0,0,0,0.05,0
+"-hysteresis",mid_reversal,16,0,0,0,0.05,0
+"-hysteresis",mid_reversal,17,0,0,0,0.05,0
+"-hysteresis",mid_reversal,18,0,0,0,0.05,0
+"-hysteresis",mid_reversal,19,0,0,0,0.05,0
+"-hysteresis",mid_reversal,20,0,0,0,0.05,0
+"-hysteresis",mid_reversal,21,0,0,0,0.05,0
+"-hysteresis",mid_reversal,22,0,0,0,0.05,0
+"-hysteresis",mid_reversal,23,0,0,0,0.05,0
+"-hysteresis",mid_reversal,24,0,0,0,0.05,0
+"-hysteresis",mid_reversal,25,0,0,0,0.05,0
+"-hysteresis",mid_reversal,26,0,0,0,0.05,0
+"-hysteresis",mid_reversal,27,0,0,0,0.05,0
+"-hysteresis",mid_reversal,28,0,0,0,0.05,0
+"-hysteresis",mid_reversal,29,0,0,0,0.05,0
+"-hysteresis",mid_reversal,30,0,0,0,0.05,0
+"-hysteresis",mid_reversal,31,0,0,0,0.05,0
+"-hysteresis",mid_reversal,32,0,0,0,0.05,0
+"-hysteresis",mid_reversal,33,0,0,0,0.05,0
+"-hysteresis",mid_reversal,34,0,0,0,0.05,0
+"-hysteresis",mid_reversal,35,0,0,0,0.05,0
+"-hysteresis",mid_reversal,36,0,0,0,0.05,0
+"-hysteresis",mid_reversal,37,0,0,0,0.05,0
+"-hysteresis",mid_reversal,38,0,0,0,0.05,0
+"-hysteresis",mid_reversal,39,0,0,0,0.05,0
+"-hysteresis",mid_reversal,40,0,0,0,0.05,0
+"-hysteresis",mid_reversal,41,0,0,0,0.05,0
+"-hysteresis",mid_reversal,42,0,0,0,0.05,0
+"-hysteresis",mid_reversal,43,0,0,0,0.05,0
+"-hysteresis",mid_reversal,44,0,0,0,0.05,0
+"-hysteresis",mid_reversal,45,0,0,0,0.05,0
+"-hysteresis",mid_reversal,46,0,0,0,0.05,0
+"-hysteresis",mid_reversal,47,0,0,0,0.05,0
+"-hysteresis",mid_reversal,48,0,0,0,0.05,0
+"-hysteresis",mid_reversal,49,0,0,0,0.05,0
+"-hysteresis",clean_commit,0,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,1,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,2,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,3,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,4,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,5,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,6,1,0.1,0.0456065,1.85,0
+"-hysteresis",clean_commit,7,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,8,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,9,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,10,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,11,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,12,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,13,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,14,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,15,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,16,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,17,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,18,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,19,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,20,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,21,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,22,1,0.1,0.0456065,1.85,0
+"-hysteresis",clean_commit,23,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,24,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,25,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,26,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,27,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,28,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,29,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,30,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,31,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,32,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,33,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,34,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,35,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,36,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,37,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,38,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,39,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,40,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,41,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,42,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,43,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,44,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,45,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,46,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,47,1,0.1,0.0456065,2.05,0
+"-hysteresis",clean_commit,48,1,0.1,0.0456065,1.95,0
+"-hysteresis",clean_commit,49,1,0.1,0.0456065,1.95,0
+"-hysteresis",intermittent,0,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,1,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,2,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,3,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,4,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,5,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,6,1,0.1,0.0456065,2.75,0
+"-hysteresis",intermittent,7,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,8,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,9,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,10,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,11,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,12,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,13,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,14,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,15,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,16,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,17,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,18,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,19,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,20,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,21,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,22,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,23,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,24,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,25,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,26,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,27,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,28,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,29,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,30,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,31,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,32,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,33,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,34,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,35,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,36,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,37,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,38,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,39,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,40,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,41,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,42,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,43,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,44,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,45,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,46,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,47,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,48,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,49,1,0.1,0.0456065,10,1
+"-progress hardening",near_tie,0,0,0,0,0.05,0
+"-progress hardening",near_tie,1,0,0,0,0.05,0
+"-progress hardening",near_tie,2,0,0,0,0.05,0
+"-progress hardening",near_tie,3,0,0,0,0.05,0
+"-progress hardening",near_tie,4,0,0,0,0.05,0
+"-progress hardening",near_tie,5,0,0,0,0.05,0
+"-progress hardening",near_tie,6,0,0,0,0.05,0
+"-progress hardening",near_tie,7,0,0,0,0.05,0
+"-progress hardening",near_tie,8,0,0,0,0.05,0
+"-progress hardening",near_tie,9,0,0,0,0.05,0
+"-progress hardening",near_tie,10,0,0,0,0.05,0
+"-progress hardening",near_tie,11,0,0,0,0.05,0
+"-progress hardening",near_tie,12,0,0,0,0.05,0
+"-progress hardening",near_tie,13,0,0,0,0.05,0
+"-progress hardening",near_tie,14,0,0,0,0.05,0
+"-progress hardening",near_tie,15,0,0,0,0.05,0
+"-progress hardening",near_tie,16,0,0,0,0.05,0
+"-progress hardening",near_tie,17,0,0,0,0.05,0
+"-progress hardening",near_tie,18,0,0,0,0.05,0
+"-progress hardening",near_tie,19,0,0,0,0.05,0
+"-progress hardening",near_tie,20,0,0,0,0.05,0
+"-progress hardening",near_tie,21,0,0,0,0.05,0
+"-progress hardening",near_tie,22,0,0,0,0.05,0
+"-progress hardening",near_tie,23,0,0,0,0.05,0
+"-progress hardening",near_tie,24,0,0,0,0.05,0
+"-progress hardening",near_tie,25,0,0,0,0.05,0
+"-progress hardening",near_tie,26,0,0,0,0.05,0
+"-progress hardening",near_tie,27,0,0,0,0.05,0
+"-progress hardening",near_tie,28,0,0,0,0.05,0
+"-progress hardening",near_tie,29,0,0,0,0.05,0
+"-progress hardening",near_tie,30,0,0,0,0.05,0
+"-progress hardening",near_tie,31,0,0,0,0.05,0
+"-progress hardening",near_tie,32,0,0,0,0.05,0
+"-progress hardening",near_tie,33,0,0,0,0.05,0
+"-progress hardening",near_tie,34,0,0,0,0.05,0
+"-progress hardening",near_tie,35,0,0,0,0.05,0
+"-progress hardening",near_tie,36,0,0,0,0.05,0
+"-progress hardening",near_tie,37,0,0,0,0.05,0
+"-progress hardening",near_tie,38,0,0,0,0.05,0
+"-progress hardening",near_tie,39,0,0,0,0.05,0
+"-progress hardening",near_tie,40,0,0,0,0.05,0
+"-progress hardening",near_tie,41,0,0,0,0.05,0
+"-progress hardening",near_tie,42,0,0,0,0.05,0
+"-progress hardening",near_tie,43,0,0,0,0.05,0
+"-progress hardening",near_tie,44,0,0,0,0.05,0
+"-progress hardening",near_tie,45,0,0,0,0.05,0
+"-progress hardening",near_tie,46,0,0,0,0.05,0
+"-progress hardening",near_tie,47,0,0,0,0.05,0
+"-progress hardening",near_tie,48,0,0,0,0.05,0
+"-progress hardening",near_tie,49,0,0,0,0.05,0
+"-progress hardening",transient_spike,0,0,0,0,0.05,0
+"-progress hardening",transient_spike,1,0,0,0,0.05,0
+"-progress hardening",transient_spike,2,0,0,0,0.05,0
+"-progress hardening",transient_spike,3,0,0,0,0.05,0
+"-progress hardening",transient_spike,4,0,0,0,0.05,0
+"-progress hardening",transient_spike,5,0,0,0,0.05,0
+"-progress hardening",transient_spike,6,0,0,0,0.05,0
+"-progress hardening",transient_spike,7,0,0,0,0.05,0
+"-progress hardening",transient_spike,8,0,0,0,0.05,0
+"-progress hardening",transient_spike,9,0,0,0,0.05,0
+"-progress hardening",transient_spike,10,0,0,0,0.05,0
+"-progress hardening",transient_spike,11,0,0,0,0.05,0
+"-progress hardening",transient_spike,12,0,0,0,0.05,0
+"-progress hardening",transient_spike,13,0,0,0,0.05,0
+"-progress hardening",transient_spike,14,0,0,0,0.05,0
+"-progress hardening",transient_spike,15,0,0,0,0.05,0
+"-progress hardening",transient_spike,16,0,0,0,0.05,0
+"-progress hardening",transient_spike,17,0,0,0,0.05,0
+"-progress hardening",transient_spike,18,0,0,0,0.05,0
+"-progress hardening",transient_spike,19,0,0,0,0.05,0
+"-progress hardening",transient_spike,20,0,0,0,0.05,0
+"-progress hardening",transient_spike,21,0,0,0,0.05,0
+"-progress hardening",transient_spike,22,0,0,0,0.05,0
+"-progress hardening",transient_spike,23,0,0,0,0.05,0
+"-progress hardening",transient_spike,24,0,0,0,0.05,0
+"-progress hardening",transient_spike,25,0,0,0,0.05,0
+"-progress hardening",transient_spike,26,0,0,0,0.05,0
+"-progress hardening",transient_spike,27,0,0,0,0.05,0
+"-progress hardening",transient_spike,28,0,0,0,0.05,0
+"-progress hardening",transient_spike,29,0,0,0,0.05,0
+"-progress hardening",transient_spike,30,0,0,0,0.05,0
+"-progress hardening",transient_spike,31,0,0,0,0.05,0
+"-progress hardening",transient_spike,32,0,0,0,0.05,0
+"-progress hardening",transient_spike,33,0,0,0,0.05,0
+"-progress hardening",transient_spike,34,0,0,0,0.05,0
+"-progress hardening",transient_spike,35,0,0,0,0.05,0
+"-progress hardening",transient_spike,36,0,0,0,0.05,0
+"-progress hardening",transient_spike,37,0,0,0,0.05,0
+"-progress hardening",transient_spike,38,0,0,0,0.05,0
+"-progress hardening",transient_spike,39,0,0,0,0.05,0
+"-progress hardening",transient_spike,40,0,0,0,0.05,0
+"-progress hardening",transient_spike,41,0,0,0,0.05,0
+"-progress hardening",transient_spike,42,0,0,0,0.05,0
+"-progress hardening",transient_spike,43,0,0,0,0.05,0
+"-progress hardening",transient_spike,44,0,0,0,0.05,0
+"-progress hardening",transient_spike,45,0,0,0,0.05,0
+"-progress hardening",transient_spike,46,0,0,0,0.05,0
+"-progress hardening",transient_spike,47,0,0,0,0.05,0
+"-progress hardening",transient_spike,48,0,0,0,0.05,0
+"-progress hardening",transient_spike,49,0,0,0,0.05,0
+"-progress hardening",mid_reversal,0,0,0,0,0.05,0
+"-progress hardening",mid_reversal,1,0,0,0,0.05,0
+"-progress hardening",mid_reversal,2,0,0,0,0.05,0
+"-progress hardening",mid_reversal,3,0,0,0,0.05,0
+"-progress hardening",mid_reversal,4,0,0,0,0.05,0
+"-progress hardening",mid_reversal,5,0,0,0,0.05,0
+"-progress hardening",mid_reversal,6,0,0,0,0.05,0
+"-progress hardening",mid_reversal,7,0,0,0,0.05,0
+"-progress hardening",mid_reversal,8,0,0,0,0.05,0
+"-progress hardening",mid_reversal,9,0,0,0,0.05,0
+"-progress hardening",mid_reversal,10,0,0,0,0.05,0
+"-progress hardening",mid_reversal,11,0,0,0,0.05,0
+"-progress hardening",mid_reversal,12,0,0,0,0.05,0
+"-progress hardening",mid_reversal,13,0,0,0,0.05,0
+"-progress hardening",mid_reversal,14,0,0,0,0.05,0
+"-progress hardening",mid_reversal,15,0,0,0,0.05,0
+"-progress hardening",mid_reversal,16,0,0,0,0.05,0
+"-progress hardening",mid_reversal,17,0,0,0,0.05,0
+"-progress hardening",mid_reversal,18,0,0,0,0.05,0
+"-progress hardening",mid_reversal,19,0,0,0,0.05,0
+"-progress hardening",mid_reversal,20,0,0,0,0.05,0
+"-progress hardening",mid_reversal,21,0,0,0,0.05,0
+"-progress hardening",mid_reversal,22,0,0,0,0.05,0
+"-progress hardening",mid_reversal,23,0,0,0,0.05,0
+"-progress hardening",mid_reversal,24,0,0,0,0.05,0
+"-progress hardening",mid_reversal,25,0,0,0,0.05,0
+"-progress hardening",mid_reversal,26,0,0,0,0.05,0
+"-progress hardening",mid_reversal,27,0,0,0,0.05,0
+"-progress hardening",mid_reversal,28,0,0,0,0.05,0
+"-progress hardening",mid_reversal,29,0,0,0,0.05,0
+"-progress hardening",mid_reversal,30,0,0,0,0.05,0
+"-progress hardening",mid_reversal,31,0,0,0,0.05,0
+"-progress hardening",mid_reversal,32,0,0,0,0.05,0
+"-progress hardening",mid_reversal,33,0,0,0,0.05,0
+"-progress hardening",mid_reversal,34,0,0,0,0.05,0
+"-progress hardening",mid_reversal,35,0,0,0,0.05,0
+"-progress hardening",mid_reversal,36,0,0,0,0.05,0
+"-progress hardening",mid_reversal,37,0,0,0,0.05,0
+"-progress hardening",mid_reversal,38,0,0,0,0.05,0
+"-progress hardening",mid_reversal,39,0,0,0,0.05,0
+"-progress hardening",mid_reversal,40,0,0,0,0.05,0
+"-progress hardening",mid_reversal,41,0,0,0,0.05,0
+"-progress hardening",mid_reversal,42,0,0,0,0.05,0
+"-progress hardening",mid_reversal,43,0,0,0,0.05,0
+"-progress hardening",mid_reversal,44,0,0,0,0.05,0
+"-progress hardening",mid_reversal,45,0,0,0,0.05,0
+"-progress hardening",mid_reversal,46,0,0,0,0.05,0
+"-progress hardening",mid_reversal,47,0,0,0,0.05,0
+"-progress hardening",mid_reversal,48,0,0,0,0.05,0
+"-progress hardening",mid_reversal,49,0,0,0,0.05,0
+"-progress hardening",clean_commit,0,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,1,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,2,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,3,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,4,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,5,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,6,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,7,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,8,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,9,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,10,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,11,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,12,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,13,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,14,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,15,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,16,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,17,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,18,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,19,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,20,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,21,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,22,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,23,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,24,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,25,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,26,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,27,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,28,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,29,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,30,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,31,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,32,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,33,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,34,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,35,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,36,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,37,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,38,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,39,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,40,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,41,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,42,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,43,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,44,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,45,1,0.1,0.0456065,2.25,0
+"-progress hardening",clean_commit,46,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,47,1,0.1,0.0456065,2.45,0
+"-progress hardening",clean_commit,48,1,0.1,0.0456065,2.35,0
+"-progress hardening",clean_commit,49,1,0.1,0.0456065,2.35,0
+"-progress hardening",intermittent,0,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,1,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,2,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,3,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,4,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,5,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,6,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,7,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,8,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,9,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,10,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,11,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,12,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,13,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,14,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,15,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,16,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,17,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,18,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,19,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,20,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,21,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,22,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,23,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,24,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,25,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,26,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,27,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,28,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,29,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,30,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,31,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,32,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,33,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,34,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,35,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,36,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,37,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,38,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,39,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,40,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,41,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,42,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,43,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,44,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,45,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,46,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,47,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,48,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,49,1,0.1,0.0456065,10,1
+"-accumulator (즉시 argmin)",near_tie,0,100,10,0.999982,3.55,0
+"-accumulator (즉시 argmin)",near_tie,1,95,9.5,0.998524,10,1
+"-accumulator (즉시 argmin)",near_tie,2,88,8.8,0.990342,10,1
+"-accumulator (즉시 argmin)",near_tie,3,97,9.7,0.999545,10,1
+"-accumulator (즉시 argmin)",near_tie,4,111,11.1,0.990342,10,1
+"-accumulator (즉시 argmin)",near_tie,5,96,9.6,0.999107,1.85,0
+"-accumulator (즉시 argmin)",near_tie,6,110,11,0.991952,10,1
+"-accumulator (즉시 argmin)",near_tie,7,91,9.1,0.994729,9.55,0
+"-accumulator (즉시 argmin)",near_tie,8,92,9.2,0.995898,10,1
+"-accumulator (즉시 argmin)",near_tie,9,90,9,0.993414,9.95,0
+"-accumulator (즉시 argmin)",near_tie,10,91,9.1,0.994729,10,1
+"-accumulator (즉시 argmin)",near_tie,11,100,10,0.999982,4.65,0
+"-accumulator (즉시 argmin)",near_tie,12,105,10.5,0.997795,9.95,0
+"-accumulator (즉시 argmin)",near_tie,13,104,10.4,0.998524,7.35,0
+"-accumulator (즉시 argmin)",near_tie,14,96,9.6,0.999107,10,1
+"-accumulator (즉시 argmin)",near_tie,15,92,9.2,0.995898,1.95,0
+"-accumulator (즉시 argmin)",near_tie,16,100,10,0.999982,9.65,0
+"-accumulator (즉시 argmin)",near_tie,17,101,10.1,0.999836,10,1
+"-accumulator (즉시 argmin)",near_tie,18,97,9.7,0.999545,8.85,0
+"-accumulator (즉시 argmin)",near_tie,19,108,10.8,0.994729,8.45,0
+"-accumulator (즉시 argmin)",near_tie,20,103,10.3,0.999107,10,1
+"-accumulator (즉시 argmin)",near_tie,21,105,10.5,0.997795,2.15,0
+"-accumulator (즉시 argmin)",near_tie,22,99,9.9,0.999982,10,1
+"-accumulator (즉시 argmin)",near_tie,23,90,9,0.993414,10,1
+"-accumulator (즉시 argmin)",near_tie,24,97,9.7,0.999545,10,1
+"-accumulator (즉시 argmin)",near_tie,25,97,9.7,0.999545,10,1
+"-accumulator (즉시 argmin)",near_tie,26,84,8.4,0.982424,1.95,0
+"-accumulator (즉시 argmin)",near_tie,27,94,9.4,0.997795,0.15,0
+"-accumulator (즉시 argmin)",near_tie,28,95,9.5,0.998524,10,1
+"-accumulator (즉시 argmin)",near_tie,29,86,8.6,0.98668,10,1
+"-accumulator (즉시 argmin)",near_tie,30,108,10.8,0.994729,10,1
+"-accumulator (즉시 argmin)",near_tie,31,118,11.8,0.974917,1.75,0
+"-accumulator (즉시 argmin)",near_tie,32,98,9.8,0.999836,9.75,0
+"-accumulator (즉시 argmin)",near_tie,33,119,11.9,0.972114,10,1
+"-accumulator (즉시 argmin)",near_tie,34,101,10.1,0.999836,2.25,0
+"-accumulator (즉시 argmin)",near_tie,35,105,10.5,0.997795,10,1
+"-accumulator (즉시 argmin)",near_tie,36,93,9.3,0.996919,10,1
+"-accumulator (즉시 argmin)",near_tie,37,101,10.1,0.999836,9.95,0
+"-accumulator (즉시 argmin)",near_tie,38,106,10.6,0.996919,10,1
+"-accumulator (즉시 argmin)",near_tie,39,93,9.3,0.996919,1.45,0
+"-accumulator (즉시 argmin)",near_tie,40,105,10.5,0.997795,8.75,0
+"-accumulator (즉시 argmin)",near_tie,41,94,9.4,0.997795,7.55,0
+"-accumulator (즉시 argmin)",near_tie,42,96,9.6,0.999107,1.85,0
+"-accumulator (즉시 argmin)",near_tie,43,103,10.3,0.999107,7.75,0
+"-accumulator (즉시 argmin)",near_tie,44,89,8.9,0.991952,10,1
+"-accumulator (즉시 argmin)",near_tie,45,84,8.4,0.982424,9.65,0
+"-accumulator (즉시 argmin)",near_tie,46,100,10,0.999982,3.95,0
+"-accumulator (즉시 argmin)",near_tie,47,92,9.2,0.995898,10,1
+"-accumulator (즉시 argmin)",near_tie,48,101,10.1,0.999836,10,1
+"-accumulator (즉시 argmin)",near_tie,49,88,8.8,0.990342,9.85,0
+"-accumulator (즉시 argmin)",transient_spike,0,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,1,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,2,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,3,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,4,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,5,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,6,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,7,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,8,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,9,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,10,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,11,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,12,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,13,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,14,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,15,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,16,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,17,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,18,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,19,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,20,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,21,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,22,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,23,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,24,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,25,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,26,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,27,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,28,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,29,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,30,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,31,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,32,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,33,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,34,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,35,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,36,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,37,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,38,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,39,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,40,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,41,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,42,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,43,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,44,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,45,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,46,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,47,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,48,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",transient_spike,49,2,0.2,0.0811261,0.05,0
+"-accumulator (즉시 argmin)",mid_reversal,0,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,1,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,2,19,1.9,0.454493,10,1
+"-accumulator (즉시 argmin)",mid_reversal,3,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,4,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,5,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,6,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,7,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,8,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,9,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,10,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,11,19,1.9,0.454493,10,1
+"-accumulator (즉시 argmin)",mid_reversal,12,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,13,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,14,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,15,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,16,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,17,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,18,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,19,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,20,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,21,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,22,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,23,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,24,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,25,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,26,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,27,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,28,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,29,19,1.9,0.454493,10,1
+"-accumulator (즉시 argmin)",mid_reversal,30,21,2.1,0.486277,10,1
+"-accumulator (즉시 argmin)",mid_reversal,31,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,32,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,33,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,34,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,35,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,36,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,37,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,38,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,39,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,40,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,41,19,1.9,0.454493,10,1
+"-accumulator (즉시 argmin)",mid_reversal,42,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,43,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,44,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,45,15,1.5,0.385676,10,1
+"-accumulator (즉시 argmin)",mid_reversal,46,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,47,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,48,7,0.7,0.219719,10,1
+"-accumulator (즉시 argmin)",mid_reversal,49,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",clean_commit,0,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,1,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,2,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,3,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,4,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,5,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,6,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,7,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,8,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,9,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,10,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,11,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,12,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,13,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,14,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,15,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,16,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,17,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,18,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,19,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,20,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,21,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,22,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,23,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,24,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,25,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,26,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,27,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,28,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,29,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,30,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,31,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,32,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,33,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,34,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,35,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,36,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,37,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,38,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,39,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,40,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,41,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,42,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,43,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,44,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,45,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,46,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,47,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,48,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",clean_commit,49,0,0,0,0.05,0
+"-accumulator (즉시 argmin)",intermittent,0,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,1,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,2,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,3,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,4,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,5,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,6,42,4.2,0.743495,0.05,0
+"-accumulator (즉시 argmin)",intermittent,7,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,8,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,9,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,10,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,11,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,12,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,13,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,14,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,15,42,4.2,0.743495,0.05,0
+"-accumulator (즉시 argmin)",intermittent,16,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,17,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,18,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,19,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,20,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,21,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,22,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,23,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,24,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,25,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,26,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,27,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,28,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,29,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,30,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,31,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,32,40,4,0.723934,0.05,0
+"-accumulator (즉시 argmin)",intermittent,33,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,34,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,35,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,36,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,37,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,38,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,39,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,40,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,41,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,42,38,3.8,0.703465,0.05,0
+"-accumulator (즉시 argmin)",intermittent,43,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,44,32,3.2,0.63623,0.05,0
+"-accumulator (즉시 argmin)",intermittent,45,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,46,36,3.6,0.682052,0.05,0
+"-accumulator (즉시 argmin)",intermittent,47,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,48,34,3.4,0.659655,0.05,0
+"-accumulator (즉시 argmin)",intermittent,49,34,3.4,0.659655,0.05,0
+"simple-dwell (O4)",near_tie,0,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,1,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,2,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,3,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,4,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,5,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,6,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,7,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,8,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,9,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,10,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,11,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,12,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,13,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,14,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,15,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,16,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,17,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,18,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,19,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,20,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,21,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,22,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,23,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,24,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,25,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,26,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,27,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,28,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,29,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,30,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,31,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,32,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,33,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,34,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,35,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,36,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,37,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,38,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,39,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,40,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,41,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,42,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,43,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,44,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,45,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,46,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,47,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,48,0,0,0,0.05,0
+"simple-dwell (O4)",near_tie,49,0,0,0,0.05,0
+"simple-dwell (O4)",transient_spike,0,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,1,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,2,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,3,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,4,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,5,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,6,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,7,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,8,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,9,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,10,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,11,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,12,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,13,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,14,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,15,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,16,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,17,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,18,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,19,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,20,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,21,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,22,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,23,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,24,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,25,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,26,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,27,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,28,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,29,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,30,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,31,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,32,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,33,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,34,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,35,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,36,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,37,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,38,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,39,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,40,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,41,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,42,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,43,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,44,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,45,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,46,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,47,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,48,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",transient_spike,49,2,0.2,0.0811261,0.05,0
+"simple-dwell (O4)",mid_reversal,0,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,1,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,2,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,3,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,4,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,5,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,6,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,7,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,8,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,9,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,10,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,11,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,12,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,13,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,14,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,15,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,16,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,17,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,18,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,19,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,20,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,21,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,22,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,23,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,24,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,25,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,26,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,27,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,28,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,29,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,30,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,31,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,32,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,33,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,34,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,35,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,36,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,37,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,38,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,39,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,40,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,41,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,42,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,43,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,44,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,45,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,46,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,47,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,48,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",mid_reversal,49,1,0.1,0.0456065,10,1
+"simple-dwell (O4)",clean_commit,0,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,1,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,2,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,3,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,4,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,5,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,6,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,7,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,8,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,9,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,10,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,11,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,12,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,13,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,14,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,15,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,16,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,17,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,18,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,19,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,20,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,21,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,22,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,23,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,24,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,25,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,26,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,27,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,28,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,29,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,30,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,31,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,32,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,33,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,34,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,35,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,36,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,37,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,38,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,39,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,40,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,41,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,42,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,43,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,44,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,45,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,46,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,47,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,48,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",clean_commit,49,1,0.1,0.0456065,1.15,0
+"simple-dwell (O4)",intermittent,0,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,1,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,2,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,3,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,4,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,5,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,6,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,7,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,8,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,9,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,10,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,11,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,12,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,13,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,14,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,15,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,16,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,17,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,18,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,19,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,20,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,21,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,22,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,23,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,24,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,25,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,26,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,27,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,28,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,29,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,30,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,31,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,32,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,33,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,34,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,35,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,36,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,37,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,38,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,39,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,40,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,41,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,42,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,43,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,44,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,45,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,46,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,47,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,48,0,0,0,0.05,0
+"simple-dwell (O4)",intermittent,49,0,0,0,0.05,0
+"-class correspondence",near_tie,0,102,10.2,0.999545,9.85,0
+"-class correspondence",near_tie,1,100,10,0.999982,10,1
+"-class correspondence",near_tie,2,81,8.1,0.974917,10,1
+"-class correspondence",near_tie,3,93,9.3,0.996919,1.15,0
+"-class correspondence",near_tie,4,94,9.4,0.997795,10,1
+"-class correspondence",near_tie,5,106,10.6,0.996919,7.55,0
+"-class correspondence",near_tie,6,96,9.6,0.999107,9.95,0
+"-class correspondence",near_tie,7,102,10.2,0.999545,1.15,0
+"-class correspondence",near_tie,8,91,9.1,0.994729,10,1
+"-class correspondence",near_tie,9,103,10.3,0.999107,10,1
+"-class correspondence",near_tie,10,93,9.3,0.996919,10,1
+"-class correspondence",near_tie,11,88,8.8,0.990342,9.35,0
+"-class correspondence",near_tie,12,107,10.7,0.995898,10,1
+"-class correspondence",near_tie,13,107,10.7,0.995898,9.95,0
+"-class correspondence",near_tie,14,98,9.8,0.999836,10,1
+"-class correspondence",near_tie,15,99,9.9,0.999982,3.05,0
+"-class correspondence",near_tie,16,103,10.3,0.999107,10,1
+"-class correspondence",near_tie,17,102,10.2,0.999545,2.25,0
+"-class correspondence",near_tie,18,97,9.7,0.999545,10,1
+"-class correspondence",near_tie,19,103,10.3,0.999107,10,1
+"-class correspondence",near_tie,20,90,9,0.993414,10,1
+"-class correspondence",near_tie,21,98,9.8,0.999836,10,1
+"-class correspondence",near_tie,22,106,10.6,0.996919,9.75,0
+"-class correspondence",near_tie,23,96,9.6,0.999107,10,1
+"-class correspondence",near_tie,24,87,8.7,0.988585,10,1
+"-class correspondence",near_tie,25,99,9.9,0.999982,9.95,0
+"-class correspondence",near_tie,26,101,10.1,0.999836,10,1
+"-class correspondence",near_tie,27,88,8.8,0.990342,0.65,0
+"-class correspondence",near_tie,28,108,10.8,0.994729,6.55,0
+"-class correspondence",near_tie,29,96,9.6,0.999107,8.95,0
+"-class correspondence",near_tie,30,94,9.4,0.997795,5.95,0
+"-class correspondence",near_tie,31,100,10,0.999982,2.55,0
+"-class correspondence",near_tie,32,94,9.4,0.997795,9.95,0
+"-class correspondence",near_tie,33,100,10,0.999982,1.85,0
+"-class correspondence",near_tie,34,92,9.2,0.995898,9.95,0
+"-class correspondence",near_tie,35,97,9.7,0.999545,10,1
+"-class correspondence",near_tie,36,102,10.2,0.999545,10,1
+"-class correspondence",near_tie,37,107,10.7,0.995898,10,1
+"-class correspondence",near_tie,38,97,9.7,0.999545,10,1
+"-class correspondence",near_tie,39,96,9.6,0.999107,10,1
+"-class correspondence",near_tie,40,104,10.4,0.998524,10,1
+"-class correspondence",near_tie,41,106,10.6,0.996919,7.05,0
+"-class correspondence",near_tie,42,91,9.1,0.994729,9.75,0
+"-class correspondence",near_tie,43,109,10.9,0.993414,0.75,0
+"-class correspondence",near_tie,44,109,10.9,0.993414,3.35,0
+"-class correspondence",near_tie,45,95,9.5,0.998524,10,1
+"-class correspondence",near_tie,46,96,9.6,0.999107,4.85,0
+"-class correspondence",near_tie,47,90,9,0.993414,9.95,0
+"-class correspondence",near_tie,48,98,9.8,0.999836,8.95,0
+"-class correspondence",near_tie,49,95,9.5,0.998524,3.05,0
+"-class correspondence",transient_spike,0,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,1,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,2,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,3,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,4,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,5,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,6,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,7,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,8,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,9,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,10,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,11,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,12,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,13,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,14,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,15,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,16,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,17,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,18,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,19,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,20,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,21,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,22,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,23,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,24,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,25,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,26,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,27,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,28,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,29,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,30,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,31,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,32,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,33,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,34,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,35,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,36,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,37,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,38,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,39,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,40,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,41,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,42,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,43,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,44,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,45,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,46,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,47,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,48,2,0.2,0.0811261,0.05,0
+"-class correspondence",transient_spike,49,2,0.2,0.0811261,0.05,0
+"-class correspondence",mid_reversal,0,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,1,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,2,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,3,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,4,47,4.7,0.788631,10,1
+"-class correspondence",mid_reversal,5,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,6,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,7,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,8,39,3.9,0.713815,10,1
+"-class correspondence",mid_reversal,9,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,10,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,11,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,12,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,13,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,14,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,15,37,3.7,0.692879,10,1
+"-class correspondence",mid_reversal,16,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,17,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,18,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,19,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,20,35,3.5,0.670979,10,1
+"-class correspondence",mid_reversal,21,53,5.3,0.836151,10,1
+"-class correspondence",mid_reversal,22,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,23,53,5.3,0.836151,10,1
+"-class correspondence",mid_reversal,24,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,25,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,26,47,4.7,0.788631,10,1
+"-class correspondence",mid_reversal,27,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,28,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,29,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,30,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,31,47,4.7,0.788631,10,1
+"-class correspondence",mid_reversal,32,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,33,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,34,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,35,53,5.3,0.836151,10,1
+"-class correspondence",mid_reversal,36,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,37,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,38,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,39,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,40,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,41,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,42,41,4.1,0.733826,10,1
+"-class correspondence",mid_reversal,43,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,44,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,45,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,46,39,3.9,0.713815,10,1
+"-class correspondence",mid_reversal,47,43,4.3,0.752946,10,1
+"-class correspondence",mid_reversal,48,59,5.9,0.876948,10,1
+"-class correspondence",mid_reversal,49,47,4.7,0.788631,10,1
+"-class correspondence",clean_commit,0,0,0,0,0.05,0
+"-class correspondence",clean_commit,1,0,0,0,0.05,0
+"-class correspondence",clean_commit,2,0,0,0,0.05,0
+"-class correspondence",clean_commit,3,0,0,0,0.05,0
+"-class correspondence",clean_commit,4,0,0,0,0.05,0
+"-class correspondence",clean_commit,5,0,0,0,0.05,0
+"-class correspondence",clean_commit,6,0,0,0,0.05,0
+"-class correspondence",clean_commit,7,0,0,0,0.05,0
+"-class correspondence",clean_commit,8,0,0,0,0.05,0
+"-class correspondence",clean_commit,9,0,0,0,0.05,0
+"-class correspondence",clean_commit,10,0,0,0,0.05,0
+"-class correspondence",clean_commit,11,0,0,0,0.05,0
+"-class correspondence",clean_commit,12,0,0,0,0.05,0
+"-class correspondence",clean_commit,13,0,0,0,0.05,0
+"-class correspondence",clean_commit,14,0,0,0,0.05,0
+"-class correspondence",clean_commit,15,0,0,0,0.05,0
+"-class correspondence",clean_commit,16,0,0,0,0.05,0
+"-class correspondence",clean_commit,17,0,0,0,0.05,0
+"-class correspondence",clean_commit,18,0,0,0,0.05,0
+"-class correspondence",clean_commit,19,0,0,0,0.05,0
+"-class correspondence",clean_commit,20,0,0,0,0.05,0
+"-class correspondence",clean_commit,21,0,0,0,0.05,0
+"-class correspondence",clean_commit,22,0,0,0,0.05,0
+"-class correspondence",clean_commit,23,0,0,0,0.05,0
+"-class correspondence",clean_commit,24,0,0,0,0.05,0
+"-class correspondence",clean_commit,25,0,0,0,0.05,0
+"-class correspondence",clean_commit,26,0,0,0,0.05,0
+"-class correspondence",clean_commit,27,0,0,0,0.05,0
+"-class correspondence",clean_commit,28,0,0,0,0.05,0
+"-class correspondence",clean_commit,29,0,0,0,0.05,0
+"-class correspondence",clean_commit,30,0,0,0,0.05,0
+"-class correspondence",clean_commit,31,0,0,0,0.05,0
+"-class correspondence",clean_commit,32,0,0,0,0.05,0
+"-class correspondence",clean_commit,33,0,0,0,0.05,0
+"-class correspondence",clean_commit,34,0,0,0,0.05,0
+"-class correspondence",clean_commit,35,0,0,0,0.05,0
+"-class correspondence",clean_commit,36,0,0,0,0.05,0
+"-class correspondence",clean_commit,37,0,0,0,0.05,0
+"-class correspondence",clean_commit,38,0,0,0,0.05,0
+"-class correspondence",clean_commit,39,0,0,0,0.05,0
+"-class correspondence",clean_commit,40,0,0,0,0.05,0
+"-class correspondence",clean_commit,41,0,0,0,0.05,0
+"-class correspondence",clean_commit,42,0,0,0,0.05,0
+"-class correspondence",clean_commit,43,0,0,0,0.05,0
+"-class correspondence",clean_commit,44,0,0,0,0.05,0
+"-class correspondence",clean_commit,45,0,0,0,0.05,0
+"-class correspondence",clean_commit,46,0,0,0,0.05,0
+"-class correspondence",clean_commit,47,0,0,0,0.05,0
+"-class correspondence",clean_commit,48,0,0,0,0.05,0
+"-class correspondence",clean_commit,49,0,0,0,0.05,0
+"-class correspondence",intermittent,0,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,1,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,2,32,3.2,0.63623,0.05,0
+"-class correspondence",intermittent,3,36,3.6,0.682052,0.05,0
+"-class correspondence",intermittent,4,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,5,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,6,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,7,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,8,36,3.6,0.682052,0.05,0
+"-class correspondence",intermittent,9,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,10,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,11,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,12,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,13,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,14,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,15,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,16,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,17,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,18,50,5,0.813263,0.05,0
+"-class correspondence",intermittent,19,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,20,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,21,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,22,50,5,0.813263,0.05,0
+"-class correspondence",intermittent,23,36,3.6,0.682052,0.05,0
+"-class correspondence",intermittent,24,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,25,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,26,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,27,36,3.6,0.682052,0.05,0
+"-class correspondence",intermittent,28,48,4.8,0.79704,0.05,0
+"-class correspondence",intermittent,29,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,30,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,31,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,32,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,33,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,34,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,35,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,36,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,37,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,38,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,39,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,40,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,41,42,4.2,0.743495,0.05,0
+"-class correspondence",intermittent,42,34,3.4,0.659655,0.05,0
+"-class correspondence",intermittent,43,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,44,40,4,0.723934,0.05,0
+"-class correspondence",intermittent,45,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,46,44,4.4,0.762181,0.05,0
+"-class correspondence",intermittent,47,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,48,38,3.8,0.703465,0.05,0
+"-class correspondence",intermittent,49,38,3.8,0.703465,0.05,0
