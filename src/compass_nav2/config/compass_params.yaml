@@ -1,0 +1,56 @@
+# Nav2 controller_server 설정 — CompassController (Commit-and-Cross 결정 컨트롤러).
+#
+# 사용법: controller_server 의 FollowPath 플러그인을
+#   compass_nav2::CompassController
+# 로 지정하고 아래 노브를 병합한다. 모든 노브는 compass::Knobs 기본값과 1:1이며
+# (research_spec §1.4), 런타임 튜닝은 플랫폼별로 기대된다.
+#
+# ROS2 Jazzy + Nav2 (micromamba `ros2` env) 빌드 검증됨.
+
+controller_server:
+  ros__parameters:
+    controller_frequency: 20.0
+    FollowPath:
+      plugin: "compass_nav2::CompassController"
+
+      # ---- 출력 제한 ----
+      max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
+
+      # ---- 궤적 계층 ② (경로 추종 cruise) ----
+      cruise_speed: 0.45         # m/s; NORMAL 기본 순항 속도
+      max_angular_speed: 1.0     # rad/s; yaw rate 상한
+      goal_decel_dist: 0.6       # m; 목표 근처 감속 시작 거리
+
+      # ---- 조향: 경로 추종 cross-track + heading PD ----
+      # ωn=√(cruise·k_e), ζ=k_theta/(2√(cruise·k_e)). 기본값은 ζ≈1.3 과감쇠로
+      # 직선 복도에서 위빙 없이 수렴한다 (예전 베어링 비례 조향은 ±0.8 m 위빙).
+      lookahead_dist: 1.0        # m; 로컬 목표(코어 입력) lookahead 거리
+      k_e: 3.0                   # cross-track(횡오차) 이득
+      k_theta: 3.0               # heading(헤딩오차) 이득
+      k_side: 0.4                # 사회적 측면 편향 이득
+
+      # ---- Commit-and-Cross 노브 (compass::Knobs) ----
+      delta_floor: 0.05          # 순간 전환 마진 (무차원)
+      E0: 0.30                   # 누적기 기준 임계 E_th(0)
+      k_rho: 1.0                 # 진행 경화 계수
+      p: 2                       # 진행 경화 지수
+      lambda: 0.97               # 누수 계수 (τ_leak≈1.64s)
+      e_max_fwd: 1.0             # 정방향 누적기 상한
+      e_max_rev: 0.50            # 역방향 누적기 상한
+      d_safe: 0.5                # 하드 안전 거리 (m)
+      ttc_min: 2.0               # 최소 TTC (s)
+      W: 3.0                     # 스래시 창 길이 (s)
+      n_thrash: 4                # 스래시 임계 (회)
+      w_g: 1.0                   # J_goal 가중
+      w_s: 1.0                   # J_social 가중
+      w_e: 0.3                   # J_effort 가중
+      w_r: 0.5                   # J_rule 가중
+      sigma_front: 1.2           # 전방 proxemics 폭 (m)
+      sigma_rear: 0.6            # 후방 proxemics 폭 (m)
+      sigma_s: 0.5               # 측면 proxemics 폭 (m)
+      K_cap: 3                   # 명시 차원 상한
+      a_brake: 0.5               # 감속률
+      ttc_stop: 0.8              # 정지 임계 TTC (s)
+      T_safe_dwell: 0.6          # 안전 드웰 보호 시간 (s)
+      eps_in: 0.02               # 동률 진입 히스테리시스
+      eps_out: 0.06              # 동률 이탈 히스테리시스

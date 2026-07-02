@@ -1,0 +1,13 @@
+# OS / editor
+.DS_Store
+*.swp
+*~
+# build artifacts (future ROS2 / colcon)
+build/
+install/
+log/
+__pycache__/
+*.pyc
+# scratch
+*.tmp
+.gstack/

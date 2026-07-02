@@ -1,0 +1,114 @@
+# Nav2 controller_server 설정 — COMPASS (Commit-and-Cross) 컨트롤러 스모크 브링업.
+#
+# FollowPath 플러그인을 compass_nav2::CompassController 로 지정한다. 모든 노브는
+# compass::Knobs 기본값과 1:1 이며 (src/compass_nav2/config/compass_params.yaml 과 동일),
+# 시뮬레이터 스모크에 필요한 표준 Nav2 controller_server 배관(local costmap·goal/progress
+# checker)을 함께 둔다.
+#
+# 주의: local_costmap 은 controller_server 와 같은 최상위 노드여야 한다(중첩 금지).
+# 지도(map)/AMCL 이 없는 스모크 구성이므로 costmap 의 global_frame 은 odom 이며
+# static_layer 는 두지 않는다(전역 프레임 map TF 가 없어 활성화가 막히는 것을 피함).
+#
+# 대상: ROS 2 Jazzy + Nav2 (micromamba `ros2` env) + Gazebo Harmonic.
+
+controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: true
+
+    FollowPath:
+      plugin: "compass_nav2::CompassController"
+
+      # ---- 출력 제한 ----
+      max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
+
+      # ---- 궤적 계층 ② (경로 추종 cruise) ----
+      cruise_speed: 0.45         # m/s; NORMAL 기본 순항 속도
+      max_angular_speed: 1.0     # rad/s; yaw rate 상한
+      goal_decel_dist: 0.6       # m; 목표 근처 감속 시작 거리
+
+      # ---- 조향: 경로 추종 cross-track + heading PD ----
+      # 과감쇠(ζ≈1.3) 기본값 — 빈 복도에서 위빙 없이 직진 수렴.
+      lookahead_dist: 1.0        # m; 로컬 목표(코어 입력) lookahead 거리
+      k_e: 3.0                   # cross-track(횡오차) 이득
+      k_theta: 3.0               # heading(헤딩오차) 이득
+      k_side: 0.4                # 사회적 측면 편향 이득
+
+      # ---- Commit-and-Cross 노브 (compass::Knobs) ----
+      delta_floor: 0.05          # 순간 전환 마진 (무차원)
+      E0: 0.30                   # 누적기 기준 임계 E_th(0)
+      k_rho: 1.0                 # 진행 경화 계수
+      p: 2                       # 진행 경화 지수
+      lambda: 0.97                # 누수 계수 (플러그인·논문 기본값 정합)
+      e_max_fwd: 1.0             # 정방향 누적기 상한
+      e_max_rev: 0.50            # 역방향 누적기 상한
+      d_safe: 0.5                # 하드 안전 거리 (m)
+      ttc_min: 2.0               # 최소 TTC (s)
+      W: 3.0                     # 스래시 창 길이 (s)
+      n_thrash: 4                # 스래시 임계 (회)
+      w_g: 1.0                   # J_goal 가중
+      w_s: 1.0                   # J_social 가중
+      w_e: 0.3                   # J_effort 가중
+      w_r: 0.5                   # J_rule 가중
+      sigma_front: 1.2           # 전방 proxemics 폭 (m)
+      sigma_rear: 0.6            # 후방 proxemics 폭 (m)
+      sigma_s: 0.5               # 측면 proxemics 폭 (m)
+      K_cap: 3                   # 명시 차원 상한
+      a_brake: 0.5               # 감속률
+      ttc_stop: 0.8              # 정지 임계 TTC (s)
+      T_safe_dwell: 0.6          # 안전 드웰 보호 시간 (s)
+      eps_in: 0.02               # 동률 진입 히스테리시스
+      eps_out: 0.06              # 동률 이탈 히스테리시스
+
+# controller_server 가 참조하는 로컬 costmap (최상위 노드, 스모크용 최소 설정).
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: true
+      global_frame: odom
+      robot_base_frame: base_link
+      rolling_window: true
+      width: 6
+      height: 6
+      resolution: 0.05
+      robot_radius: 0.25
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
+
+lifecycle_manager_control:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    node_names: ["controller_server"]
+    bond_timeout: 0.0

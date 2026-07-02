@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use COMPASS in your research, please cite it as below."
+title: "COMPASS: commitment-based passing for social robot navigation"
+authors:
+  - family-names: Kang
+    given-names: Jungmo
+    email: kangjmo91@gmail.com
+license: Apache-2.0
+repository-code: "https://github.com/kjungmo/compass"
+preferred-citation:
+  type: unpublished
+  title: "COMPASS: Temporally Consistent Topological Passing Decisions for Socially Aware Robot Navigation"
+  authors:
+    - family-names: Kang
+      given-names: Jungmo
+      email: kangjmo91@gmail.com
+  year: 2026
+  notes: "Draft manuscript; LaTeX sources and PDF under paper/arxiv/ in the repository"

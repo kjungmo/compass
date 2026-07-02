@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>compass_eval</name>
+  <version>0.1.0</version>
+  <description>COMPASS 결정 계층 오프라인 실험 하니스 (R1 ablation · R3 실시간성 · R4 가독성 프록시). 결정 코어를 재현 가능한 조우 시나리오로 구동해 행동 일관성 지표를 실측한다.</description>
+  <maintainer email="kangjmo91@gmail.com">Kang Jung Mo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>compass_core</depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

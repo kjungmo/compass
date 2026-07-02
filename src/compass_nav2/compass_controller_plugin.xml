@@ -1,0 +1,8 @@
+<library path="compass_controller">
+  <class type="compass_nav2::CompassController" base_class_type="nav2_core::Controller">
+    <description>
+      Commit-and-Cross 통과 결정 시간 일관성 컨트롤러. compass_core 의 DecisionCore
+      를 costmap 기반 IEnvQuery 위에서 구동하여 주기 간 DecisionState 를 보존한다.
+    </description>
+  </class>
+</library>
