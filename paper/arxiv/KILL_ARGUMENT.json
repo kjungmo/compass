@@ -1,0 +1,60 @@
+{
+ "audit_skill": "kill-argument",
+ "verdict": "FAIL",
+ "reason_code": "headline_claim_unproved",
+ "summary": "7 rejection points: 2 answered by current text, 4 partially answered, 1 still unresolved. Net: does_not_survive. P1 remains unproved under arbitrary stationarity.",
+ "attack_memo_path": ".aris/traces/kill-argument/2026-08-10_run01/thread1_attack.md",
+ "trace_path": ".aris/traces/kill-argument/2026-08-10_run01/",
+ "reviewer_model": "gpt-5.6-sol",
+ "reviewer_reasoning": "ultra",
+ "context_policy": "fresh (two independent threads, no codex-reply)",
+ "protocol_deviation": "main.tex was amended between the attack thread and the adjudication thread; the adjudicator therefore ruled on the post-fix source, converting the adjudication into a verification of the fix.",
+ "generated_at": "2026-08-10T02:08:30.024472+00:00",
+ "details": {
+  "points": [
+   {
+    "id": "P1",
+    "label": "Student-t3 counterexample",
+    "verdict": "answered_by_current_text",
+    "severity": "critical"
+   },
+   {
+    "id": "P2",
+    "label": "Stationarity still cannot prove P1",
+    "verdict": "still_unresolved",
+    "severity": "critical"
+   },
+   {
+    "id": "P3",
+    "label": "Reflecting boundary and eventual hitting",
+    "verdict": "answered_by_current_text",
+    "severity": "major"
+   },
+   {
+    "id": "P4",
+    "label": "Remark 2 remains incomplete",
+    "verdict": "partially_answered",
+    "severity": "critical"
+   },
+   {
+    "id": "P5",
+    "label": "Headline provable novelty",
+    "verdict": "partially_answered",
+    "severity": "critical"
+   },
+   {
+    "id": "P6",
+    "label": "Internal ablations cannot replace P1",
+    "verdict": "partially_answered",
+    "severity": "major"
+   },
+   {
+    "id": "P7",
+    "label": "External and physical validation absent",
+    "verdict": "partially_answered",
+    "severity": "major"
+   }
+  ],
+  "net": "does_not_survive"
+ }
+}

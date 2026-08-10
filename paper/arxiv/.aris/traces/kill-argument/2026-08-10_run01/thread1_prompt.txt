@@ -1,0 +1,28 @@
+You are simulating a hostile top-venue robotics reviewer (RA-L / ICRA / IROS / T-RO) for a paper. This is a kill-argument adversarial check — your task is NOT to give a balanced review but to construct the **single strongest argument for rejecting this paper**.
+
+## Files to read (read them yourself from the working directory)
+- LaTeX entry: `main.tex` (single-file source, ~650 lines, long lines)
+- Compiled PDF: `main.pdf`
+- Figures: `figures/*.pdf`
+
+Read the source carefully. Do not consult any prior reviews, fix lists, response letters, or summaries; this must be a fresh, zero-context adversarial pass. Ignore any file other than the ones listed above.
+
+## Your task
+Construct the single best argument to reject this paper in approximately 200 words. Write the worst-case rejection paragraph a senior area chair would produce after reading it.
+
+Focus on these axes — pick the most damaging combination, do not list all:
+1. Theorem validity: are the stated properties (P1–P5) actually proved as stated?
+2. Assumption-vs-claim mismatch: does the body silently retreat to a narrower object than the title/abstract advertise?
+3. Missing proof obligations: is a lemma the headline depends on invoked but never proved (e.g. the zero-mean / bounded-variance condition on the challenger advantage, the switching-rate bound, the reachability bound on the accumulator)?
+4. Claim-vs-evidence gap: is the evidence too narrow to support the breadth of the take-away? Note what is actually measured versus what is deferred.
+5. Scope overclaim: does the title, the abstract, or the framing sell a planner/navigation result substantially broader than what the body establishes?
+6. Baseline and comparison adequacy: is the paper positioned against the right prior art, and does the absence of external baselines undercut the contribution claim?
+
+## Constraints
+- Approximately 200 words total (do NOT exceed 250).
+- A single developed argument, not a list — pick the most damaging line of attack and develop it.
+- Cite specific locations (section numbers, equation numbers, or line numbers in `main.tex`) when accusing.
+- Tone: dispassionate but uncompromising. Do NOT hedge. Do NOT acknowledge mitigations the paper might have made elsewhere. This is the rejection paragraph; the defense gets the next pass.
+- Do NOT reference prior review rounds, fix lists, or any context outside the current paper files.
+
+Output: just the rejection memo, nothing else.

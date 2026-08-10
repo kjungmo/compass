@@ -1,0 +1,50 @@
+You are an independent area-chair adjudicator examining whether the current paper text answers a hostile reviewer's rejection memo. You are NOT the paper's defender — your job is to read the attack point-by-point and rule, from the current source files alone, whether each point stands or falls. Fresh, zero-context adjudication; do not reference any prior reviews or fix lists.
+
+## Paper files (read them yourself from the working directory)
+- LaTeX entry: `main.tex`
+- Compiled PDF: `main.pdf`
+- Figures: `figures/*.pdf`
+
+## The hostile reviewer's rejection memo (the "attack")
+> The paper should be rejected because its central formal contribution, P1, is false under its stated assumptions. In §4.6 (Proposition 1, Eqs. (11)–(13); `main.tex` lines 280–306), Eq. (11) establishes only negative mean drift; stationarity, zero mean, and finite variance do not imply an exponential first-passage bound. Consider i.i.d. centered Student-\(t_3\) advantages: they satisfy every stated assumption, yet from \(e_0=0\) the one-cycle switching probability is \(P[D_1\ge \Delta_{\mathrm{floor}}+E_0/dt]\), which decays polynomially, directly contradicting Eqs. (12)–(13). The proof also misidentifies clipping at zero as an “absorbing barrier” (lines 288–291); it is reflecting, since a positive increment immediately leaves zero. With i.i.d. unbounded innovations, threshold crossing occurs eventually with probability one and can have finite expected time, invalidating the paper’s never-hit argument. Remark 2 (lines 312–314) cannot repair this: mixing still does not provide exponential tails without an exponential-moment condition, and the unspecified “effective” coefficient is not a theorem. This failure destroys the paper’s advertised provable anti-oscillation novelty (abstract and lines 52–78). The offline internal ablations in §5.1–§5.3 cannot substitute for that guarantee, especially when all external planner comparisons and physical safety/navigation outcomes remain unmeasured in §5.6 (lines 543–570).
+
+## Your task
+The attack is one continuous argument, but it makes multiple distinct rejection points that you must adjudicate separately. Decompose the attack into its atomic rejection points (3-7 of them), then for each point classify it:
+
+- answered_by_current_text: the current paper source already mitigates this point (cite specific file:line evidence)
+- partially_answered: paper has some response but not enough to refute the attack as written
+- still_unresolved: paper has no effective response
+
+For each rejection point, output:
+### Point P_n: <short label>
+**Attack claim**: <the specific accusation, ~30 words>
+**Verdict**: answered_by_current_text | partially_answered | still_unresolved
+**Evidence (or lack of)**: <cite file:line, ~50 words>
+**Severity if unresolved**: critical | major | minor
+**If unresolved, recommended fix**: <one specific actionable sentence>
+
+After per-point analysis, output:
+
+## Summary
+Total rejection points: N
+- answered_by_current_text: X
+- partially_answered: Y
+- still_unresolved: Z
+
+## Net assessment
+<one short paragraph: would this paper survive a senior area-chair read of the attack memo, given only what is in the current source? Be honest — if Y or Z > 0 and they hit the headline, say so.>
+
+## Top action items (in priority order, max 3)
+1. ...
+2. ...
+3. ...
+
+## Constraints
+- Do NOT consult any prior round reviews or fix lists. Adjudicate strictly from current paper files.
+- If the paper cannot refute a point, do NOT minimize — keep severity honest.
+- If a point reflects an author-chosen position (e.g. a conscious scope decision stated in the paper), classify as `partially_answered` with a note that the position is intentional, AND say whether the position is sustainable under the attack — do NOT auto-grade as `answered_by_current_text` just because it is intentional.
+- Verify the attack's mathematical claims against the actual text. If the attack itself is wrong about what the paper assumes or proves, say so explicitly and rule the point answered.
+- Be specific. No flattery, no hedging, no rationalizing on the paper's behalf.
+
+At the very END output a fenced ```json block:
+{"points":[{"id":"P1","label":"...","verdict":"answered_by_current_text|partially_answered|still_unresolved","severity":"critical|major|minor"}],"net":"survives|survives_with_revision|does_not_survive"}
