@@ -1,0 +1,270 @@
+{
+ "audit_skill": "citation-audit",
+ "verdict": "FAIL",
+ "reason_code": "wrong_context",
+ "summary": "27 cited entries audited: KEEP 7, FIX 12, REPLACE 8. Wrong-context uses present; bibliography requires correction before submission.",
+ "audited_input_hashes": {
+  "main.tex": "sha256:530fa7715d1fd4f9b0fa8fb79ad65d61f129c0df81e5a265feac4f12db3c15e6",
+  ".aris/citation-audit/contexts.txt": "sha256:af884ae3587d11457cbd6049f6f4670e15d75c41bca3728fe02b1acfc1fda68e"
+ },
+ "trace_path": ".aris/traces/citation-audit/2026-08-10_run01/",
+ "thread_id": "codex-exec-5-batch-fresh-threads",
+ "reviewer_model": "gpt-5.6-sol",
+ "reviewer_reasoning": "xhigh",
+ "generated_at": "2026-08-10T01:41:28.187744+00:00",
+ "details": {
+  "total_entries": 27,
+  "counts": {
+   "REPLACE": 8,
+   "FIX": 12,
+   "KEEP": 7
+  },
+  "per_entry": [
+   {
+    "key": "fox1997dwa",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "CONTEXT"
+    ],
+    "note": "Canonical for DWA command selection, but not direct support for the asserted memorylessness-to-oscillation claim.",
+    "fixed_entry": null
+   },
+   {
+    "key": "rosmann2017teb",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Drop the non-title '(TEB)'; the paper supports parallel topology optimization but not the stronger switching-cost and formal commitment wording.",
+    "fixed_entry": null
+   },
+   {
+    "key": "williams2017mppi",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "CONTEXT"
+    ],
+    "note": "Correct MPPI record and sampling citation, but the cited paper does not establish inherent solution smoothness.",
+    "fixed_entry": null
+   },
+   {
+    "key": "helbing1995social",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "CONTEXT"
+    ],
+    "note": "Foundational pedestrian Social Force Model, but it does not establish mitigation of robot freezing.",
+    "fixed_entry": null
+   },
+   {
+    "key": "vandenberg2011rvo",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "The reciprocal-congestion context is supported, but '(RVO/ORCA)' is not in the title and series volume 70 is missing.",
+    "fixed_entry": "\\bibitem{vandenberg2011rvo} J. van den Berg, S. J. Guy, M. Lin, D. Manocha. Reciprocal n-Body Collision Avoidance. In C. Pradalier, R. Siegwart, G. Hirzinger (eds.), \\emph{Robotics Research: The 14th International Symposium ISRR}, Springer Tracts in Advanced Robotics, vol. 70, pp. 3--19, Springer, 2011."
+   },
+   {
+    "key": "hall1966hidden",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Hall supports qualitative, culture-dependent proxemic zones, not robotic cost fields or a forward-extended Gaussian; '(proxemics)' is not part of the title.",
+    "fixed_entry": null
+   },
+   {
+    "key": "kirby2010thesis",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "The work is real and supports both uses, but the parenthetical descriptor is not part of the title.",
+    "fixed_entry": "\\bibitem{kirby2010thesis} R. Kirby. \\emph{Social Robot Navigation}. PhD thesis, Carnegie Mellon University, Technical Report CMU-RI-TR-10-13, 2010."
+   },
+   {
+    "key": "bhattacharya2012topological",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "Remove the non-title parenthetical; the paper supports the topology claim, with H-signature technically a homology invariant.",
+    "fixed_entry": "\\bibitem{bhattacharya2012topological} S. Bhattacharya, M. Likhachev, and V. Kumar. Topological Constraints in Search-based Robot Path Planning. \\emph{Autonomous Robots}, 33(3), pp. 273--290, 2012."
+   },
+   {
+    "key": "dragan2013legibility",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "Kenton Lee's T. initial is missing; both observer-inference uses are appropriate.",
+    "fixed_entry": "\\bibitem{dragan2013legibility} A. D. Dragan, K. C. T. Lee, and S. S. Srinivasa. Legibility and Predictability of Robot Motion. In \\emph{Proc. 8th ACM/IEEE Int. Conf. on Human-Robot Interaction (HRI)}, pp. 301--308, 2013."
+   },
+   {
+    "key": "trautman2010",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "Add pages 797--803; the source supports the freezing-robot terminology but not the manuscript's proposed structural cause.",
+    "fixed_entry": "\\bibitem{trautman2010} P. Trautman and A. Krause. Unfreezing the Robot: Navigation in Dense, Interacting Crowds. In \\emph{Proc. IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS)}, pp. 797--803, 2010."
+   },
+   {
+    "key": "mavrogiannis2022momentum",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "J. Thomason should be W. Thomason; retain the source but avoid portraying its angular-momentum objective as a persistent evidence accumulator.",
+    "fixed_entry": "\\bibitem{mavrogiannis2022momentum} C. Mavrogiannis, P. Alves-Oliveira, W. Thomason, and R. A. Knepper. Social Momentum: Design and Evaluation of a Framework for Socially Competent Robot Navigation. \\emph{ACM Transactions on Human-Robot Interaction (THRI)}, 11(2), Article 14, pp. 14:1--14:37, 2022."
+   },
+   {
+    "key": "mavrogiannis2023survey",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Published metadata is correct and the survey supports ongoing work toward metric and benchmark standardization, while emphasizing that consensus is not yet achieved.",
+    "fixed_entry": null
+   },
+   {
+    "key": "gao2022evaluation",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Frontiers metadata is correct and the review directly supports the evaluation-metrics standardization claim.",
+    "fixed_entry": null
+   },
+   {
+    "key": "francis2023principles",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "The 2023 preprint exists, but the archival citation is ACM THRI 14(2), Article 34, 2025.",
+    "fixed_entry": "\\bibitem{francis2023principles} A. Francis, C. P\\'erez-D'Arpino, C. Li, F. Xia, A. Alahi, R. Alami, et al. Principles and Guidelines for Evaluating Social Robot Navigation Algorithms. \\emph{ACM Transactions on Human-Robot Interaction}, 14(2), Article 34, 65 pages, 2025."
+   },
+   {
+    "key": "alahi2016sociallstm",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "CONTEXT"
+    ],
+    "note": "Metadata is correct, but Social-LSTM uses a unimodal bivariate Gaussian and does not support calling the listed methods collectively multimodal.",
+    "fixed_entry": null
+   },
+   {
+    "key": "gupta2018socialgan",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "CVPR metadata is correct and Social-GAN directly supports multimodal, socially plausible trajectory prediction.",
+    "fixed_entry": null
+   },
+   {
+    "key": "salzmann2020trajectron",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "Add the archival Springer proceedings information: ECCV Part XVIII, LNCS volume 12363.",
+    "fixed_entry": "\\bibitem{salzmann2020trajectron} T. Salzmann, B. Ivanovic, P. Chakravarty, M. Pavone. Trajectron++: Dynamically-Feasible Trajectory Forecasting with Heterogeneous Data. In \\emph{Computer Vision--ECCV 2020, Part XVIII}, Lecture Notes in Computer Science, vol. 12363, pp. 683--700, Springer, 2020."
+   },
+   {
+    "key": "kendon1990conducting",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Remove the non-title '(F-formation)' suffix and avoid equating o-space with an outer group boundary or attributing the robotic no-split rule directly to Kendon.",
+    "fixed_entry": "\\bibitem{kendon1990conducting} A. Kendon. \\emph{Conducting Interaction: Patterns of Behavior in Focused Encounters}. Studies in Interactional Sociolinguistics, vol. 7. Cambridge University Press, 1990."
+   },
+   {
+    "key": "riosmartinez2015survey",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "CONTEXT"
+    ],
+    "note": "Valid for proxemics and F-formations, but it does not support the rear/blind-spot surprise claim.",
+    "fixed_entry": null
+   },
+   {
+    "key": "trautman2015dense",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Metadata is correct and the intent-aware cooperative-navigation use is supported.",
+    "fixed_entry": null
+   },
+   {
+    "key": "setti2015gcff",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Remove GCFF from the title; the paper estimates memberships and o-space centers but not an explicit radius output.",
+    "fixed_entry": "\\bibitem{setti2015gcff} F. Setti, C. Russell, C. Bassetti, M. Cristani. F-Formation Detection: Individuating Free-Standing Conversational Groups in Images. \\emph{PLOS ONE}, 10(5), e0123783, 2015."
+   },
+   {
+    "key": "moussaid2009experimental",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA"
+    ],
+    "note": "The explanatory parenthetical is not part of the title and misleadingly applies N=40 to a study whose field component tracked 2,670 pedestrians.",
+    "fixed_entry": "\\bibitem{moussaid2009experimental} M. Moussa\\\"id, D. Helbing, S. Garnier, A. Johansson, M. Combe, G. Theraulaz. Experimental study of the behavioural mechanisms underlying self-organization in human crowds. \\emph{Proceedings of the Royal Society B: Biological Sciences}, 276(1668), pp. 2755--2762, 2009."
+   },
+   {
+    "key": "mavrogiannis2023winding",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Journal and arXiv metadata are correct, and both topological-consistency uses are supported.",
+    "fixed_entry": null
+   },
+   {
+    "key": "degroot2024topology",
+    "verdict": "FIX",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Use 2025 for the final volume-41 citation and qualify the novelty claim because the work explicitly formalizes inter-cycle homotopy consistency.",
+    "fixed_entry": "\\bibitem{degroot2024topology} O. de Groot, L. Ferranti, D. M. Gavrila, J. Alonso-Mora. Topology-Driven Parallel Trajectory Optimization in Dynamic Environments. \\emph{IEEE Transactions on Robotics (T-RO)}, 41, pp. 110--126, 2025. Also \\emph{arXiv preprint arXiv:2401.06021}."
+   },
+   {
+    "key": "kuderer2012feature",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Verified RSS 2012 maximum-entropy joint-trajectory model; metadata and the narrowly stated no-switching-bound context are sound.",
+    "fixed_entry": null
+   },
+   {
+    "key": "kretzschmar2016irl",
+    "verdict": "KEEP",
+    "axis_failures": [],
+    "note": "Official IJRR metadata is exact and the mixture-distribution/IRL context is directly supported.",
+    "fixed_entry": null
+   },
+   {
+    "key": "cao2019dynamicchannel",
+    "verdict": "REPLACE",
+    "axis_failures": [
+     "METADATA",
+     "CONTEXT"
+    ],
+    "note": "Correct authors to C. Cao and S. Iba; keep at line 70 but replace or remove the weak temporal-consistency use at line 78.",
+    "fixed_entry": null
+   }
+  ],
+  "uncited_entries": [
+   {
+    "key": "macenski2020nav2",
+    "suggestion": "check",
+    "note": "Nav2 원논문이 서지에만 있고 본문 인용 없음"
+   }
+  ],
+  "uncited_entries_status": "ok",
+  "bib_source": "inline \\begin{thebibliography} in main.tex (no .bib file)"
+ }
+}
