@@ -100,6 +100,18 @@ Social-LSTM은 스텝마다 **단봉 이변량 Gaussian**을 냅니다. 이 문�
 
 **재컴파일 검증 미실시.** 작업 환경에 LaTeX 툴체인이 없어(`pdflatex` 부재) 프로토콜 Step 7(`Citation undefined` 경고 확인, 페이지 수 변화 확인)을 수행하지 못했습니다. 서지 교정 반영 후 별도 환경에서 컴파일 검증이 필요합니다.
 
+## 조치 반영 이력 (2026-08-11)
+
+커밋 `1fd0a82`에서 위 판정을 전량 반영했습니다.
+
+- **FIX 12건**: 제목 내 편집자 설명구 전부 제거, 저자 교정(`W. Thomason` · `C. Cao`/`S. Iba` · `K. C. T. Lee` · `D. M. Gavrila`), `francis2023principles` 정본 승격(ACM THRI 14(2), Art. 34, 2025), 누락 서지 보강(STAR vol. 70 · LNCS vol. 12363 · IROS pp. 797--803), `degroot` 연도 2025 교정.
+- **REPLACE 8건**: 각 문헌이 실제로 말하는 범위로 본문 서술 축소 — DWA 진동 인과는 본 논문의 구조 관찰로 명시, TEB는 ROS 구현의 `selection-cost hysteresis`로 한정, MPPI smoothness 수식 삭제, SFM freezing 완화 주장은 로봇 항법 문헌(`trautman2010`, `trautman2015dense`)으로 이관, 비용장 정식화는 Kirby로 귀속, `multimodal` → `probabilistic`, 후방 사각 놀람 주장은 설계 가정으로 재서술, `cao2019` 시간 일관성 인식 주장 완화.
+- **최우선 조치(신규성 문장)**: §2 gap 주장을 재서술 — `degroot2024topology`가 일관성 파라미터로 주기 간 위상 일관성을 **형식화함을 본문이 인정**하고, 본 논문의 gap을 track-ID 기반 class 생애주기 + 결정론적 전환간격 하한(P2)으로 좁혀 명시.
+- **부수**: Kendon no-split 귀속 교정, GCFF o-space 반경 출력 서술 교정, `moussaid` N=40 주석 제거(본문 헤지는 유지), `macenski2020nav2`를 §4.8 Nav2 플러그인 구현부에 인용(미인용 해소).
+- **재컴파일 검증 완료**: `tectonic`으로 33쪽 컴파일, `Citation undefined` 경고 0건. 위 "미완 항목"은 이로써 해소됐습니다.
+
+**주의**: 이 절은 조치 내역이며, 각 교정의 사실성은 감사 원판정(위 표)과 배치별 트레이스의 검증 URL에 근거합니다.
+
 ## 산출물
 
 - `CITATION_AUDIT.json` — 기계 판독용 판정 대장

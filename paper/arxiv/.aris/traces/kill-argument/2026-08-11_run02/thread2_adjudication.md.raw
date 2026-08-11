@@ -1,0 +1,110 @@
+### Point P_1: Exact-boundary counterexample
+
+**Attack claim**: The advertised admissible parameter region includes a boundary case where the accumulator equals the hardening threshold, and the non-strict switch rule reverses precisely at P4’s lock threshold.
+
+**Verdict**: still_unresolved
+
+**Evidence (or lack of)**: The arithmetic is correct:
+
+\[
+a=(0.95-0.05)0.05=0.045,\qquad
+e^{\rm rev}_{\max}=\min(0.045,0.045/(1-0.5))=0.045.
+\]
+
+Thus \(0.03<0.045\le0.03(1+1)=0.06\), satisfying the printed two-sided condition ([main.tex:275–280](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:275)). The formula gives \(\bar\rho=(0.045/0.03-1)=0.5\). At \(e_{k-1}=0,D_k=0.95\), \(e_k=0.045=E_{\rm th}(0.5)\), so the printed \(e_k\ge E_{\rm th}\) guard switches ([main.tex:174–182](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:174), [main.tex:244–248](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:244)). The stated domains \(\lambda\in(0,1]\), \(p\ge1\), and \(\rho\in[0,1]\) are met; no-safety and positive-progress premises do not exclude this state.
+
+The proof requires \(E_{\rm th}(\bar\rho)>e^{\rm rev}_{\max}\), but its \(\bar\rho\) formula solves equality and its existence condition uses \(\le\) ([main.tex:368–385](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:368)). The alleged strict/non-strict mismatch is therefore real.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Change the executable switch guard to \(e_k>E_{\rm th}\) and consistently restate containment as \(E_{\rm th}(\bar\rho)\ge e^{\rm rev}_{\max}\), then recheck every P4 boundary statement.
+
+### Point P_2: Missing cumulative-retreat premise
+
+**Attack claim**: P4’s proposition omits the bounded cumulative-retreat condition needed by its proof, so finite completion does not follow from the proposition’s printed hypotheses.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: P4 states only no safety intervention, bounded challenger advantage, and positive realized cross-track rate ([main.tex:357–359](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:357)). The proof subsequently introduces the essential condition \(\sum_k b_k\le B<L_{\rm plan}\) and uses it to derive finite completion ([main.tex:362–366](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:362)). The condition is disclosed, but not made a proposition hypothesis.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Add the cumulative-retreat bound explicitly to P4’s statement and to every summary that claims finite maneuver completion.
+
+### Point P_3: Post-lock retreat releases containment
+
+**Attack claim**: A bounded retreat from \(\rho=0.6\) to \(0.49\) releases containment and permits reversal, contradicting P4’s unconditional “once locked, no reversal” conclusion.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: With the memo’s parameters, \(E_{\rm th}(0.6)=0.048>0.045\), but \(E_{\rm th}(0.49)=0.0447<0.045\), so the reachable accumulator can again trigger reversal. Such a finite retreat is compatible with the proof’s bounded-\(b_k\) model. Remark 6 expressly concedes release below \(\bar\rho\) and adds a never-retreat-below condition ([main.tex:390–392](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:390)), contradicting P4’s broader statement. P3/P5 apply to safety events, which this retreat need not cause.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Add post-crossing forward invariance \(\rho_k\ge\bar\rho\) as a P4 premise, or weaken P4 to pointwise containment only while that inequality holds.
+
+### Point P_4: Decision labels, not realized motion
+
+**Attack claim**: The reported experiments measure internal decisions rather than realized trajectories, so they cannot empirically demonstrate maneuver completion or physical avoidance of freezing.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The paper intentionally confines its contribution and harness to the decision layer ([main.tex:82–86](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:82), [main.tex:465–478](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:465)). All figures are computed from the decision stream. This scope is transparent, but it is not sustainable as evidence for realized maneuver completion or physical anti-freezing.
+
+**Severity if unresolved**: major
+
+**If unresolved, recommended fix**: Run the decision core in closed loop with trajectory realization and report completion and motion-derived measurements rather than decision-label stability alone.
+
+### Point P_5: Measured justified-switch lockout
+
+**Attack claim**: The paper’s own sensitivity sweep blocks every justified switch above \(v_{\rm lat}=0.35\) m/s, exposing a liveness failure caused by progress hardening.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The source confirms 50/50 commitment for \(v_{\rm lat}\le0.20\) but 0/50 switching for \(v_{\rm lat}\ge0.35\), explicitly calls this a “freezing threshold,” attributes it to approximating lateral progress by forward speed, and leaves separation of lateral speed as a future correction ([main.tex:531–535](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:531)). Diagnosis does not mitigate the current failure.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Replace the forward-speed proxy with realized cross-track progress, specify a liveness-preserving operating envelope, and rerun the justified-switch sweep.
+
+### Point P_6: Freezing and success remain unmeasured
+
+**Attack claim**: No completed experiment reports success, stops, freezing rate, or related physical outcomes, leaving the central anti-freezing interpretation empirically unsupported.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The omission is explicit: physical performance is excluded from current results ([main.tex:462–478](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:462)), while success and stops/freezing rate appear only as unfilled planned metrics ([main.tex:564–572](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:564)). The decision-layer-only position is intentional, but a preregistered protocol supplies no evidence that the robot actually completes or avoids freezing.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Provide closed-loop simulation or robot results for completion, success, freezing duration/rate, time-to-goal, and failures against independently tuned baselines.
+
+### Point P_7: HOLD is not demonstrated deadlock escape
+
+**Attack claim**: COMPASS can terminate oscillation by entering HOLD permanently; without a defined release rule, this is safe lock-up rather than demonstrated deadlock escape.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The design intentionally treats HOLD as “stop-and-wait” and calls convergence to a stop a safe, legible termination ([main.tex:213–215](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:213), [main.tex:398–403](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:398)). Algorithm 1 only assigns `mode ← HOLD`; “on re-entry” is mentioned without any release condition ([main.tex:224–252](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:224)). That intentional definition is unsustainable as a claim of escape or eventual progress.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Define a concrete HOLD exit/replanning policy and prove or measure bounded recovery, or rename P5 as bounded thrashing with safe stop and withdraw the deadlock-escape claim.
+
+## Summary
+
+Total rejection points: 7
+
+- answered_by_current_text: 0
+- partially_answered: 6
+- still_unresolved: 1
+
+## Net assessment
+
+The paper would not survive this attack under a senior area-chair read. The exact admissible boundary case falsifies P4 as written, and its completion claim additionally relies on hypotheses absent from the proposition. The paper candidly discloses its empirical scope and freezing finding, but disclosure does not supply the missing physical evidence or recovery semantics. P2’s separate inter-switch bound is not refuted by this memo, yet it cannot rescue the headline maneuver-completion and anti-freezing claims.
+
+## Top action items (in priority order, max 3)
+
+1. Repair P4’s boundary convention and restate all retreat and post-lock invariance assumptions in the proposition.
+2. Correct the progress signal and define a non-permanent HOLD recovery policy with explicit liveness conditions.
+3. Add closed-loop trajectory experiments measuring completion, success, freezing/stops, and recovery against tuned baselines.

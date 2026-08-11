@@ -1,60 +1,48 @@
 {
- "audit_skill": "kill-argument",
- "verdict": "FAIL",
- "reason_code": "headline_claim_unproved",
- "summary": "7 rejection points: 2 answered by current text, 4 partially answered, 1 still unresolved. Net: does_not_survive. P1 remains unproved under arbitrary stationarity.",
- "attack_memo_path": ".aris/traces/kill-argument/2026-08-10_run01/thread1_attack.md",
- "trace_path": ".aris/traces/kill-argument/2026-08-10_run01/",
- "reviewer_model": "gpt-5.6-sol",
- "reviewer_reasoning": "ultra",
- "context_policy": "fresh (two independent threads, no codex-reply)",
- "protocol_deviation": "main.tex was amended between the attack thread and the adjudication thread; the adjudicator therefore ruled on the post-fix source, converting the adjudication into a verification of the fix.",
- "generated_at": "2026-08-10T02:08:30.024472+00:00",
- "details": {
-  "points": [
-   {
-    "id": "P1",
-    "label": "Student-t3 counterexample",
-    "verdict": "answered_by_current_text",
-    "severity": "critical"
-   },
-   {
-    "id": "P2",
-    "label": "Stationarity still cannot prove P1",
-    "verdict": "still_unresolved",
-    "severity": "critical"
-   },
-   {
-    "id": "P3",
-    "label": "Reflecting boundary and eventual hitting",
-    "verdict": "answered_by_current_text",
-    "severity": "major"
-   },
-   {
-    "id": "P4",
-    "label": "Remark 2 remains incomplete",
-    "verdict": "partially_answered",
-    "severity": "critical"
-   },
-   {
-    "id": "P5",
-    "label": "Headline provable novelty",
-    "verdict": "partially_answered",
-    "severity": "critical"
-   },
-   {
-    "id": "P6",
-    "label": "Internal ablations cannot replace P1",
-    "verdict": "partially_answered",
-    "severity": "major"
-   },
-   {
-    "id": "P7",
-    "label": "External and physical validation absent",
-    "verdict": "partially_answered",
-    "severity": "major"
-   }
-  ],
-  "net": "does_not_survive"
- }
+  "audit_skill": "kill-argument",
+  "round": 2,
+  "verdict": "FAIL",
+  "reason_code": "unresolved_critical",
+  "summary": "P4 lock-boundary equality case falsifies P4 as written; fixed post-adjudication in 70e649b (not re-reviewed)",
+  "audited_input_hashes": {
+    "main.tex": "sha256:ee6dd67c946999be5ad77103f19dbdbe646e8b66b94f329861d30279b4f8d9cc",
+    "main.pdf": "sha256:e58e9b763c21b9666f7f99d1cf7e345edac8ca083e2b735bc618fa3773745b66"
+  },
+  "audited_at_commit": "1fd0a82",
+  "post_audit_fix_commit": "70e649b",
+  "trace_path": ".aris/traces/kill-argument/2026-08-11_run02/",
+  "thread_id": "019fef2f-f605-75b2-85e4-dfb22a2c00ee",
+  "reviewer_model": "gpt-5.6-sol",
+  "reviewer_reasoning": "ultra",
+  "generated_at": "2026-08-11T05:15:00Z",
+  "details": {
+    "attack_thread_id": "019fef27-e273-73f3-8665-334cd5a98354",
+    "defense_thread_id": "019fef2f-f605-75b2-85e4-dfb22a2c00ee",
+    "protocol_notes": [
+      "headline_unstable rule formally applied (abstract changed within last 2 commits) but deliberately overridden: the purpose of this round is to test whether that headline change closed the round-1 attack",
+      "round-1 attack axes (P1 stationarity, citations) did not reappear; the zero-context attacker chose P4 as the strongest remaining attack",
+      "attack arithmetic independently verified by the authors by recomputation before any edit"
+    ],
+    "decomposed_points": [
+      {"id": "P_1", "label": "exact-boundary counterexample", "verdict": "still_unresolved", "severity_if_unresolved": "critical", "post_audit_action": "lock region opened to rho > rho_bar; two-sided upper bound made strict; boundary instance carried in rem:lockboundary; algorithm guard unchanged"},
+      {"id": "P_2", "label": "missing cumulative-retreat premise", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "sum b_k <= B < L_plan promoted into P4 statement"},
+      {"id": "P_3", "label": "post-lock retreat releases containment", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "containment restated as pointwise; forward invariance made an explicit hypothesis of the completion clause"},
+      {"id": "P_4", "label": "decision labels, not realized motion", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "unresolvable by text; requires closed-loop experiments"},
+      {"id": "P_5", "label": "justified-switch lockout above v_lat=0.35", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "unresolvable by text; requires progress-signal correction and re-run of the sweep"},
+      {"id": "P_6", "label": "freezing and success unmeasured", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "unresolvable by text; preregistered evaluation must run"},
+      {"id": "P_7", "label": "HOLD is not demonstrated deadlock escape", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "P5 retitled to Bounded thrashing and safe termination; abstract and S1 aligned; recovery explicitly delegated"}
+    ],
+    "counts": {
+      "answered_by_current_text": 0,
+      "partially_answered": 6,
+      "still_unresolved": 1
+    },
+    "net_assessment": "The exact admissible boundary case falsifies P4 as written, and its completion claim relies on hypotheses absent from the proposition. P2's inter-switch bound is not refuted but cannot rescue the maneuver-completion and anti-freezing claims. Disclosure of empirical scope does not supply missing physical evidence or recovery semantics.",
+    "top_action_items": [
+      "Repair P4's boundary convention and restate all retreat and post-lock invariance assumptions in the proposition (done in 70e649b, pending round-3 re-review)",
+      "Correct the progress signal and define a non-permanent HOLD recovery policy with explicit liveness conditions (design decision + experiments)",
+      "Add closed-loop trajectory experiments measuring completion, success, freezing/stops, and recovery against tuned baselines"
+    ],
+    "render_html": "skipped (render helper not run in this environment; non-blocking per skill contract)"
+  }
 }
