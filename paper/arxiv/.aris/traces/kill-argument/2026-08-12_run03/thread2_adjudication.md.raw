@@ -1,0 +1,93 @@
+### Point P_1: Raw innovation is not state drift
+
+**Attack claim**: Proposition 1 confuses the negative mean raw innovation with the clipped accumulator’s expected state increment; the i.i.d. two-point counterexample disproves that identification.
+
+**Verdict**: still_unresolved
+
+**Evidence (or lack of)**: The recursion clips at zero ([main.tex:174–180](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:174)), while Proposition 1 calls \(\mathbb E[(D_k-\Delta_{\rm floor})dt]\) the accumulator’s “one-cycle expected increment” ([main.tex:305–310](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:305)). For \(\Delta_{\rm floor}<a\le D_{\max}\), \(\sigma_D^2\ge a^2\), and the stated \(e_{\max}\), the attacker correctly obtains
+\[
+\mathbb E[e_1-e_0]=\tfrac12(a-\Delta_{\rm floor})dt>0,
+\]
+although the raw innovation mean is \(-\Delta_{\rm floor}dt\). All P1 assumptions, including i.i.d., hold. The proof recognizes reflection but repeats the conflation at [main.tex:329–330](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:329).
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Restate Eq. (11) solely as negative net-input/interior drift and derive the state-dependent conditional drift including reflection, leakage, and clipping.
+
+### Point P_2: No crossing-rate derivation for the actual recursion
+
+**Attack claim**: Cramér–Lundberg analogy and Hoeffding on raw sums do not establish the claimed per-cycle switching rate for the reflected, leaky, clipped, and reset accumulator.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The text identifies reflection ([main.tex:329–332](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:329)) and specifies challenger and post-switch resets ([main.tex:246–248](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:246)), but then proceeds only “by analogy” before asserting Eqs. (12)–(13) ([main.tex:336–345](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:336)). Lindley/Cramér–Lundberg theory could salvage an i.i.d. fixed-cycle bound through pathwise domination and a suffix-sum maximal inequality; Kingman alone does not give the displayed exponent. None of that transfer is written.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Define the switch-count/rate precisely, dominate the implemented state by an unreset Lindley recursion, and derive the fixed-cycle tail and expected switch-count bound using an exponential supermartingale.
+
+### Point P_3: Mixing extension is not theorem-ready
+
+**Attack claim**: The geometric-mixing alternative is too vague to support the same exponential crossing result or its coefficient for correlated challenger advantages.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: P1 adds a dependence condition and correctly rejects bare stationarity ([main.tex:312–326](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:312)). However, “geometrically \(\alpha\)-mixing at a rate fast enough for a regenerative block decomposition” is not quantified, and the claimed effective coefficient is merely asserted at [main.tex:354–357](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:354). Geometric \(\alpha\)-mixing alone does not automatically supply independent regenerative blocks or the displayed marginal-variance rate.
+
+**Severity if unresolved**: major
+
+**If unresolved, recommended fix**: Restrict the formal theorem to i.i.d. inputs, or replace the mixing clause with a precise regenerative/concentration hypothesis and an explicit dependence-adjusted rate theorem.
+
+### Point P_4: The advertised coefficient is heuristic
+
+**Attack claim**: The coefficient \(2\Delta_{\rm floor}/(\sigma_D^2dt)\) is only a small-drift quasi-Gaussian approximation, not a distribution-free adjustment coefficient under P1’s assumptions.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The paper intentionally labels the coefficient a “small-drift, quasi-Gaussian approximation” at [main.tex:337–345](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:337). That candor mitigates the accusation, but the approximation is then inserted into the advertised rate. The exact i.i.d. coefficient depends on the full law through \(\mathbb E[e^{\theta(D-\Delta_{\rm floor})dt}]=1\); boundedness and variance alone do not yield the printed value. This position is sustainable only as a tuning heuristic, not as a formal bound coefficient.
+
+**Severity if unresolved**: major
+
+**If unresolved, recommended fix**: State the theorem using the exact log-mgf adjustment coefficient or a rigorous support-based concentration coefficient, and move the quasi-Gaussian expression to explicitly non-guaranteed tuning guidance.
+
+### Point P_5: P1 remains prominently advertised
+
+**Attack claim**: Despite its proof defects, the abstract and contribution statements still advertise P1’s exponential rate and approximate coefficient as a formal refinement.
+
+**Verdict**: partially_answered
+
+**Evidence (or lack of)**: The abstract does advertise P1, but explicitly makes deterministic P2 the claimed anti-oscillation guarantee and marks P1 conditional ([main.tex:37–38](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:37)). The introduction, proposition preamble, and conclusion repeat that hierarchy ([main.tex:57](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:57), [main.tex:292–314](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:292), [main.tex:623–625](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:623)). This intentional positioning is not sustainable while P1 remains false as stated and incompletely proved.
+
+**Severity if unresolved**: major
+
+**If unresolved, recommended fix**: Remove P1’s rate and coefficient from the abstract, contributions, and conclusion until a valid theorem and proof replace the current sketch.
+
+### Point P_6: Entire formal anti-oscillation contribution collapses
+
+**Attack claim**: Failure of probabilistic P1 eliminates the paper’s complete formal anti-oscillation contribution.
+
+**Verdict**: answered_by_current_text
+
+**Evidence (or lack of)**: The current text expressly rests its headline guarantee on P2 ([main.tex:292–294](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:292)). P2’s core deterministic bound is valid: after every discretionary switch the state resets to zero, each cycle can add at most \((D_{\max}-\Delta_{\rm floor})dt\), and leak, clipping, or further resets cannot accelerate threshold attainment ([main.tex:364–370](/home/cona/kangj/compass-aris-pilot/paper/arxiv/main.tex:364)). Thus P1’s failure leaves a narrower but sound pathwise result.
+
+**Severity if unresolved**: critical
+
+**If unresolved, recommended fix**: Not applicable.
+
+## Summary
+
+Total rejection points: 6
+
+- answered_by_current_text: 1
+- partially_answered: 4
+- still_unresolved: 1
+
+## Net assessment
+
+The paper would not survive this attack unchanged. The memo overreaches in claiming that every formal anti-oscillation result collapses, because P2 remains a valid deterministic inter-switch bound. Nevertheless, P1 contains a false state-drift assertion, lacks the derivation needed for its crossing-rate claim, and still appears prominently in the abstract and conclusions. Those are rejection-level defects in an advertised theorem.
+
+## Top action items (in priority order, max 3)
+
+1. Withdraw or fully restate P1 so Eq. (11) concerns raw net input rather than the reflected state increment.
+2. Either supply a complete i.i.d. Lindley-domination/rate proof with an exact adjustment coefficient or remove Eqs. (12)–(13).
+3. Remove the mixing extension unless it is replaced by precise, theorem-checkable dependence assumptions and constants.

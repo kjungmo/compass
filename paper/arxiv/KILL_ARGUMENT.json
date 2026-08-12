@@ -1,47 +1,47 @@
 {
   "audit_skill": "kill-argument",
-  "round": 2,
+  "round": 3,
   "verdict": "FAIL",
   "reason_code": "unresolved_critical",
-  "summary": "P4 lock-boundary equality case falsifies P4 as written; fixed post-adjudication in 70e649b (not re-reviewed)",
+  "summary": "P1 conflates the raw-innovation mean with the reflected-state increment (false as stated under P1's own hypotheses) and rests its crossing rate on a Cramer-Lundberg analogy; repaired post-adjudication in d8c21e2 on aris/hardening-v0.8 (not re-reviewed)",
   "audited_input_hashes": {
-    "main.tex": "sha256:ee6dd67c946999be5ad77103f19dbdbe646e8b66b94f329861d30279b4f8d9cc",
-    "main.pdf": "sha256:e58e9b763c21b9666f7f99d1cf7e345edac8ca083e2b735bc618fa3773745b66"
+    "main.tex": "sha256:807872d53194cb2ddf2223fef1752fdd55512b6dad9d381ce98ed76e03a9d8d9",
+    "main.pdf": "sha256:53f3bdab95d7686c7f00b503369d121b4d5e0119b1565728c0d8a638481207e0"
   },
-  "audited_at_commit": "1fd0a82",
-  "post_audit_fix_commit": "70e649b",
-  "trace_path": ".aris/traces/kill-argument/2026-08-11_run02/",
-  "thread_id": "019fef2f-f605-75b2-85e4-dfb22a2c00ee",
+  "audited_at_commit": "5649dc0 (branch aris/hardening-v0.8; upstream main was force-updated to the v0.8 single commit, so rounds >= 3 audit the ported branch, not this archive branch)",
+  "post_audit_fix_commit": "d8c21e2 (aris/hardening-v0.8)",
+  "trace_path": ".aris/traces/kill-argument/2026-08-12_run03/",
+  "thread_id": "019ff851-6385-7f32-8081-d44c44453b38",
   "reviewer_model": "gpt-5.6-sol",
   "reviewer_reasoning": "ultra",
-  "generated_at": "2026-08-11T05:15:00Z",
+  "generated_at": "2026-08-12T23:42:00Z",
   "details": {
-    "attack_thread_id": "019fef27-e273-73f3-8665-334cd5a98354",
-    "defense_thread_id": "019fef2f-f605-75b2-85e4-dfb22a2c00ee",
+    "attack_thread_id": "019ff33c-d962-77c1-acfc-1e3578dfc334",
+    "defense_thread_id": "019ff851-6385-7f32-8081-d44c44453b38",
     "protocol_notes": [
-      "headline_unstable rule formally applied (abstract changed within last 2 commits) but deliberately overridden: the purpose of this round is to test whether that headline change closed the round-1 attack",
-      "round-1 attack axes (P1 stationarity, citations) did not reappear; the zero-context attacker chose P4 as the strongest remaining attack",
-      "attack arithmetic independently verified by the authors by recomputation before any edit"
+      "headline_unstable rule again deliberately overridden: the round tests whether the round-2 repairs closed the P4 attack surface",
+      "round-2 attack axis (P4 lock boundary) did not reappear; the zero-context attacker moved to P1's drift statement, an indirect signal the round-2 repairs shifted the attack surface",
+      "attack arithmetic (uniform{-a,+a} boundary counterexample) independently verified by the authors by recomputation before the adjudication returned; the domination+Kingman repair route was pre-derived in the same verification",
+      "self-caught defect during repair drafting, raised by neither attacker nor adjudicator: an all-time supremum bound P(sup_k e_k >= E_0) <= exp(-theta* E_0) is FALSE for this positive-recurrent recursion (over an unbounded horizon crossings happen with probability approaching 1 when the support allows); the correct and published form is the marginal per-cycle bound P(e_k >= E_0) <= exp(-theta* E_0) uniform in k, with the N-cycle expected-count corollary"
     ],
     "decomposed_points": [
-      {"id": "P_1", "label": "exact-boundary counterexample", "verdict": "still_unresolved", "severity_if_unresolved": "critical", "post_audit_action": "lock region opened to rho > rho_bar; two-sided upper bound made strict; boundary instance carried in rem:lockboundary; algorithm guard unchanged"},
-      {"id": "P_2", "label": "missing cumulative-retreat premise", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "sum b_k <= B < L_plan promoted into P4 statement"},
-      {"id": "P_3", "label": "post-lock retreat releases containment", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "containment restated as pointwise; forward invariance made an explicit hypothesis of the completion clause"},
-      {"id": "P_4", "label": "decision labels, not realized motion", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "unresolvable by text; requires closed-loop experiments"},
-      {"id": "P_5", "label": "justified-switch lockout above v_lat=0.35", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "unresolvable by text; requires progress-signal correction and re-run of the sweep"},
-      {"id": "P_6", "label": "freezing and success unmeasured", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "unresolvable by text; preregistered evaluation must run"},
-      {"id": "P_7", "label": "HOLD is not demonstrated deadlock escape", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "P5 retitled to Bounded thrashing and safe termination; abstract and S1 aligned; recovery explicitly delegated"}
+      {"id": "P_1", "label": "raw innovation is not state drift", "verdict": "still_unresolved", "severity_if_unresolved": "critical", "post_audit_action": "P1(i) restated as a claim about the driving innovation X_k=(D_k-Dfloor)dt with an explicit warning it is not a state-drift statement; new remark rem:boundarydrift carries the attack's uniform{-a,+a} counterexample verbatim; rarity re-quantified as a crossing-probability bound"},
+      {"id": "P_2", "label": "no crossing-rate derivation for the actual recursion", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "proof upgraded from sketch to complete: pathwise domination of the implemented accumulator (leak, upper clip, resets) by the lambda=1 Lindley recursion; suffix-sum reversal identity; Ville maximal inequality on the exponential martingale = Kingman's bound cited as theorem (Lindley 1952, Kingman 1970 added to bibliography); switch-count/rate defined via the marginal per-cycle bound and linearity"},
+      {"id": "P_3", "label": "mixing extension is not theorem-ready", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "formal claim restricted to i.i.d. inputs; geometric-mixing route explicitly stated as NOT claimed as a theorem; unsupported OU/AR(1) 'exponential tail preserved' assertion replaced by the rigorous observation that Step-1 domination absorbs every lambda <= 1"},
+      {"id": "P_4", "label": "advertised coefficient is heuristic", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "guarantee now stated with the exact Lundberg root theta* of E[exp(theta X)]=1; the closed form 2*Dfloor/(sigma_D^2 dt) demoted to an explicitly non-guaranteed quasi-Gaussian tuning remark (rem:tuning)"},
+      {"id": "P_5", "label": "P1 remains prominently advertised", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "abstract, contributions, section preamble, and conclusion restated: exact root as the stated exponent, closed form as tuning guidance only; the withdrawn conditional-expected-time claim removed from headline text"},
+      {"id": "P_6", "label": "entire formal anti-oscillation contribution collapses", "verdict": "answered_by_current_text", "severity_if_unresolved": "critical", "post_audit_action": "none needed; adjudicator confirms the memo overreaches because deterministic P2 carries the headline and survives"}
     ],
     "counts": {
-      "answered_by_current_text": 0,
-      "partially_answered": 6,
+      "answered_by_current_text": 1,
+      "partially_answered": 4,
       "still_unresolved": 1
     },
-    "net_assessment": "The exact admissible boundary case falsifies P4 as written, and its completion claim relies on hypotheses absent from the proposition. P2's inter-switch bound is not refuted but cannot rescue the maneuver-completion and anti-freezing claims. Disclosure of empirical scope does not supply missing physical evidence or recovery semantics.",
+    "net_assessment": "The paper would not survive this attack unchanged. The memo overreaches in claiming every formal anti-oscillation result collapses (P2 remains a valid deterministic inter-switch bound), but P1 contains a false state-drift assertion, lacks the derivation for its crossing-rate claim, and appears prominently in the abstract and conclusions. Those are rejection-level defects in an advertised theorem.",
     "top_action_items": [
-      "Repair P4's boundary convention and restate all retreat and post-lock invariance assumptions in the proposition (done in 70e649b, pending round-3 re-review)",
-      "Correct the progress signal and define a non-permanent HOLD recovery policy with explicit liveness conditions (design decision + experiments)",
-      "Add closed-loop trajectory experiments measuring completion, success, freezing/stops, and recovery against tuned baselines"
+      "Withdraw or fully restate P1 so Eq. (11) concerns raw net input rather than the reflected state increment (done in d8c21e2, pending round-4 re-review)",
+      "Supply a complete i.i.d. Lindley-domination/rate proof with an exact adjustment coefficient or remove Eqs. (12)-(13) (proof supplied in d8c21e2, pending round-4 re-review)",
+      "Remove the mixing extension unless replaced by precise, theorem-checkable dependence assumptions and constants (removed as a claim in d8c21e2, retained only as an explicitly non-claimed route)"
     ],
     "render_html": "skipped (render helper not run in this environment; non-blocking per skill contract)"
   }
