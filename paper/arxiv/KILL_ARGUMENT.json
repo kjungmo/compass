@@ -1,47 +1,86 @@
 {
   "audit_skill": "kill-argument",
-  "round": 3,
+  "round": 4,
   "verdict": "FAIL",
   "reason_code": "unresolved_critical",
-  "summary": "P1 conflates the raw-innovation mean with the reflected-state increment (false as stated under P1's own hypotheses) and rests its crossing rate on a Cramer-Lundberg analogy; repaired post-adjudication in d8c21e2 on aris/hardening-v0.8 (not re-reviewed)",
+  "summary": "P2 (the deterministic inter-switch bound the paper rests on) carried no single-cycle non-crossing condition, and the paper's own admissible boundary instance (E_0=0.03, D_max=0.95, dt=0.05) lets an alternating maximal advantage flip the class every cycle while satisfying P2; repaired post-adjudication in 3eaf1a0 on aris/hardening-v0.8 (not re-reviewed)",
   "audited_input_hashes": {
-    "main.tex": "sha256:807872d53194cb2ddf2223fef1752fdd55512b6dad9d381ce98ed76e03a9d8d9",
-    "main.pdf": "sha256:53f3bdab95d7686c7f00b503369d121b4d5e0119b1565728c0d8a638481207e0"
+    "main.tex": "sha256:7b48aa113c71ae8a4b992b1748786e163cc3cf3485d74e5c149e2111472622a2",
+    "main.pdf": "sha256:e81a71bc7bea9b9f9eb9763f19ebafb1d3b52a3c75cfe3f0bc7b9251d2400f49"
   },
-  "audited_at_commit": "5649dc0 (branch aris/hardening-v0.8; upstream main was force-updated to the v0.8 single commit, so rounds >= 3 audit the ported branch, not this archive branch)",
-  "post_audit_fix_commit": "d8c21e2 (aris/hardening-v0.8)",
-  "trace_path": ".aris/traces/kill-argument/2026-08-12_run03/",
-  "thread_id": "019ff851-6385-7f32-8081-d44c44453b38",
+  "audited_at_commit": "d8c21e2 (branch aris/hardening-v0.8; the round-3 repair commit, unchanged for 17 days before this round)",
+  "post_audit_fix_commit": "3eaf1a0 (aris/hardening-v0.8)",
+  "trace_path": ".aris/traces/kill-argument/2026-08-30_run04/",
+  "thread_id": "01a04edc-562c-77e1-84da-2d7739ba2e0e",
   "reviewer_model": "gpt-5.6-sol",
   "reviewer_reasoning": "ultra",
-  "generated_at": "2026-08-12T23:42:00Z",
+  "generated_at": "2026-08-29T18:59:00Z",
   "details": {
-    "attack_thread_id": "019ff33c-d962-77c1-acfc-1e3578dfc334",
-    "defense_thread_id": "019ff851-6385-7f32-8081-d44c44453b38",
+    "attack_thread_id": "01a04ed2-843d-78e3-bab3-083a4f16730c",
+    "defense_thread_id": "01a04edc-562c-77e1-84da-2d7739ba2e0e",
     "protocol_notes": [
-      "headline_unstable rule again deliberately overridden: the round tests whether the round-2 repairs closed the P4 attack surface",
-      "round-2 attack axis (P4 lock boundary) did not reappear; the zero-context attacker moved to P1's drift statement, an indirect signal the round-2 repairs shifted the attack surface",
-      "attack arithmetic (uniform{-a,+a} boundary counterexample) independently verified by the authors by recomputation before the adjudication returned; the domination+Kingman repair route was pre-derived in the same verification",
-      "self-caught defect during repair drafting, raised by neither attacker nor adjudicator: an all-time supremum bound P(sup_k e_k >= E_0) <= exp(-theta* E_0) is FALSE for this positive-recurrent recursion (over an unbounded horizon crossings happen with probability approaching 1 when the support allows); the correct and published form is the marginal per-cycle bound P(e_k >= E_0) <= exp(-theta* E_0) uniform in k, with the N-cycle expected-count corollary"
+      "headline_unstable rule deliberately overridden for the third time: the abstract changed in d8c21e2 and the round exists to test whether the round-3 repairs closed the P1 attack surface",
+      "round-3 attack axis (P1 drift/Kingman) did not reappear; the zero-context attacker moved to P2 vacuity and to the liveness/evaluation gap, an indirect signal the round-3 repairs shifted the attack surface",
+      "attack arithmetic (E_0/(D_max-Dfloor)=0.0333 s < dt=0.05 s; single-cycle innovation 0.045 > E_0 on the boundary instance) independently verified by the authors by recomputation before the adjudication returned; the N_min/non-vacuity repair route was pre-derived in the same verification",
+      "author-side finding raised by neither attacker nor adjudicator: the by-construction advantage bound is D_max = sum_X w_X = 2.8 for the default weights (each normalized term is clipped to [0,1] and summed with weights 1.0/1.0/0.3/0.5, cost_evaluator.cpp:119), not 1; the worst-case default N_min is therefore 3 cycles (0.15 s), reported in the paper as such rather than the 7 cycles that a single-term bound would give",
+      "author-side consistency defect fixed in passing: Algorithm 1 wrote J(c) as a horizon integral of already-normalized terms, inconsistent with Section 4.2 and the implementation (the integrals live inside J_X before normalization)",
+      "the adjudicator's 'then test the alternating-maximal-advantage sequence' was not executed in the harness (that would be a new measurement); the one-cycle flip on the boundary instance is exhibited analytically in rem:p2nonvac and the N_min bound is proved, not measured",
+      "all numbers added to the paper in this round (N_min 3/7/14, N_resp 76/24/17/7, reachability thresholds 0.23/0.41, equilibrium 0.583 vs 0.60, ramp end e~0.21) are consequences of the printed recursion and knob values, computed by script and labelled as derivations, not measurements"
     ],
     "decomposed_points": [
-      {"id": "P_1", "label": "raw innovation is not state drift", "verdict": "still_unresolved", "severity_if_unresolved": "critical", "post_audit_action": "P1(i) restated as a claim about the driving innovation X_k=(D_k-Dfloor)dt with an explicit warning it is not a state-drift statement; new remark rem:boundarydrift carries the attack's uniform{-a,+a} counterexample verbatim; rarity re-quantified as a crossing-probability bound"},
-      {"id": "P_2", "label": "no crossing-rate derivation for the actual recursion", "verdict": "partially_answered", "severity_if_unresolved": "critical", "post_audit_action": "proof upgraded from sketch to complete: pathwise domination of the implemented accumulator (leak, upper clip, resets) by the lambda=1 Lindley recursion; suffix-sum reversal identity; Ville maximal inequality on the exponential martingale = Kingman's bound cited as theorem (Lindley 1952, Kingman 1970 added to bibliography); switch-count/rate defined via the marginal per-cycle bound and linearity"},
-      {"id": "P_3", "label": "mixing extension is not theorem-ready", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "formal claim restricted to i.i.d. inputs; geometric-mixing route explicitly stated as NOT claimed as a theorem; unsupported OU/AR(1) 'exponential tail preserved' assertion replaced by the rigorous observation that Step-1 domination absorbs every lambda <= 1"},
-      {"id": "P_4", "label": "advertised coefficient is heuristic", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "guarantee now stated with the exact Lundberg root theta* of E[exp(theta X)]=1; the closed form 2*Dfloor/(sigma_D^2 dt) demoted to an explicitly non-guaranteed quasi-Gaussian tuning remark (rem:tuning)"},
-      {"id": "P_5", "label": "P1 remains prominently advertised", "verdict": "partially_answered", "severity_if_unresolved": "major", "post_audit_action": "abstract, contributions, section preamble, and conclusion restated: exact root as the stated exponent, closed form as tuning guidance only; the withdrawn conditional-expected-time claim removed from headline text"},
-      {"id": "P_6", "label": "entire formal anti-oscillation contribution collapses", "verdict": "answered_by_current_text", "severity_if_unresolved": "critical", "post_audit_action": "none needed; adjudicator confirms the memo overreaches because deterministic P2 carries the headline and survives"}
+      {
+        "id": "P_1",
+        "label": "headline-theorem mismatch (P2 may add nothing beyond sampling)",
+        "verdict": "partially_answered",
+        "severity_if_unresolved": "critical",
+        "post_audit_action": "P2 restated as the discrete-cycle bound N_min(rho)=ceil(E_th(rho)/((D_max-Dfloor)dt)) with the declared non-vacuity condition E_0 > (D_max-Dfloor)dt (eq:p2nonvac, N_min>=2); abstract, contribution, scope paragraph and conclusion restated with the cycle bound and the condition"
+      },
+      {
+        "id": "P_2",
+        "label": "admissible one-cycle counterexample (boundary instance)",
+        "verdict": "still_unresolved",
+        "severity_if_unresolved": "critical",
+        "post_audit_action": "eq:p2nonvac declared alongside eq:twosided; rem:p2nonvac shows the boundary instance violates it (0.045 > 0.03), exhibits the every-cycle flip, and excludes the instance as an operating point; rem:lockboundary annotated; default-knob N_min reported including the worst case D_max=2.8 (3 cycles) and D_max<=1 (7 cycles)"
+      },
+      {
+        "id": "P_3",
+        "label": "P2 vacuity versus liveness (never switching satisfies P2)",
+        "verdict": "partially_answered",
+        "severity_if_unresolved": "major",
+        "post_audit_action": "new Proposition prop:p2live: under a sustained advantage D_k>=D_sus, a discretionary switch fires within N_resp=ceil(ln(1-E(1-lambda)/a)/ln lambda) cycles, with full monotone-comparison proof and a converse (no switch reachable when the leak equilibrium lies below the threshold); rem:resptime gives default-knob figures; P2 text now states it is a rate upper bound only"
+      },
+      {
+        "id": "P_4",
+        "label": "missed five-margin reversal in mid_reversal",
+        "verdict": "partially_answered",
+        "severity_if_unresolved": "major",
+        "post_audit_action": "Section 5.3 now derives the finding from prop:p2live (reachability threshold 0.23 at rho=0; N_resp(0.25)=76 cycles; the ramp exceeds 0.23 only in the last 8 cycles; noiseless ramp leaves e~0.21<E_0) and reframes it as a knob-design trade-off; warranted-switch recall and response delay pre-registered in Section 5.6; not measured"
+      },
+      {
+        "id": "P_5",
+        "label": "progress-rate freezing region (v_lat>=0.35 lockout)",
+        "verdict": "partially_answered",
+        "severity_if_unresolved": "critical",
+        "post_audit_action": "mechanism made exact via the converse clause (clean_commit advantage 0.40 gives equilibrium 0.583 < E_th(1)=0.60, so no switch is reachable once rho saturates); the recommended estimator change (rho from realized cross-track displacement) is an implementation change outside this text-only round and remains open; demonstration across the speed range requires measurement"
+      },
+      {
+        "id": "P_6",
+        "label": "decision-stream metrics reward freezing",
+        "verdict": "partially_answered",
+        "severity_if_unresolved": "major",
+        "post_audit_action": "warranted-switch recall, response delay (vs N_resp) and lockup rate pre-registered for both the harness and the physical evaluation (Section 5.6); the decision-stream-only limitation is unchanged and closes only with the planned physical evaluation"
+      }
     ],
     "counts": {
-      "answered_by_current_text": 1,
-      "partially_answered": 4,
+      "answered_by_current_text": 0,
+      "partially_answered": 5,
       "still_unresolved": 1
     },
-    "net_assessment": "The paper would not survive this attack unchanged. The memo overreaches in claiming every formal anti-oscillation result collapses (P2 remains a valid deterministic inter-switch bound), but P1 contains a false state-drift assertion, lacks the derivation for its crossing-rate claim, and appears prominently in the abstract and conclusions. Those are rejection-level defects in an advertised theorem.",
+    "net_assessment": "The paper would probably not survive a senior area-chair reading of this attack. It candidly discloses the liveness, proxy, reversal, and freezing limitations, but those disclosures do not repair the headline mathematics: P2's own formally admissible witness allows cycle-rate discretionary switching, so the advertised deterministic anti-oscillation interpretation is unsupported.",
     "top_action_items": [
-      "Withdraw or fully restate P1 so Eq. (11) concerns raw net input rather than the reflected state increment (done in d8c21e2, pending round-4 re-review)",
-      "Supply a complete i.i.d. Lindley-domination/rate proof with an exact adjustment coefficient or remove Eqs. (12)-(13) (proof supplied in d8c21e2, pending round-4 re-review)",
-      "Remove the mixing extension unless replaced by precise, theorem-checkable dependence assumptions and constants (removed as a claim in d8c21e2, retained only as an explicitly non-claimed route)"
+      "Replace P2 with an exact discrete-cycle bound plus an explicit, nontrivial multi-cycle requirement (done in 3eaf1a0, pending round-5 re-review)",
+      "Add a complementary finite-response liveness theorem and repair the forward-speed-based progress estimator (theorem added in 3eaf1a0; estimator repair is an implementation change and remains open)",
+      "Evaluate warranted-switch correctness, response delay, freezing, and realized motion, not switch suppression alone (metrics pre-registered in 3eaf1a0; measurement not performed)"
     ],
     "render_html": "skipped (render helper not run in this environment; non-blocking per skill contract)"
   }
