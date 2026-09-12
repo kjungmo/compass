@@ -1,6 +1,6 @@
 # COMPASS completion checkpoint
 
-Status: awaiting ROS CI and final review. This is the checkpoint for authorized
+Status: ROS link failure fixed; awaiting CI rerun and final review. This is the checkpoint for authorized
 continuation; do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
@@ -37,6 +37,13 @@ or repeated independent trials are claimed for this deterministic diagnostic.
 5. CI for standalone regression and ROS Jazzy colcon build/test.
 
 ## Local evidence
+
+CI at remote commit 0921b70fcf338ee6c7b6f4e6d8b3b0430b642d9c:
+standalone passed; ROS Jazzy compiled core/messages/evaluator and controller
+sources, but the shared controller link failed because libcompass_core.a was
+not built with PIC (R_X86_64_PC32 relocation). Set POSITION_INDEPENDENT_CODE ON
+for compass_core; the next CI must validate the shared link and ROS tests.
+Evidence: https://github.com/kjungmo/compass/actions/runs/34698467661
 
 Run bash scripts/test_completion_gates.sh. All estimator checks and 16 opportunity
 plus 8 physical-metric tests pass. Previous 50,000-cycle/1,500-row legacy regression
