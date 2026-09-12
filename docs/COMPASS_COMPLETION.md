@@ -1,17 +1,20 @@
 # COMPASS completion checkpoint
 
-Status: candidate trajectory cost seam verified by ROS CI. Opt-in Nav2 swept
-environment and selected-command integration built in ROS CI; one boundary test
-exposed zero-clearance acceptance at d_safe=0. The explicit infeasibility fix is
-implemented locally and awaits CI. This is the checkpoint for authorized
-continuation; do not resend either Omni email. Do not merge/deploy to main.
+Status: the complete opt-in Nav2 candidate trajectory/environment/command path,
+including the zero-clearance correction, passed standalone and ROS Jazzy CI at
+remote PR #15 head 5e338c92 (run 34710326982). Round-5 observer/theorem fixes and
+the P5 rolling-window/HOLD implementation are integrated locally and pass the
+standalone gates; they still require publication to PR #15 and one ROS CI run.
+Do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
 
 - PR #2: review/observability-metrics, original remote head 27fd2519.
 - PR #14: review/responsive-progress, original remote head 41e7837e.
 - PR #15: review/completion-gates, based on PR #14.
-- Other round5 observer/theorem branches are concurrent work; do not overwrite them.
+- PR #12: codex/round5-observer, original remote head 5343d457.
+- PR #13: codex/round5-theorems, original remote head 60bb5ed9.
+  Their reviewed changes are integrated here; preserve those concurrent branches.
 
 The goal is a reviewable, tested software implementation with explicit research
 limits. It is not a claim that no future software changes can ever be necessary.
@@ -52,6 +55,22 @@ TTC uses constant-velocity people predictions and distinguishes approaching from
 receding motion. Goal taper, Nav2 speed limits and safety braking are applied in
 the declared order. If braking changes speed, the selected rollout is regenerated
 and revalidated before its first command is emitted. The default remains false.
+8. The observer uses log-odds and requires 0.30 s of observed follow-up after a
+threshold crossing. Final-tick crossings are censored. The regenerated 1,500-row
+CSV reports argmin 3.60 +/- 4.64 s, 72/250 censored, and the synthetic
+no-correspondence comparator 3.60 +/- 4.63 s, 71/250 censored. Switch counts,
+sign-change rates and entropy are unchanged. Raw/table consistency checks pass.
+9. P1 now defines and bounds pre-test evidence separately from stored post-reset
+evidence; response-time claims carry persistent selection/eligibility, uninterrupted
+updates, sustained-advantage, and clip/leak-headroom hypotheses. P4 treats equality
+at the leak equilibrium as asymptotic rather than attained. The observer is called
+a common scoring convention, not unbiased motion-legibility evidence. The rho
+sweep is described as offline transition blocking, not physical freezing.
+10. P5 now counts at most one safety intervention per decision time in the
+open-left rolling window (t-W,t], synchronizes n_thrash to that count, enters an
+absorbing zero-command HOLD at threshold, and requires release_hold() for explicit
+release. Sparse-window, duplicate-time, dense-threshold, regressing-time, HOLD and
+release tests pass. This does not establish physical stopping or collision freedom.
 
 ## Local evidence
 
@@ -71,11 +90,14 @@ This validates the PIC correction after run 34698467661 failed at shared linking
 Safety-velocity and identical-plan changes at bb0e8293c1b949e398df9f4efb0df5748898cfd2
 passed both standalone and ROS Jazzy jobs:
 https://github.com/kjungmo/compass/actions/runs/34702249850
-The subsequent Nav2 environment/command integration needs a new CI run.
+The subsequent Nav2 environment/command integration was exercised in later runs.
 Run 34708554568 built all four packages and passed standalone checks, but its ROS
 test stage failed 1 of 59 tests: map-edge clearance was 0 as intended while
 executionSafe accepted it when the test supplied d_safe=0. The fix now requires
 strict positive clearance in addition to the configured threshold.
+Run 34710326982 at remote PR #15 head 5e338c92 passed both standalone and ROS
+Jazzy jobs after that fix: all four packages built and all tests passed.
+Evidence: https://github.com/kjungmo/compass/actions/runs/34710326982
 Local safety contract tests cover zero/small bounds, normal startup, STOP/HOLD,
 and nonfinite limits. The 50,000-cycle/1,500-row regression remains green with
 16 opportunity tests after these changes. The plan-republish gtest is now also covered by that successful ROS CI.
@@ -92,21 +114,26 @@ Re-running emits the underlying motion JSONL. No physical/Gazebo claim is closed
 
 ## Review findings and gates
 
-- PR #2: request changes until the unconfirmed-opportunity correction is included.
+- PR #2's unconfirmed-opportunity correction is included in PR #15 and covered
+by 16 tests; PR #2 itself remains an unchanged stack component.
 - PR #14: conditional research-only acceptance after CI; not a production-ready
 response guarantee. Intermittent switches rise .4 -> .6, mid-reversal stays zero,
 and a warranted oracle has not validated either scenario.
 - Candidate integration: the optional Nav2 path now supplies class-specific
 rollouts to CostEvaluator, checks swept static clearance and predicted TTC, and
-emits the revalidated selected rollout command. Local standalone gates pass;
-ROS CMake/controller tests for this change await CI. This bounded implementation
+emits the revalidated selected rollout command. Local standalone gates and
+ROS CMake/controller tests pass. This bounded implementation
 still does not solve mixed-side multi-person homotopy or validate physical
 performance. See CANDIDATE_TRAJECTORIES.md for its explicit limitations.
 - The small/zero safety-bound bootstrap defect is fixed in code with a regression;
 its ROS build and plan-republish regression passed at bb0e8293.
-- ROS build/test passed through candidate costs at 30b6e781; latest Nav2
-environment/command changes need their own CI.
+- The two PR #12 observer review findings and two PR #13 theorem review findings
+are addressed in the integrated branch. Independent review of the new combined
+SHA remains external to implementation verification.
 No Gazebo test executed. Local ROS/container runtime is still absent.
+- The integrated LaTeX source passes numeric/checker validation. Its 40-page PDF
+was rebuilt with cached algorithm/algorithmicx packages and two pdfLaTeX passes;
+changed theorem/result pages were rendered and visually checked.
 - 480 physical cases remain pending: bind geometry, actor traces, independent
 opportunity/free-motion oracle and controller adapter before physical experiments.
 - Robot deployment and main merge require a separate concrete decision.

@@ -48,7 +48,7 @@ micromamba run -n ros2 bash -lc 'set +u; cd ~/kangj/compass && \
 2. **스퍼리어스 억제.** `transient_spike` 에서 full=0 전환(스파이크 무시), argmin=2.
 3. **신속 커밋.** `clean_commit` 에서 full 은 1회 전환, t-legible 2.37 s.
 4. **가독성.** 진동 변형은 사후확률이 안정되지 못해 자주 비가독(argmin/−class 검열
-   73–74/250; near_tie t-legible 7.9 s vs full 0.05 s).
+   각 48/250; near_tie t-legible 7.9 s vs full 0.05 s).
 
 **가설과 달랐던 것(정직히 보고)**
 - `−hysteresis`(Δ_floor=0)·`−progress hardening`(k_ρ=0) 은 본 시나리오들에서 full 대비
@@ -56,15 +56,20 @@ micromamba run -n ros2 bash -lc 'set +u; cd ~/kangj/compass && \
   기각하므로, 본 동작 영역에서 1차 진동 억제 기제는 Δ_floor·k_ρ 가 아니라 **누적기**
   자체입니다. (논문이 사전 등록한 "Δ_floor 제거 → 전환 폭증" 가설은 본 영역에서
   성립하지 않음 — 측정에 의한 가설 정정.)
-- `simple-dwell`(O4) 은 `intermittent` 에서 교착(전환 0, 비가독)하나, full 도 이
-  영역에서 늦게(거의 지평 끝) 커밋해 함께 비가독에 가깝습니다 — 기본 노브에서
-  간헐 우위 커밋이 느림(파라미터 민감도).
+- `simple-dwell`(O4) 은 `intermittent` 에서 교착(전환 0)하지만, 고정된 초기
+  라벨 때문에 결정-스트림 관찰자에는 즉시 가독으로 보입니다. `full`은 50개
+  시드에서 1.55--2.10초에 전환하고 평균 t-legible 4.11초, 검열 0/50입니다.
+  따라서 이 프록시만으로 responsiveness를 판정할 수 없습니다.
 
-**ρ-율 민감도(R5 직결, freezing).** `R5_rho_sweep.md`: clean_commit 에서 v_lat≤0.20 m/s
+**ρ-율 민감도(R5 직결, 오프라인 전환 봉쇄).** `R5_rho_sweep.md`: clean_commit 에서 v_lat≤0.20 m/s
 면 full 이 항상 커밋(50/50, t-legible≈2.4 s)하지만 v_lat≥0.35 m/s 면 **전환이 봉쇄**
 (0/50)됩니다. progress hardening 이 ρ 포화로 E_th 를 E0(1+k_ρ) 까지 올려 정당한 전환마저
-막는 **freezing 임계가 v_lat∈(0.20,0.35)** 에 있음을 실측. 기본 노브의 비봉쇄 구간이
-좁다는 R5 민감도 발견이며, 코어의 `v_lat=|v_cmd|` 단순화를 향후 횡속도 분리로 보정할
-근거입니다.
+막는 **오프라인 전환 봉쇄 구간이 v_lat∈(0.20,0.35)** 에 있음을 실측했습니다. 이는
+스크립트형 진행 입력과 기존 `v_lat=|v_cmd|` 단순화의 민감도이며, 실제 로봇 정지·물리
+freezing·목표 실패를 입증하지 않습니다.
 
 산출물: `R1_ablation.md` · `R3_latency.md` · `R5_rho_sweep.md` · `ablation_raw.csv`(원자료).
+
+Round 5: observer는 log-odds와 0.30초의 양의 관측 유지구간으로 교정했습니다.
+지평 마지막 tick에서 처음 임계값을 넘는 경우는 검열합니다. R1 행동 결과는
+EPYC 9V74에서 재실행했고, R3 latency는 기존 측정입니다.

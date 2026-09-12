@@ -12,7 +12,7 @@ struct DecisionState {
   double e_rev = 0;                    // 역방향 도전 누적기 e^rev
   double rho = 0;                      // 진행도 ρ ∈ [0,1]
   std::optional<TopoClass> prev_c_prime;  // 직전 주기 도전자 c′
-  int n_thrash = 0;                    // 안전 유발 전환 횟수
+  int n_thrash = 0;                    // 현재 창 W 안의 안전 개입 횟수
   std::deque<double> safe_switch_times;   // 창 W 내 안전 전환 시각
   double t_safe_dwell = 0;             // 안전 드웰 보호 종료 시각
   Mode mode = Mode::NORMAL;
@@ -21,8 +21,16 @@ struct DecisionState {
 
   void reset_on_commit();
   void reset_on_safe_switch(double now, double T);
+  void release_hold();
 };
 
 inline void DecisionState::reset_on_commit() { e_rev = 0; rho = 0; L_real = 0; e_fwd = 0; }
 inline void DecisionState::reset_on_safe_switch(double now, double T) { e_rev = 0; rho = 0; t_safe_dwell = now + T; }
+inline void DecisionState::release_hold() {
+  if (mode != Mode::HOLD) return;
+  mode = Mode::NORMAL;
+  n_thrash = 0;
+  safe_switch_times.clear();
+  t_safe_dwell = 0;
+}
 }  // namespace compass

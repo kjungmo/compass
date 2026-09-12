@@ -88,6 +88,17 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
   DecisionOutput out;
   double v_cmd = v_in;
 
+  // P5: HOLD is an absorbing zero-command state. The owner must explicitly
+  // call DecisionState::release_hold() before normal evaluation can resume.
+  if (st.mode == Mode::HOLD) {
+    out.c_star = st.c_star;
+    out.v_target = 0.0;
+    out.safety_velocity_limited = true;
+    out.mode = Mode::HOLD;
+    finalize_trace(out);
+    return out;
+  }
+
   // 안전 집합 𝒮 = { safe 인 class }.
   std::vector<ClassEval> S;
   for (const auto & e : evals) if (e.safe) S.push_back(e);

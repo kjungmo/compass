@@ -9,7 +9,9 @@ inc=(-I src/compass_core/include -I src/compass_eval/include)
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/src/main.cpp -o "$out/eval"
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/src/trace_main.cpp -o "$out/trace"
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/test_trace.cpp -o "$out/test"
+g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/test/test_observer.cpp -o "$out/observer"
 "$out/test"
+"$out/observer"
 "$out/eval" ablation "$out" > "$out/summary.txt"
 python3 - "$out" <<'PY'
 import csv,sys

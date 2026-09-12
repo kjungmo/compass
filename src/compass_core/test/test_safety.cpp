@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include "compass_core/safety.hpp"
 #include "compass_core/tie_breaker.hpp"
 using namespace compass;
@@ -61,11 +62,66 @@ TEST(Safety, P5ThrashGuardHolds) {
   std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
   Mode final_mode = Mode::NORMAL;
   // c* 가 매번 안전 집합 밖이 되도록 c_star 를 S 밖으로 강제하며 반복.
-  for (int i = 0; i < k.n_thrash + 2; ++i) {
+  for (int i = 0; i < k.n_thrash; ++i) {
     s.c_star.set(7, Side::R);   // S 는 {7L} 뿐이므로 c_star=7R 는 늘 ∉ S
     SafetyResult r = run_safety_branch(s, S, 0.5, /*ttc=*/5.0, /*now=*/0.1 * i, k, tb);
     final_mode = r.mode;
   }
   EXPECT_EQ(final_mode, Mode::HOLD);
-  EXPECT_GE(s.n_thrash, k.n_thrash);
+  EXPECT_EQ(s.n_thrash, k.n_thrash);
+}
+
+TEST(Safety, P5UsesOpenLeftRollingWindow) {
+  Knobs k; k.W = 3.0; k.n_thrash = 3;
+  DecisionState s; s.c_star.set(7, Side::R);
+  TieBreaker tb;
+  std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
+
+  for (double now : {0.0, 3.0, 6.0, 9.0}) {
+    s.c_star.set(7, Side::R);
+    SafetyResult r = run_safety_branch(s, S, 0.5, 5.0, now, k, tb);
+    EXPECT_NE(r.mode, Mode::HOLD);
+    EXPECT_EQ(s.n_thrash, 1);
+  }
+}
+
+TEST(Safety, P5RecordsAtMostOncePerDecisionTime) {
+  Knobs k; k.n_thrash = 2;
+  DecisionState s; s.c_star.set(7, Side::R);
+  TieBreaker tb;
+  std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
+
+  run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
+  SafetyResult duplicate = run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
+  EXPECT_EQ(s.n_thrash, 1);
+  EXPECT_NE(duplicate.mode, Mode::HOLD);
+}
+
+TEST(Safety, P5HoldIsAbsorbingUntilExplicitRelease) {
+  Knobs k; k.n_thrash = 1;
+  DecisionState s; s.c_star.set(7, Side::R);
+  TieBreaker tb;
+  std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
+
+  SafetyResult entered = run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
+  ASSERT_EQ(entered.mode, Mode::HOLD);
+  EXPECT_DOUBLE_EQ(entered.v_target, 0.0);
+
+  SafetyResult retained = run_safety_branch(s, S, 0.5, 5.0, 100.0, k, tb);
+  EXPECT_EQ(retained.mode, Mode::HOLD);
+  EXPECT_DOUBLE_EQ(retained.v_target, 0.0);
+  EXPECT_EQ(s.n_thrash, 1);
+
+  s.release_hold();
+  EXPECT_EQ(s.mode, Mode::NORMAL);
+  EXPECT_EQ(s.n_thrash, 0);
+  EXPECT_TRUE(s.safe_switch_times.empty());
+}
+
+TEST(Safety, RejectsRegressingInterventionTime) {
+  Knobs k; DecisionState s; s.c_star.set(7, Side::R);
+  TieBreaker tb;
+  std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
+  run_safety_branch(s, S, 0.5, 5.0, 2.0, k, tb);
+  EXPECT_THROW(run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb), std::invalid_argument);
 }

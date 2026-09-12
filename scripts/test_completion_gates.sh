@@ -11,6 +11,8 @@ g++ -std=c++17 -O2 "${inc[@]}" src/compass_core/src/topo_class.cpp src/compass_n
 "$out/progress"
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_nav2/test/test_velocity_limits.cpp -o "$out/velocity"
 "$out/velocity"
+g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/test_safety_window.cpp -o "$out/safety_window"
+"$out/safety_window"
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_nav2/src/path_tracking.cpp src/compass_eval/src/closed_loop_diagnostic.cpp -o "$out/closed_loop"
 result_dir=${1:-/tmp/compass_closed_loop}
 mkdir -p "$result_dir"
