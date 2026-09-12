@@ -48,7 +48,7 @@ micromamba run -n ros2 bash -lc 'set +u; cd ~/kangj/compass && \
 2. **스퍼리어스 억제.** `transient_spike` 에서 full=0 전환(스파이크 무시), argmin=2.
 3. **신속 커밋.** `clean_commit` 에서 full 은 1회 전환, t-legible 2.37 s.
 4. **가독성.** 진동 변형은 사후확률이 안정되지 못해 자주 비가독(argmin/−class 검열
-   73–74/250; near_tie t-legible 7.9 s vs full 0.05 s).
+   각 48/250; near_tie t-legible 7.9 s vs full 0.05 s).
 
 **가설과 달랐던 것(정직히 보고)**
 - `−hysteresis`(Δ_floor=0)·`−progress hardening`(k_ρ=0) 은 본 시나리오들에서 full 대비
@@ -68,3 +68,5 @@ micromamba run -n ros2 bash -lc 'set +u; cd ~/kangj/compass && \
 근거입니다.
 
 산출물: `R1_ablation.md` · `R3_latency.md` · `R5_rho_sweep.md` · `ablation_raw.csv`(원자료).
+
+Round 5: observer는 log-odds로 교정했습니다. Full/intermittent는 0/50 검열, 평균 4.11초입니다. 기존 50/50 검열 및 늦은 전환 해석은 수치 포화에 따른 오류입니다. R1 행동 결과는 EPYC 9V74에서 재실행했고, R3 latency는 기존 측정입니다.

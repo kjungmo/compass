@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <algorithm>
+#include <stdexcept>
 #include "compass_core/decision_core.hpp"
 #include "compass_core/accumulator.hpp"
 
@@ -169,6 +170,7 @@ struct Metrics {
 // §4.7 베이즈 관찰자: 외부 관측 가능한 통과 측 스트림으로 사후확률을 갱신,
 // 임계 p* 를 넘어 끝까지 유지되는 최초 시각을 time-to-legible 로 둔다.
 inline Metrics compute(const std::vector<int> & sides) {
+  if (sides.empty()) throw std::invalid_argument("empty decision stream");
   const int n = static_cast<int>(sides.size());
   int sw = 0;
   for (int i = 1; i < n; ++i) if (sides[i] != sides[i - 1]) ++sw;
@@ -180,17 +182,19 @@ inline Metrics compute(const std::vector<int> & sides) {
 
   const int Hstar = sides[n - 1];
   const double eps = 0.2, pstar = 0.9;
-  double postR = 0.5;
-  std::vector<double> postH(n);
+  // Log-odds avoids an absorbing floating-point posterior of exactly 0 or 1.
+  // Keep the same prior, likelihood, final-side target and horizon hold rule.
+  double log_odds_r = 0.0;
+  const double evidence = std::log((1 - eps) / eps);
+  const double threshold = std::log(pstar / (1 - pstar));
+  std::vector<bool> confident(n);
   for (int i = 0; i < n; ++i) {
-    const double lik_R = (sides[i] == 1) ? (1 - eps) : eps;
-    const double lik_L = (sides[i] == 0) ? (1 - eps) : eps;
-    const double a = postR * lik_R, b = (1 - postR) * lik_L;
-    postR = a / (a + b);
-    postH[i] = (Hstar == 1) ? postR : (1 - postR);
+    log_odds_r += (sides[i] == 1 ? evidence : -evidence);
+    const double target_odds = Hstar == 1 ? log_odds_r : -log_odds_r;
+    confident[i] = target_odds >= threshold;
   }
   int t_idx = -1;
-  for (int i = n - 1; i >= 0; --i) { if (postH[i] >= pstar) t_idx = i; else break; }
+  for (int i = n - 1; i >= 0; --i) { if (confident[i]) t_idx = i; else break; }
   if (t_idx < 0) { m.t_legible = n * DT; m.censored = true; }
   else           { m.t_legible = t_idx * DT; m.censored = false; }
   return m;

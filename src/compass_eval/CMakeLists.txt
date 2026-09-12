@@ -13,4 +13,11 @@ target_include_directories(compass_eval PUBLIC
 ament_target_dependencies(compass_eval compass_core)
 
 install(TARGETS compass_eval DESTINATION lib/${PROJECT_NAME})
+if(BUILD_TESTING)
+  enable_testing()
+  add_executable(test_observer test/test_observer.cpp)
+  target_include_directories(test_observer PRIVATE include)
+  ament_target_dependencies(test_observer compass_core)
+  add_test(NAME observer_regression COMMAND test_observer)
+endif()
 ament_package()
