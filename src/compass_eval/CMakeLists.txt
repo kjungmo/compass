@@ -12,5 +12,17 @@ target_include_directories(compass_eval PUBLIC
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(compass_eval compass_core)
 
-install(TARGETS compass_eval DESTINATION lib/${PROJECT_NAME})
+add_executable(compass_trace src/trace_main.cpp)
+target_include_directories(compass_trace PRIVATE include)
+ament_target_dependencies(compass_trace compass_core)
+
+if(BUILD_TESTING)
+  enable_testing()
+  add_executable(compass_trace_test test_trace.cpp)
+  target_include_directories(compass_trace_test PRIVATE include)
+  ament_target_dependencies(compass_trace_test compass_core)
+  add_test(NAME compass_trace_state_equivalence COMMAND compass_trace_test)
+endif()
+
+install(TARGETS compass_eval compass_trace DESTINATION lib/${PROJECT_NAME})
 ament_package()
