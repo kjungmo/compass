@@ -27,6 +27,11 @@ std::vector<TopoClass> DecisionCore::enumerate(const DecisionInput & in) const {
 
 DecisionOutput DecisionCore::step(const DecisionInput & in, DecisionState & st,
                                   const IEnvQuery & env) {
+  return step(in, st, env, nullptr);
+}
+
+DecisionOutput DecisionCore::step(const DecisionInput & in, DecisionState & st,
+                                  const IEnvQuery & env, DecisionTrace * trace) {
   // 1) 열거 + 비용 + 안전 집합.
   std::vector<TopoClass> classes = enumerate(in);
   std::vector<ClassEval> evals;
@@ -45,12 +50,29 @@ DecisionOutput DecisionCore::step(const DecisionInput & in, DecisionState & st,
   // ttc(c*) — 현재 커밋 class 의 TTC (안전 사다리 입력).
   const double ttc_cstar = env.ttc(st.c_star);
   const double v_in = in.robot_vel.vx;
-  return step_evals(evals, st, ttc_cstar, v_in, in.now, in.dt);
+  return step_evals(evals, st, ttc_cstar, v_in, in.now, in.dt, trace);
 }
 
 DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
                                         DecisionState & st, double ttc,
                                         double v_in, double now, double dt) {
+  return step_evals(evals, st, ttc, v_in, now, dt, nullptr);
+}
+
+DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
+    DecisionState & st, double ttc, double v_in, double now, double dt,
+    DecisionTrace * trace) {
+  if (trace) {
+    *trace = DecisionTrace{};
+    trace->now = now; trace->dt = dt; trace->v_input = v_in;
+    trace->before = st; trace->candidates = evals;
+  }
+  auto finalize_trace = [&](const DecisionOutput & result) {
+    if (trace) {
+      trace->after = st; trace->v_output = result.v_target;
+      trace->switched = !trace->before.c_star.equals(st.c_star);
+    }
+  };
   DecisionOutput out;
   double v_cmd = v_in;
 
@@ -66,6 +88,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
 
   // ---- 2) [안전] 사전식 최상위 분기 (P3 안전 지배) -----------------------
   if (!cstar_in_S) {
+    if (trace) trace->safety_branch = true;
     SafetyResult sr = run_safety_branch(st, S, v_cmd, ttc, now, k_, tb_);
     out.c_star = st.c_star;
     out.v_target = sr.v_target;
@@ -84,6 +107,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
         out.c_star = st.c_star;
       }
     }
+    finalize_trace(out);
     return out;   // FINALIZE (안전 분기는 ρ 갱신 생략)
   }
 
@@ -102,17 +126,26 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
     }
     const double D = J_cstar - J_cprime;   // 도전자 우위
 
+    if (trace) { trace->challenger = c_prime; trace->advantage = D; }
     // 도전 대상 변경 시 e_rev 리셋.
     if (!st.prev_c_prime.has_value() || !c_prime.equals(st.prev_c_prime.value())) {
       st.e_rev = 0;
+      if (trace) trace->challenger_reset = true;
     }
+    if (trace) trace->evidence_after_challenger_reset = st.e_rev;
 
     // 분리 누적기 갱신 (e_rev: (D-Δ)dt, e_fwd: (-D-Δ)dt).
     accumulate(st, D, dt, k_);
 
+    if (trace) {
+      trace->evidence_after_accumulate = st.e_rev;
+      trace->rho_used = st.rho;
+      trace->threshold_used = E_th(st.rho, k_);
+    }
     // 전환 조건: e_rev >= E_th(ρ).
     if (switch_ready(st, k_)) {
       st.c_star = c_prime;
+      if (trace) trace->commit_reset = true;
       st.reset_on_commit();   // e_rev, ρ, L_real, e_fwd 리셋
     }
     st.prev_c_prime = c_prime;
@@ -129,6 +162,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
   out.c_star = st.c_star;
   out.v_target = v_cmd;
   out.mode = st.mode;
+  finalize_trace(out);
   return out;
 }
 
