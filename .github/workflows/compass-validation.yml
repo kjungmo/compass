@@ -2,7 +2,10 @@ name: COMPASS validation
 on:
   pull_request:
   push:
-    branches: ["review/**"]
+    branches: ["main"]
+concurrency:
+  group: compass-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -12,6 +15,21 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash scripts/test_compass_observability.sh
       - run: bash scripts/test_completion_gates.sh
+      - run: bash scripts/test_compass_response.sh
+      - run: python3 scripts/check_observer_results.py
+      - run: python3 scripts/check_switch_bounds.py
+      - run: python3 scripts/check_paper_numbers.py
+      - run: python3 scripts/check_repo_consistency.py
+      - run: python3 -m unittest discover -s scripts -p test_repo_consistency.py
+  paper:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install manuscript build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-extra texlive-science texlive-fonts-recommended poppler-utils ripgrep
+      - run: bash scripts/build_paper.sh --check
   ros-jazzy:
     runs-on: ubuntu-24.04
     container: ros:jazzy-ros-base
@@ -21,11 +39,11 @@ jobs:
         run: |
           apt-get update
           apt-get install -y build-essential python3-colcon-common-extensions ros-jazzy-navigation2 ros-jazzy-nav2-bringup ros-jazzy-ament-cmake-gtest
-      - name: Build core, messages, evaluator and controller
+      - name: Build all five packages (simulation assets only, no Gazebo execution)
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build --base-paths src --packages-up-to compass_nav2 compass_eval --cmake-args -DBUILD_TESTING=ON
+          colcon build --base-paths src sim --cmake-args -DBUILD_TESTING=ON
       - name: Test
         shell: bash
         run: |
@@ -33,3 +51,12 @@ jobs:
           source install/setup.bash
           colcon test --packages-select compass_core compass_nav2 compass_eval --event-handlers console_direct+
           colcon test-result --verbose
+      - name: Verify simulation package install assets and Python syntax
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          test -f install/compass_sim/share/compass_sim/launch/sim_bringup.launch.py
+          test -f install/compass_sim/share/compass_sim/worlds/compass_office.sdf
+          test -x install/compass_sim/lib/compass_sim/send_straight_goal
+          python3 -m compileall -q sim/launch sim/scripts

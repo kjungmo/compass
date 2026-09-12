@@ -12,14 +12,14 @@ void prune_window(DecisionState & s, double now, double W) {
     s.safe_switch_times.pop_front();
   }
 }
-double decelerate(double v_in, const Knobs & k) {
-  return std::max(0.0, v_in - k.a_brake);
+double decelerate(double v_in, double dt, const Knobs & k) {
+  return std::max(0.0, v_in - k.a_brake * dt);
 }
 }  // namespace
 
 SafetyResult run_safety_branch(DecisionState & s,
                                const std::vector<ClassEval> & S_set,
-                               double v_in, double ttc, double now,
+                               double v_in, double ttc, double now, double dt,
                                const Knobs & k, TieBreaker & tb) {
   SafetyResult r;
   r.took_safety_branch = true;   // P3: 안전 분기가 재량 분기를 항상 선점
@@ -35,6 +35,9 @@ SafetyResult run_safety_branch(DecisionState & s,
 
   if (!std::isfinite(now) || !std::isfinite(k.W) || k.W <= 0.0)
     throw std::invalid_argument("safety window requires finite time and positive W");
+  if (!std::isfinite(dt) || dt <= 0.0 ||
+      !std::isfinite(k.a_brake) || k.a_brake < 0.0)
+    throw std::invalid_argument("braking requires positive dt and nonnegative finite acceleration");
   if (!s.safe_switch_times.empty() && now < s.safe_switch_times.back())
     throw std::invalid_argument("safety intervention time must be monotonic");
 
@@ -60,7 +63,7 @@ SafetyResult run_safety_branch(DecisionState & s,
   if (in_dwell || partial_over) {
     // (i) 드웰 보호 또는 (ii) 부분 임계 초과 -> 2단계 감속, 필요 시 3단계 정지.
     r.c_star = s.c_star;            // 1단계(전환) 생략
-    r.v_target = decelerate(v_in, k);
+    r.v_target = decelerate(v_in, dt, k);
     r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   } else if (!safe_set.empty()) {
@@ -73,7 +76,7 @@ SafetyResult run_safety_branch(DecisionState & s,
   } else {
     // 𝒮 비어있음 -> 감속, 필요 시 정지.
     r.c_star = s.c_star;
-    r.v_target = decelerate(v_in, k);
+    r.v_target = decelerate(v_in, dt, k);
     r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   }

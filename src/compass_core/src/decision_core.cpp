@@ -7,7 +7,9 @@
 #include <stdexcept>
 namespace compass {
 
-DecisionCore::DecisionCore(Knobs k) : k_(k), cost_(k) {}
+DecisionCore::DecisionCore(Knobs k) : k_(k), cost_(k) {
+  validate_accumulator_knobs(k_);
+}
 
 std::vector<TopoClass> DecisionCore::enumerate(const DecisionInput & in) const {
   // 상위 K_cap 명만 명시 차원으로. (단순화: 입력 순서 상위 K_cap.)
@@ -69,9 +71,10 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
 DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
     DecisionState & st, double ttc, double v_in, double now, double dt,
     DecisionTrace * trace, std::optional<double> progress_delta_m) {
-  if (progress_delta_m && (!std::isfinite(*progress_delta_m) ||
-      !std::isfinite(dt) || dt <= 0))
-    throw std::invalid_argument("measured progress requires finite delta and positive dt");
+  if (!std::isfinite(dt) || dt <= 0.0)
+    throw std::invalid_argument("decision interval dt must be finite and positive");
+  if (progress_delta_m && !std::isfinite(*progress_delta_m))
+    throw std::invalid_argument("measured progress requires finite delta");
   bool discretionary_commit = false;
   if (trace) {
     *trace = DecisionTrace{};
@@ -112,7 +115,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
   // ---- 2) [안전] 사전식 최상위 분기 (P3 안전 지배) -----------------------
   if (!cstar_in_S) {
     if (trace) trace->safety_branch = true;
-    SafetyResult sr = run_safety_branch(st, S, v_cmd, ttc, now, k_, tb_);
+    SafetyResult sr = run_safety_branch(st, S, v_cmd, ttc, now, dt, k_, tb_);
     out.c_star = st.c_star;
     out.v_target = sr.v_target;
     out.safety_velocity_limited = sr.velocity_limited;
@@ -126,7 +129,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
       }
       if (best != nullptr) {
         st.c_star = best->cls;
-        st.e_fwd = 0; st.e_rev = 0; st.rho = 0;
+        st.e_fwd = 0; st.e_rev = 0; st.rho = 0; st.L_real = 0;
         st.t_safe_dwell = now + k_.T_safe_dwell;
         out.c_star = st.c_star;
       }

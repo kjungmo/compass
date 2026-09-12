@@ -155,6 +155,12 @@ double CostEvaluator::J(const TopoClass & c, const DecisionInput & in,
     for (const auto& p:in.people) {
       if (!finite_pose(p.pose) || !std::isfinite(p.vel.vx)) return unavailable;
       for (double x:p.cov) if (!std::isfinite(x)) return unavailable;
+      // A covariance must be symmetric before averaging roundoff. Permit only
+      // |c01-c10| <= 1e-12 * max(1, |c01|, |c10|); otherwise antisymmetric
+      // entries could cancel and disguise malformed input as a valid PSD matrix.
+      const double symmetry_scale=std::max({1.0,std::abs(p.cov[1]),std::abs(p.cov[2])});
+      if (std::abs(p.cov[1]-p.cov[2]) > 1e-12*symmetry_scale)
+        return unavailable;
       const double cross=.5*(p.cov[1]+p.cov[2]);
       if (p.cov[0]<0 || p.cov[3]<0 || p.cov[0]*p.cov[3]<cross*cross)
         return unavailable;

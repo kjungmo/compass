@@ -71,7 +71,8 @@ double CostmapEnvQuery::lateral_bias(const compass::TopoClass & c) const
   double sum = 0.0;
   for (const auto & [id, side] : c.pairs()) {
     (void)id;
-    sum += (side == compass::Side::R) ? 1.0 : -1.0;
+    // Match the emitted path-tracking convention: L is positive path-normal.
+    sum += (side == compass::Side::R) ? -1.0 : 1.0;
   }
   return sum / static_cast<double>(c.size());
 }
@@ -79,17 +80,16 @@ double CostmapEnvQuery::lateral_bias(const compass::TopoClass & c) const
 bool CostmapEnvQuery::occupied(double wx, double wy) const
 {
   if (costmap_ == nullptr) {
-    return false;
+    return true;
   }
   unsigned int mx = 0;
   unsigned int my = 0;
   if (!costmap_->worldToMap(wx, wy, mx, my)) {
-    // costmap 밖은 미지 영역 — 보존적으로 비점유로 본다(통과 가능 측).
-    return false;
+    // Unobserved space is unavailable, including cells outside this map.
+    return true;
   }
   const unsigned char cost = costmap_->getCost(mx, my);
-  return cost >= nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE &&
-         cost != nav2_costmap_2d::NO_INFORMATION;
+  return cost >= nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
 }
 
 double CostmapEnvQuery::clearance(const compass::TopoClass & c) const
@@ -98,8 +98,8 @@ double CostmapEnvQuery::clearance(const compass::TopoClass & c) const
     const auto trajectory = trajectoryAtSpeed(c, candidate_speed_);
     return trajectory.empty() ? 0.0 : trajectoryClearance(trajectory);
   }
-  if (costmap_ == nullptr) {
-    return kDefaultClearance;
+  if (costmap_ == nullptr || occupied(robot_pose_.x, robot_pose_.y)) {
+    return 0.0;
   }
   // 로봇에서 로컬 목표 방향으로, class 의 횡 오프셋만큼 옆으로 비킨 ray 를 쏜다.
   const double dgx = local_goal_.x - robot_pose_.x;
@@ -131,7 +131,7 @@ double CostmapEnvQuery::corridor_width(const compass::TopoClass & c) const
       2.0 * (clear + kRobotRadius) : 0.0;
   }
   if (costmap_ == nullptr) {
-    return kDefaultCorridor;
+    return 0.0;
   }
   const double dgx = local_goal_.x - robot_pose_.x;
   const double dgy = local_goal_.y - robot_pose_.y;
@@ -181,7 +181,7 @@ double CostmapEnvQuery::ttc(const compass::TopoClass & c) const
     const double pvy = p.vel.vx * std::sin(p.pose.theta);
     const double rvx = robot_vel_.vx * std::cos(robot_pose_.theta) - pvx;
     const double rvy = robot_vel_.vx * std::sin(robot_pose_.theta) - pvy;
-    const double closing = -(rvx * dx + rvy * dy) / dist;  // +면 접근
+    const double closing = (rvx * dx + rvy * dy) / dist;  // robot-minus-person: + means approaching
     if (closing > 1e-3) {
       min_ttc = std::min(min_ttc, dist / closing);
     }
@@ -197,7 +197,7 @@ bool CostmapEnvQuery::feasible(const compass::TopoClass & c) const
   }
   // 하드 실현 가능성: 해당 class 횡 오프셋의 즉시 전방이 lethal 이 아니어야 한다.
   if (costmap_ == nullptr) {
-    return true;
+    return false;
   }
   return clearance(c) > std::max(costmap_->getResolution(), 1e-3);
 }
@@ -205,13 +205,31 @@ bool CostmapEnvQuery::feasible(const compass::TopoClass & c) const
 double CostmapEnvQuery::trajectoryClearance(
   const compass::CandidateTrajectory & trajectory) const
 {
-  // Opt-in mode fails closed without a map. The legacy path above retains its
-  // historical permissive fallback for archived behavior.
+  // Both environment paths fail closed without a map; archived offline metrics
+  // do not justify a permissive runtime safety fallback.
   if (costmap_ == nullptr || trajectory.empty()) {
     return 0.0;
   }
   const double res = costmap_->getResolution();
   if (!std::isfinite(res) || res <= 0.0) {
+    return 0.0;
+  }
+  // Samples alone can miss an obstacle between controller ticks. Any point on
+  // an exact constant-speed unicycle interval is at most half its arc length
+  // from one endpoint. Distance to obstacles/map edges is 1-Lipschitz, so this
+  // subtraction makes the sampled minimum a conservative swept lower bound.
+  double sweep_padding = 0.0;
+  for (size_t i = 1; i < trajectory.size(); ++i) {
+    const double dt = trajectory[i].t - trajectory[i - 1].t;
+    const double half_arc = 0.5 * std::abs(trajectory[i - 1].command.vx) * dt;
+    if (!std::isfinite(dt) || dt <= 0.0 || !std::isfinite(half_arc)) {
+      return 0.0;
+    }
+    sweep_padding = std::max(sweep_padding, half_arc);
+  }
+  // Clearance is already capped at kClearanceScan; huge intervals cannot be
+  // certified by this bounded scan and must fail closed.
+  if (sweep_padding >= kClearanceScan) {
     return 0.0;
   }
   const double min_x = costmap_->getOriginX();
@@ -260,7 +278,7 @@ double CostmapEnvQuery::trajectoryClearance(
       }
     }
   }
-  return minimum;
+  return std::max(0.0, minimum - sweep_padding);
 }
 
 double CostmapEnvQuery::trajectoryTtc(

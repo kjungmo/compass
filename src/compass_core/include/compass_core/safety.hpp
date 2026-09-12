@@ -29,11 +29,11 @@ struct SafetyResult {
 //   - rolling-window count >= N_thrash -> mode = HOLD, v_target=0 (P5).
 // HOLD 는 DecisionState::release_hold()가 명시적으로 호출될 때까지 흡수 상태다.
 //
-// 주의: 본 함수 시그니처는 dt 를 입력으로 받지 않으므로 a_brake 감속은
-// knobs 의 가정 주기(=1.0초 단위 환산) 대신 a_brake 를 직접 차감한다.
+// a_brake is a nonnegative acceleration in m/s^2; dt is the finite positive
+// decision interval in seconds. This command bound is not a stopping guarantee.
 SafetyResult run_safety_branch(DecisionState & s,
                                const std::vector<ClassEval> & S_set,
-                               double v_in, double ttc, double now,
+                               double v_in, double ttc, double now, double dt,
                                const Knobs & k, TieBreaker & tb);
 
 }  // namespace compass

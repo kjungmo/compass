@@ -250,6 +250,17 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   cmd.header.frame_id = pose.header.frame_id;
   cmd.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
 
+  // Every environment/command path interprets raw pose/plan coordinates in the
+  // costmap frame. Never compare unrelated frames, including in legacy mode.
+  // Transforming plans is a separate feature.
+  if (global_frame_.empty() || pose.header.frame_id != global_frame_ ||
+      (!global_plan_.poses.empty() && global_plan_.header.frame_id != global_frame_)) {
+    measured_progress_.reset();
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+      "Controller: pose/plan frame mismatch; holding command");
+    return cmd;
+  }
+
   // 1) 자세·속도 -> compass 자료형.
   compass::SE2 robot;
   robot.x = pose.pose.position.x;
@@ -287,11 +298,9 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
 
   if (use_measured_progress_) {
     const double stamp = pose.header.stamp.sec + pose.header.stamp.nanosec * 1e-9;
-    if (pose.header.frame_id != global_frame_ ||
-        (!global_plan_.poses.empty() && global_plan_.header.frame_id != global_frame_) ||
-        !std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
+    if (!std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
       measured_progress_.reset();
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose or frame mismatch; holding command");
+      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose; holding command");
       return cmd;
     }
     const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
@@ -332,12 +341,28 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     use_candidate_trajectories_, path, v, gains);
 
   // 4) 결정 코어 1주기 — DecisionState 는 멤버로 보존된다.
-  compass::DecisionOutput out = core_->step(in, state_, env_);
+  compass::DecisionOutput out;
+  try {
+    out = core_->step(in, state_, env_);
+  } catch (const std::invalid_argument& error) {
+    // Contract violations (including a regressing safety clock) cannot escape
+    // the command adapter and leave a prior nonzero command unaddressed.
+    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+      "Invalid decision input: %s; holding command", error.what());
+    return cmd;
+  }
 
   // 5) DecisionOutput -> TwistStamped.
   if (out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) {
     cmd.twist.linear.x = 0.0;
     cmd.twist.angular.z = 0.0;
+    return cmd;
+  }
+
+  // A braking ladder is not permission to drive through an immediately blocked
+  // or unobserved legacy ray. In particular, a missing map must emit a complete
+  // zero twist even when measured speed would otherwise produce a braking bound.
+  if (!use_candidate_trajectories_ && !(env_.clearance(out.c_star) > 0.0)) {
     return cmd;
   }
 

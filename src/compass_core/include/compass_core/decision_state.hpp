@@ -25,7 +25,9 @@ struct DecisionState {
 };
 
 inline void DecisionState::reset_on_commit() { e_rev = 0; rho = 0; L_real = 0; e_fwd = 0; }
-inline void DecisionState::reset_on_safe_switch(double now, double T) { e_rev = 0; rho = 0; t_safe_dwell = now + T; }
+inline void DecisionState::reset_on_safe_switch(double now, double T) {
+  e_rev = 0; rho = 0; L_real = 0; t_safe_dwell = now + T;
+}
 inline void DecisionState::release_hold() {
   if (mode != Mode::HOLD) return;
   mode = Mode::NORMAL;

@@ -23,7 +23,7 @@ struct Knobs {
   double sigma_rear = 0.6;    // 후방 proxemics 폭 (m)
   double sigma_s = 0.5;       // 측면 proxemics 폭 (m)
   int K_cap = 3;              // 명시 차원 상한
-  double a_brake = 0.5;       // 감속률
+  double a_brake = 0.5;       // Braking acceleration (m/s^2), applied as a_brake * dt.
   double ttc_stop = 0.8;      // 정지 임계 TTC (s)
   double T_safe_dwell = 0.6;  // 안전 드웰 보호 시간 (s)
   double eps_in = 0.02;       // 동률 진입 히스테리시스

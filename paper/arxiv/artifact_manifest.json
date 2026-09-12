@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "artifacts": {
+    "paper/arxiv/figures/fig_class_lifecycle.pdf": {
+      "sha256": "a19ae7a8c291218bd785e5e81c93af7ab26ebcb7ca082feddc9ddd9cc41ee152"
+    },
+    "paper/arxiv/figures/fig_decision_flow.pdf": {
+      "sha256": "fccc4cf6760165164c4623925247759774ce05c90cad5ddd8aaf6679712709fd"
+    },
+    "paper/arxiv/figures/fig_oscillation_compare.pdf": {
+      "sha256": "8f5149614e9473605e303a409759bebc4e307819f0d744670b0c19cebe44bc88"
+    },
+    "paper/arxiv/figures/fig_social_cost_field.pdf": {
+      "sha256": "c69f5e9d78895f188a155b78a49a1351cdc1c5d6ca8d365f748f2055b6cbbc23"
+    },
+    "paper/arxiv/main.pdf": {
+      "sha256": "a01f7a1557b4658f708dc8dea46606ef4ffdcaf5796c3f3c32effa16d634700c"
+    },
+    "paper/arxiv/main.tex": {
+      "sha256": "f59037a2601d3bdc4bc77b523764cfb6c8a63de58c215e6bb8eb287b2d321d97"
+    }
+  }
+}

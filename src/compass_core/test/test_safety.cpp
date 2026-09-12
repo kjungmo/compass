@@ -20,7 +20,7 @@ TEST(Safety, P3SafetyDominatesAccumulator) {
   // 안전한 대체 class 가 존재 -> 안전 사다리는 전환을 수행하되, 재량 분기가 아니라
   // 안전 분기에서 일어났음을 표시.
   std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
-  SafetyResult r = run_safety_branch(s, S, /*v_in=*/0.5, /*ttc=*/5.0, /*now=*/1.0, k, tb);
+  SafetyResult r = run_safety_branch(s, S, /*v_in=*/0.5, /*ttc=*/5.0, /*now=*/1.0, .05, k, tb);
   EXPECT_TRUE(r.took_safety_branch);                 // 안전 분기 선점
   EXPECT_TRUE(r.c_star.equals(mk({{7, Side::L}}, 0).cls));  // 안전 전환됨
   EXPECT_DOUBLE_EQ(s.e_rev, 0.0);                    // 안전 전환 -> e_rev 리셋
@@ -39,7 +39,7 @@ TEST(Safety, SafetyLadderMonotone) {
   // (n_thrash HOLD 마스킹을 피하려고 호출 수를 N_thrash 미만으로 제한.)
   const int iters = std::min(3, k.n_thrash - 1);
   for (int i = 0; i < iters; ++i) {
-    SafetyResult r = run_safety_branch(s, S, v, /*ttc=*/5.0, /*now=*/1.0, k, tb);
+    SafetyResult r = run_safety_branch(s, S, v, /*ttc=*/5.0, /*now=*/1.0, .05, k, tb);
     EXPECT_TRUE(r.c_star.equals(s.c_star));     // class 전환 안 함 (1단계 생략)
     EXPECT_LE(r.v_target, prev);                // 단조 비증가
     EXPECT_NE(r.mode, Mode::HOLD);
@@ -50,7 +50,7 @@ TEST(Safety, SafetyLadderMonotone) {
   // ttc 가 ttc_stop 미만이면 STOP 으로 전이 (신선한 상태로 검증, HOLD 마스킹 회피).
   DecisionState s2; s2.c_star.set(7, Side::R); s2.t_safe_dwell = 100.0;
   TieBreaker tb2;
-  SafetyResult rs = run_safety_branch(s2, S, 0.5, /*ttc=*/k.ttc_stop * 0.5, 1.0, k, tb2);
+  SafetyResult rs = run_safety_branch(s2, S, 0.5, /*ttc=*/k.ttc_stop * 0.5, 1.0, .05, k, tb2);
   EXPECT_EQ(rs.mode, Mode::STOP);
   EXPECT_LT(rs.v_target, 0.5);                   // 정지 직전에도 감속 단조 적용
 }
@@ -64,7 +64,7 @@ TEST(Safety, P5ThrashGuardHolds) {
   // c* 가 매번 안전 집합 밖이 되도록 c_star 를 S 밖으로 강제하며 반복.
   for (int i = 0; i < k.n_thrash; ++i) {
     s.c_star.set(7, Side::R);   // S 는 {7L} 뿐이므로 c_star=7R 는 늘 ∉ S
-    SafetyResult r = run_safety_branch(s, S, 0.5, /*ttc=*/5.0, /*now=*/0.1 * i, k, tb);
+    SafetyResult r = run_safety_branch(s, S, 0.5, /*ttc=*/5.0, /*now=*/0.1 * i, .05, k, tb);
     final_mode = r.mode;
   }
   EXPECT_EQ(final_mode, Mode::HOLD);
@@ -79,7 +79,7 @@ TEST(Safety, P5UsesOpenLeftRollingWindow) {
 
   for (double now : {0.0, 3.0, 6.0, 9.0}) {
     s.c_star.set(7, Side::R);
-    SafetyResult r = run_safety_branch(s, S, 0.5, 5.0, now, k, tb);
+    SafetyResult r = run_safety_branch(s, S, 0.5, 5.0, now, .05, k, tb);
     EXPECT_NE(r.mode, Mode::HOLD);
     EXPECT_EQ(s.n_thrash, 1);
   }
@@ -91,8 +91,8 @@ TEST(Safety, P5RecordsAtMostOncePerDecisionTime) {
   TieBreaker tb;
   std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
 
-  run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
-  SafetyResult duplicate = run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
+  run_safety_branch(s, S, 0.5, 5.0, 1.0, .05, k, tb);
+  SafetyResult duplicate = run_safety_branch(s, S, 0.5, 5.0, 1.0, .05, k, tb);
   EXPECT_EQ(s.n_thrash, 1);
   EXPECT_NE(duplicate.mode, Mode::HOLD);
 }
@@ -103,11 +103,11 @@ TEST(Safety, P5HoldIsAbsorbingUntilExplicitRelease) {
   TieBreaker tb;
   std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
 
-  SafetyResult entered = run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb);
+  SafetyResult entered = run_safety_branch(s, S, 0.5, 5.0, 1.0, .05, k, tb);
   ASSERT_EQ(entered.mode, Mode::HOLD);
   EXPECT_DOUBLE_EQ(entered.v_target, 0.0);
 
-  SafetyResult retained = run_safety_branch(s, S, 0.5, 5.0, 100.0, k, tb);
+  SafetyResult retained = run_safety_branch(s, S, 0.5, 5.0, 100.0, .05, k, tb);
   EXPECT_EQ(retained.mode, Mode::HOLD);
   EXPECT_DOUBLE_EQ(retained.v_target, 0.0);
   EXPECT_EQ(s.n_thrash, 1);
@@ -122,6 +122,6 @@ TEST(Safety, RejectsRegressingInterventionTime) {
   Knobs k; DecisionState s; s.c_star.set(7, Side::R);
   TieBreaker tb;
   std::vector<ClassEval> S = { mk({{7, Side::L}}, 0.20) };
-  run_safety_branch(s, S, 0.5, 5.0, 2.0, k, tb);
-  EXPECT_THROW(run_safety_branch(s, S, 0.5, 5.0, 1.0, k, tb), std::invalid_argument);
+  run_safety_branch(s, S, 0.5, 5.0, 2.0, .05, k, tb);
+  EXPECT_THROW(run_safety_branch(s, S, 0.5, 5.0, 1.0, .05, k, tb), std::invalid_argument);
 }

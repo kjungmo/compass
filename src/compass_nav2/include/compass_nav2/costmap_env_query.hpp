@@ -30,8 +30,8 @@ namespace compass_nav2
 // 답한다. 보존적인 근사를 채택한다: clearance 는 로봇 자세에서 로컬 목표 방향
 // 으로 진행하면서 만나는 lethal cell 까지의 거리, corridor_width 는 그 진행
 // 직교 방향으로 양측 lethal cell 사이 폭, TTC 는 사람 상대 접근에서 산출한다.
-// costmap 이 없거나 표본이 비면 안전 측(통과 가능)으로 답한다 — 플러그인은
-// 항상 명령을 산출해야 한다.
+// Missing maps, unknown cells and out-of-map points are unavailable. The legacy
+// ray model is still a research approximation, not a swept-footprint certificate.
 class CostmapEnvQuery : public compass::IEnvQuery
 {
 public:
@@ -62,7 +62,7 @@ public:
     const compass::TopoClass & c, double speed, double d_safe, double ttc_min) const;
 
 private:
-  // class 의 측면 부호 합 (L=-1, R=+1)의 평균 -> 횡 오프셋 방향. 빈 class 면 0.
+  // Mean class-side sign (L=+1, R=-1), matching path tracking; empty class -> 0.
   double lateral_bias(const compass::TopoClass & c) const;
   // (wx,wy) 가 lethal/inscribed 이상으로 점유되었는지.
   bool occupied(double wx, double wy) const;
@@ -79,8 +79,7 @@ private:
   double candidate_speed_ = 0.0;
   PathTrackGains gains_;
 
-  // 보존적 기본값 (costmap 부재 시).
-  static constexpr double kDefaultClearance = 5.0;     // m
+  // Bounded search defaults; missing-map availability is always false.
   static constexpr double kDefaultCorridor = 3.0;      // m
   static constexpr double kDefaultTtc = 10.0;          // s
   static constexpr double kRayMax = 4.0;               // m, 전방 ray 길이 상한

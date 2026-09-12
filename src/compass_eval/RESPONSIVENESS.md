@@ -1,9 +1,13 @@
 # Opt-in responsiveness experiment
 
-This is a research configuration, not a change to the archived default policy.
+This is a research configuration, not the default parameter profile.
 `responsive_profile()` sets only `k_rho=0.5`. The existing accumulator, challenger
-reset, tie breaking and safety branches remain in use. Default `Knobs{}` and
-calls without measured progress preserve the archived 1,500 CSV rows.
+reset, tie breaking and safety branches remain in use. Default `Knobs{}` values
+and the legacy progress fallback are retained. The current 1,500-row canonical
+CSV uses the corrected log-odds observer and is not byte-identical to the
+original `9fe495a` archive; label switch counts, sign-change rates and entropy
+are unchanged in that battery. Integrated safety repairs are separate behavioral
+changes, so this is not a claim of global old/new state equivalence.
 
 ## Why this candidate
 
@@ -24,10 +28,14 @@ bound, not a guarantee whenever an external oracle wants a switch. Noise that
 violates the sustained lower bound does not satisfy the theorem premise.
 
 The old P4 interior permanent-blocking conclusion does not apply to this profile
-for such advantages. P1's accumulation-based minimum crossing argument remains
-applicable with the new knobs and its original assumptions; P2 requires the
-stated reachability and fixed-challenger premises. No paper theorem was changed
-in this code PR. Keep the original configuration when reproducing the paper.
+for such advantages. The deterministic minimum-crossing result (P2) uses the new
+knobs with its range-bound and reset hypotheses; its companion response-time
+result additionally requires persistent challenger selection/eligibility and
+clip/leak headroom. The probabilistic refinement (P1) also requires the declared
+i.i.d. increment assumptions. The integrated manuscript has separately received
+theorem corrections; this profile's bound must not be applied without its own
+hypotheses. Keep the original parameter configuration when reproducing the
+paper's default-policy experiments.
 
 ## Input and integration contract
 
@@ -43,14 +51,28 @@ The denominator `DecisionState::L_plan` must describe the same maneuver.
 tests. Zero is valid measured progress; it never falls back to command speed.
 Nonfinite deltas and nonpositive/nonfinite dt are rejected before state mutation.
 A discretionary commit discards the previous commitment's interval increment;
-safety branches preserve their existing early-return behavior and skip progress.
+safety returns skip that interval's progress increment. A safety switch or
+HOLD-entry recommit to another class clears cumulative distance and rho in both
+proxy and measured modes;
+the next stationary sample must not import the previous maneuver's progress.
 Negative progress is clamped at cumulative zero. A stale/missing measurement
 must be handled explicitly by the caller rather than quietly replaced by speed.
 
-The DecisionInput layout has changed: rebuild dependent binaries. Existing core
-entrypoint symbols remain available. The ROS wrapper is not wired to a realized
-progress estimator in this PR; selecting the profile requires an explicit caller
-change. No robot deployment is performed.
+The source version is 0.2.0: public layouts and the environment virtual interface
+have changed, so rebuild all dependent binaries. Existing core entrypoint symbols
+are not an ABI guarantee. The integrated ROS wrapper now has an estimator behind
+`FollowPath.use_measured_progress=false`; it projects stamped realized pose
+displacement onto a frozen path normal. Set `FollowPath.k_rho=0.5` separately in
+the configuration to select the research responsiveness knobs. Neither option
+enables the other, and parameters are read at controller configuration time.
+
+The estimator's declared defaults are `progress_max_gap=0.25 s`,
+`progress_max_speed=2.0 m/s`, and `progress_length=1.0 m`; these are proposed
+limits, not calibrated measurements. Invalid intervals produce a zero command.
+Identical XY geometry/frame republishes preserve the interval, while changed
+geometry/frame starts a new one. Mixed equally split side classes are unsupported.
+The frozen normal is a coherent-maneuver proxy, not a general multi-person
+progress estimator. No Gazebo validation or robot deployment is claimed.
 
 ## Reproduce and inspect
 
@@ -70,7 +92,10 @@ responsive/measured with a SCRIPTED constant measured rate equal to input.
 It does not validate a real progress estimator. The same generated per-seed
 scenario inputs are used across profiles; the sampler is unchanged.
 `paired_results.json` retains each seed's switches and clean-case recall; the
-runner emits the full CSV including trace hashes. The archived CSV is not replaced.
+runner emits the full CSV including trace hashes. This sweep does not overwrite
+the default-policy CSV. The checked-in validation transcript describes its earlier
+run, including the then-current observer baseline and test counts; it is not the
+final integrated CI record. Reruns need fresh source/config/toolchain provenance.
 
 Clean-case oracle: target L, onset 0, confirmation .5 s, deadline 3.5 s, hold .3 s,
 expiry 10 s. Both responsive configurations achieve 50/50 timely responses at

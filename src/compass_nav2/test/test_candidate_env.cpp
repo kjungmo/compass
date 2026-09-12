@@ -68,3 +68,64 @@ TEST(CandidateEnvironment, ModifiedSpeedIsRevalidated) {
   EXPECT_DOUBLE_EQ(execution.front().command.vx,.1);
   EXPECT_DOUBLE_EQ(execution.front().command.wz,0);
 }
+
+TEST(CandidateEnvironment, SweptClearanceRejectsBetweenSampleContact) {
+  // At 1 m/s the first poses are x=0 and x=.05. This lethal cell lies at
+  // x=[.025,.026], y=[.2499,.2509], overlapping the radius-.25 footprint only
+  // between those samples. The old point-only check returned ~.000889 m and
+  // accepted execution at d_safe=0. A fine map is a valid software input.
+  nav2_costmap_2d::Costmap2D map(1800,800,.001,-.4,-.4001,
+    nav2_costmap_2d::FREE_SPACE);
+  map.setCost(425,650,nav2_costmap_2d::LETHAL_OBSTACLE);
+  auto env=query(&map,{}, {0,0,0}, {{0,0},{4,0}},1.);
+  compass::TopoClass empty;
+  EXPECT_DOUBLE_EQ(env.clearance(empty),0);
+  EXPECT_FALSE(env.feasible(empty));
+  EXPECT_FALSE(env.executionSafe(empty,1.,0.,0.));
+}
+
+TEST(LegacyEnvironment, ApproachingAndRecedingTtcUseCorrectRelativeSign) {
+  nav2_costmap_2d::Costmap2D map(100,100,.1,-5,-5,nav2_costmap_2d::FREE_SPACE);
+  compass_nav2::CostmapEnvQuery env;
+  compass::Person person;
+  person.pose={1,0,0};
+  person.vel.vx=0;
+  compass::TopoClass empty;
+  env.setContext(&map,{0,0,0},{4,0},{person},{.5,0});
+  EXPECT_DOUBLE_EQ(env.ttc(empty),2);
+  person.vel.vx=1;
+  env.setContext(&map,{0,0,0},{4,0},{person},{.5,0});
+  EXPECT_DOUBLE_EQ(env.ttc(empty),10);
+}
+
+TEST(LegacyEnvironment, MissingUnknownAndOutOfMapAreUnavailable) {
+  compass_nav2::CostmapEnvQuery env;
+  compass::TopoClass empty;
+  env.setContext(nullptr,{0,0,0},{4,0},{},{.5,0});
+  EXPECT_DOUBLE_EQ(env.clearance(empty),0);
+  EXPECT_DOUBLE_EQ(env.corridor_width(empty),0);
+  EXPECT_FALSE(env.feasible(empty));
+  nav2_costmap_2d::Costmap2D map(100,100,.1,-5,-5,nav2_costmap_2d::FREE_SPACE);
+  mark(map,0,0,nav2_costmap_2d::NO_INFORMATION);
+  env.setContext(&map,{0,0,0},{4,0},{},{.5,0});
+  EXPECT_DOUBLE_EQ(env.clearance(empty),0);
+  EXPECT_FALSE(env.feasible(empty));
+  env.setContext(&map,{5.1,0,0},{8,0},{},{.5,0});
+  EXPECT_DOUBLE_EQ(env.clearance(empty),0);
+  EXPECT_FALSE(env.feasible(empty));
+}
+
+TEST(LegacyEnvironment, RaySidesMatchCandidateAndEmittedPathTracking) {
+  nav2_costmap_2d::Costmap2D map(100,100,.1,-5,-5,nav2_costmap_2d::FREE_SPACE);
+  mark(map,.55,.25,nav2_costmap_2d::LETHAL_OBSTACLE);
+  compass_nav2::CostmapEnvQuery env;
+  compass::TopoClass left,right;
+  left.set(7,compass::Side::L);
+  right.set(7,compass::Side::R);
+  env.setContext(&map,{0,0,0},{4,0},{},{.5,0});
+  EXPECT_LT(env.clearance(left),env.clearance(right));
+  const auto l=compass_nav2::candidateRollout({0,0,0},{{0,0},{4,0}},left,.5,{});
+  const auto r=compass_nav2::candidateRollout({0,0,0},{{0,0},{4,0}},right,.5,{});
+  EXPECT_LT(0,l.front().command.wz);
+  EXPECT_LT(r.front().command.wz,0);
+}

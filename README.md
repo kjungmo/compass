@@ -28,48 +28,57 @@ freezes. **COMPASS** treats the *temporal consistency* of the passing decision
 as a first-class design objective: the passing relationship is a topological
 class bound to a person's track ID, switching is governed by a single **leaky
 evidence accumulation** rule that unifies margin, dwell, and point-of-no-return,
-and safety is layered **lexicographically** on top so consistency never
-overrides collision avoidance. Five properties (P1–P5: anti-oscillation,
-switching-rate bound, safety dominance, maneuver completion, deadlock escape)
-are stated formally and exercised by property tests.
+and safety decisions are layered **lexicographically** on top. Five conditional
+properties (P1–P5: anti-oscillation, switching-rate bound, safety dominance,
+maneuver completion, finite-window escalation to HOLD) are stated formally and
+exercised by software tests. Safety priority is a decision contract, not a proof
+of physical collision avoidance; HOLD is an absorbing zero-command state, not
+a guarantee of eventual goal progress.
 
-**Tested on:** ROS 2 **Jazzy** + Nav2 (custom `nav2_core::Controller` plugin)
-+ Gazebo **Harmonic** (`gz sim` 8.10).
+**Software validation:** standalone C++17 tests and ROS 2 **Jazzy** + Nav2
+build/tests. CI builds all five packages and checks simulation install assets and
+Python syntax; it does not launch Gazebo. The **Harmonic** testbed (`gz sim` 8) has historical smoke
+notes; the current optional controller paths have not been validated in Gazebo
+or on a robot. See [the implementation checkpoint](docs/COMPASS_COMPLETION.md).
 
 ## 📢 News
 
-- **2026-07** — arXiv-ready English draft (33 pp, [`paper/arxiv/`](paper/arxiv/))
-  with measured offline evaluation (R1 ablation · R3 latency · R5 ρ-sweep),
-  reproducible via [`compass_eval`](src/compass_eval/) and guarded by
-  [`scripts/check_paper_numbers.py`](scripts/check_paper_numbers.py).
+- **2026-09** — English manuscript and offline observer results corrected after
+  review; optional measured-progress and candidate-rollout interfaces added.
+  The current [English manuscript](paper/arxiv/main.tex) is a research draft,
+  not a deployment certification. See [results and provenance](src/compass_eval/results/README.md).
 
 ## Overview
 
 | Component | What it is |
 |---|---|
-| [`src/compass_core`](src/compass_core/) | ROS-independent decision core (C++): class lifecycle, leaky-evidence commitment, lexicographic safety; P1–P5 property tests |
+| [`src/compass_core`](src/compass_core/) | ROS-independent decision core (C++): ID-indexed labels/state, leaky-evidence commitment and safety-priority contracts |
 | [`src/compass_nav2`](src/compass_nav2/) | `nav2_core::Controller` plugin wrapping the core + path-following cruise |
 | [`src/compass_msgs`](src/compass_msgs/) | `People`/`Person` messages (`/people` input) |
 | [`src/compass_eval`](src/compass_eval/) | Offline experiment harness driving the actual decision core; results under [`results/`](src/compass_eval/results/) |
 | [`sim/`](sim/) | `compass_sim` — minimal Gazebo Harmonic testbed (office world, diff-drive robot, reactive pedestrian, Nav2 bringup) |
 
 **Key ideas**
-- **Track-ID-bound topological class** — the left/right passing relationship
-  survives across cycles through an explicit lifecycle rule (spawn, removal,
-  merge, split, TTL), stabilizing cross-cycle correspondence.
+
+- **Track-ID-bound passing label** — persistent IDs identify left/right
+  commitments across cycles. The paper specifies a fuller lifecycle (spawn,
+  removal, merge, split, TTL); the current core enumerates input-order top-K
+  labels and does not implement that complete runtime lifecycle or verify
+  trajectory winding classes.
 - **One switching equation** — challenger advantage integrates into a leaky
   accumulator; switching fires only when accumulated evidence crosses a
   progress-hardened threshold, subsuming hysteresis, dwell timers, and
   point-of-no-return in a single rule with a provable switching-rate bound.
 - **Lexicographic safety** — safety feasibility is evaluated before, and
-  strictly dominates, the commitment machinery; a thrash guard bounds
-  safety-induced replanning.
+  strictly dominates, the commitment machinery; a rolling-window thrash guard
+  enters HOLD when enough interventions occur in that window. Sparse repeated
+  interventions need not trigger HOLD.
 
 ## 📄 Paper
 
 > **COMPASS: Temporally Consistent Topological Passing Decisions for Socially
 > Aware Robot Navigation** — Jungmo Kang.
-> [English PDF](paper/arxiv/main.pdf) (33 pp, arXiv-ready) ·
+> [English PDF](paper/arxiv/main.pdf) (research draft) ·
 > [LaTeX source](paper/arxiv/main.tex) ·
 > [Korean draft](paper/paper_draft.md)
 
@@ -89,19 +98,54 @@ If COMPASS is useful in your research, please cite it
 
 ## 🔨 Build & test
 
-Requires ROS 2 Jazzy (and Gazebo Harmonic for the testbed). From the
-repository root:
+The decision-core gates require a C++17 compiler and Python 3, not ROS:
+
+```bash
+bash scripts/test_compass_observability.sh
+bash scripts/test_completion_gates.sh
+bash scripts/test_compass_response.sh /tmp/compass_response_results
+python3 scripts/check_observer_results.py
+python3 scripts/check_switch_bounds.py
+python3 scripts/check_paper_numbers.py
+python3 scripts/check_repo_consistency.py
+```
+
+The [repository consistency gate](scripts/check_repo_consistency.py) checks named
+result rows, documentation regressions and declared artifact hashes; it is not a
+proof of every claim. With TeX Live (including science/extra packages), Poppler
+and ripgrep installed, check the [canonical paper build](scripts/build_paper.sh):
+
+```bash
+bash scripts/build_paper.sh --check
+```
+
+This builds in a temporary directory without replacing the committed PDF.
+
+For ROS packages, start in a sourced ROS 2 Jazzy environment with Nav2 and
+the declared package dependencies installed. From the repository root:
 
 ```bash
 # from the repository root, in a sourced ROS 2 Jazzy environment
-colcon build && source install/setup.bash
-colcon test && colcon test-result --verbose
+colcon build --base-paths src --packages-up-to compass_nav2 compass_eval --cmake-args -DBUILD_TESTING=ON
+source install/setup.bash
+colcon test --packages-select compass_core compass_nav2 compass_eval
+colcon test-result --verbose
 
 # Reproducing the experiments (ablation, latency, rho-sweep)
-./build/compass_eval/compass_eval ablation src/compass_eval/results
+mkdir -p /tmp/compass_eval_results
+./build/compass_eval/compass_eval ablation /tmp/compass_eval_results
 ./build/compass_eval/compass_eval latency
 ./build/compass_eval/compass_eval rho_sweep
 ```
+
+The ablation command writes CSV to the supplied directory and prints its table;
+latency and rho-sweep print tables. Preserve the committed measurements when
+running new experiments. Exact seeded regression currently targets Linux
+g++ 13.3/libstdc++ (the recorded CI toolchain);
+latency depends on hardware, compiler, build flags and system load. Rebuild all
+dependent binaries for the 0.2.0 source version: public object layouts and the
+environment query interface changed. This version is not a published release.
+See [package notes](src/README.md) and [sim build](sim/README.md).
 
 ## 📊 Measured results
 
@@ -111,23 +155,35 @@ scenarios × 50 seeds), **not** physical-simulation performance. Success rate,
 collisions, social distance, and external baselines are deliberately left as a
 pre-registered protocol in the paper's *planned evaluation* (§5.6). Every
 number below is quoted from the committed measurement records under
-[`src/compass_eval/results/`](src/compass_eval/results/), and
-[`scripts/check_paper_numbers.py`](scripts/check_paper_numbers.py) keeps the
-paper's citations of them honest.
+[`src/compass_eval/results/`](src/compass_eval/results/). The observer was corrected
+using log-odds and 0.30 s of observed follow-up: current CSV observer fields are
+not byte-identical to the original `9fe495a` archive. Decision-label metrics in
+that battery are unchanged. Numerical checks cover the CSV/table correspondence;
+they do not validate every prose claim or certify physical performance.
+Default knob values and both opt-in flags are preserved; runtime safety-defect
+corrections intentionally change Nav2 behavior, including legacy TTC/occupancy,
+frame checks and time-scaled braking. This is not a binary or behavioral rollback
+to the original archive.
 
 <div align="center">
-<img src="paper/figures/fig_oscillation_compare.png" width="620" alt="Ablation, passing-class oscillation count: full method commits with at most one switch per encounter while removing the accumulator or class correspondence produces ~30-37 switches on average (log scale)"/>
+<img src="paper/figures/fig_oscillation_compare.png" width="620" alt="Offline passing-label switch counts: full method has at most one switch per encounter; immediate argmin and a synthetic flicker stress comparator average about 30 and 37 switches across five scenarios (log scale)"/>
 </div>
 
 - **R1 — oscillation control:** removing the leaky accumulator (immediate
   argmin) yields **~98 switches per encounter** under ambiguous near-ties;
   the full method commits with **≤ 1**.
-- **R3 — real-time headroom:** per-cycle worst-case latency at K=3 (8 classes,
-  no pruning) is **p99 58.6 µs / max 651.3 µs** — about **1.30 %** of a 20 Hz
-  (50 ms) control budget, decision core only.
-- **R5 — freezing threshold:** the progress-hardening drive rate exposes a
-  freezing onset at **v_lat ∈ (0.20, 0.35) m/s**, motivating the planned
-  lateral-velocity separation.
+- **R3 — archived latency:** the original default-cost decision core at K=3
+  (8 classes, no pruning) measured **p99 58.6 µs / max 651.3 µs** — about
+  **1.30 %** of a 20 Hz (50 ms) budget for that recorded maximum. This is not
+  a worst-case execution-time guarantee or timing evidence for the new candidate
+  path or full ROS pipeline.
+- **R5 — offline transition blocking:** the scripted progress-rate input exposes
+  a switch-blocking interval at **v_lat ∈ (0.20, 0.35) m/s**. It does not measure
+  a stopped robot, physical freezing, collision rate or goal failure.
+- **Corrected decision-stream observer:** argmin and the synthetic
+  no-correspondence comparator are censored in **72/250** and **71/250** runs,
+  respectively. This common label-stream scoring convention is not evidence of
+  human or motion legibility.
 - **Hypothesis correction (negative result kept):** removing hysteresis or
   progress hardening alone causes no regression in this regime — the primary
   anti-oscillation mechanism is the accumulator itself.
@@ -143,30 +199,33 @@ ros2 launch compass_sim sim_bringup.launch.py headless:=true
 ```
 
 See [`sim/README.md`](sim/README.md) for launch arguments, headless/WSL2
-notes, and the smoke-test scope (build + bringup validation; quantitative
-physical metrics are future work, per §5.6 of the paper).
+notes, and the historical smoke-test scope. Re-run bringup for the current source
+before relying on it; quantitative physical metrics are future work, per §5.6.
 
 ## 📚 Documentation
 
 | Document | Contents |
 |---|---|
-| [`paper/arxiv/main.pdf`](paper/arxiv/main.pdf) | The paper (EN, 33 pp): formalization, P1–P5, measured evaluation, planned-evaluation protocol |
+| [`paper/arxiv/main.pdf`](paper/arxiv/main.pdf) | English research draft: conditional P1–P5, offline evaluation, planned physical protocol |
 | [`paper/paper_draft.md`](paper/paper_draft.md) | Korean draft of the same paper |
-| [`src/compass_eval/results/`](src/compass_eval/results/) | Committed measurement records (R1/R3/R5) + raw CSV |
+| [`src/compass_eval/results/`](src/compass_eval/results/) | Corrected R1/R5, archived R3, raw CSV and scoped research diagnostics |
 | [`sim/README.md`](sim/README.md) | Testbed usage, launch args, WSL2/headless guidance |
 | [`src/README.md`](src/README.md) | Package-level notes |
+| [`src/compass_eval/RESPONSIVENESS.md`](src/compass_eval/RESPONSIVENESS.md) | Opt-in responsiveness profile, measured-progress contract and pending physical pilot |
+| [`docs/CANDIDATE_TRAJECTORIES.md`](docs/CANDIDATE_TRAJECTORIES.md) | Opt-in candidate rollout, environment and command contract; limitations |
 
 ## 🧭 Roadmap
 
-Measured today: decision-core behavior (R1/R3/R5). Planned, pre-registered in
-the paper (§5.6):
+Measured today: offline decision-core behavior, archived latency, and a
+scripted-cost unicycle diagnostic. Measured progress and candidate trajectories
+are software opt-ins; they are not validated physical results. Remaining work:
 
 - [ ] Physical performance battery in Gazebo (success rate, collisions,
       minimum social distance, lateral jerk) across seeded pedestrian
       scenarios
 - [ ] External baselines (R2) under an independent, symmetric tuning protocol
-- [ ] Lateral-velocity separation (replace the core's `v_lat = |v_cmd|`
-      approximation; relaxes the R5 freezing threshold)
+- [ ] Calibrate and physically validate the implemented measured-progress and
+      candidate-rollout opt-ins, including mixed-side/multi-person limitations
 - [ ] User study (R4) and a real-robot demo with AR trajectory overlay
 
 ## 🙏 Acknowledgements

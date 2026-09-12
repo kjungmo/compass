@@ -16,3 +16,11 @@ TEST(DecisionState, ResetOnCommitClearsRevRhoFwd) {
   EXPECT_DOUBLE_EQ(s.e_rev, 0.0); EXPECT_DOUBLE_EQ(s.rho, 0.0);
   EXPECT_DOUBLE_EQ(s.L_real, 0.0); EXPECT_DOUBLE_EQ(s.e_fwd, 0.0);
 }
+TEST(DecisionState, SafetyCommitClearsOldManeuverProgress) {
+  DecisionState s; s.e_rev=.4; s.rho=.7; s.L_real=.7;
+  s.reset_on_safe_switch(1.,.6);
+  EXPECT_DOUBLE_EQ(s.e_rev,0);
+  EXPECT_DOUBLE_EQ(s.rho,0);
+  EXPECT_DOUBLE_EQ(s.L_real,0);
+  EXPECT_DOUBLE_EQ(s.t_safe_dwell,1.6);
+}

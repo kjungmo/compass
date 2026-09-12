@@ -56,6 +56,21 @@ int main() {
   assert(std::isinf(CostEvaluator(k).J(L,in,env)));
   env.left=good;person.cov[0]=-1;in.people={person};
   assert(std::isinf(CostEvaluator(k).J(L,in,env)));
+  // Fresh-review regression: antisymmetric entries must not cancel into a
+  // seemingly PSD covariance. Symmetry permits only the documented roundoff.
+  person.cov[0]=person.cov[3]=1;
+  person.cov[1]=100;person.cov[2]=-100;in.people={person};
+  assert(std::isinf(CostEvaluator(k).J(L,in,env)));
+  person.cov[1]=person.cov[2]=.2;in.people={person};
+  assert(std::isfinite(CostEvaluator(k).J(L,in,env)));
+  person.cov[2]=.2+5e-13;in.people={person};
+  assert(std::isfinite(CostEvaluator(k).J(L,in,env)));
+  person.cov[2]=.2+2e-12;in.people={person};
+  assert(std::isinf(CostEvaluator(k).J(L,in,env)));
+  // The opt-in validation must not change the archived no-trajectory path.
+  person.cov[1]=100;person.cov[2]=-100;in.people={person};
+  env.left=std::nullopt;
+  assert(std::isfinite(CostEvaluator(k).J(L,in,env)));
   in.people.clear();
   // Omitted seam preserves the archived evaluator even when classes differ.
   env.left=std::nullopt;env.right=std::nullopt;
