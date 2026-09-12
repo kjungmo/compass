@@ -64,6 +64,10 @@ pluginlib_export_plugin_description_file(nav2_core compass_controller_plugin.xml
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  add_executable(test_measured_progress test/test_measured_progress.cpp)
+  target_include_directories(test_measured_progress PRIVATE include)
+  target_link_libraries(test_measured_progress compass_core::compass_core)
+  add_test(NAME measured_progress_contract COMMAND test_measured_progress)
 
   # 런타임 스모크: 플러그인을 pluginlib 로 로드 (설치 필요).
   ament_add_gtest(test_plugin_load test/test_plugin_load.cpp)

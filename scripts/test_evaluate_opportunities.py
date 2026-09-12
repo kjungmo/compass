@@ -13,6 +13,11 @@ def oracle():
                  target=L, hold=.3, lock_window=5)]
 
 class Tests(unittest.TestCase):
+    def test_future_opportunity_collision(self):
+        o=oracle();o[0].update(onset=2,confirmed=2.5)
+        self.assertIsNone(score(rows()[:20],o,1,'collision')['warranted_switch_recall'])
+    def test_unconfirmed_collision(self):
+        self.assertEqual(score(rows()[:5],oracle(),.25,'collision')['counts'],{'unconfirmed_opportunity':1})
     def test_frozen(self):
         r=score(rows(),oracle(),10)
         self.assertEqual(r['warranted_switch_recall'],0)

@@ -1,0 +1,35 @@
+name: COMPASS validation
+on:
+  pull_request:
+  push:
+    branches: ["review/**"]
+permissions:
+  contents: read
+jobs:
+  standalone:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/test_compass_observability.sh
+      - run: bash scripts/test_completion_gates.sh
+  ros-jazzy:
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-base
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Nav2 build dependencies
+        run: |
+          apt-get update
+          apt-get install -y build-essential python3-colcon-common-extensions ros-jazzy-navigation2 ros-jazzy-nav2-bringup ros-jazzy-ament-cmake-gtest
+      - name: Build core, messages, evaluator and controller
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --base-paths src --packages-up-to compass_nav2 compass_eval --cmake-args -DBUILD_TESTING=ON
+      - name: Test
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --packages-select compass_core compass_nav2 compass_eval --event-handlers console_direct+
+          colcon test-result --verbose

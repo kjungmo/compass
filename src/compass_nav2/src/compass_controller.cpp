@@ -18,6 +18,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <stdexcept>
 
 #include "nav2_costmap_2d/cost_values.hpp"
 #include "nav2_util/node_utils.hpp"
@@ -110,6 +111,14 @@ void CompassController::loadKnobs(
   getParam(node, name, "eps_in", k.eps_in, k.eps_in);
   getParam(node, name, "eps_out", k.eps_out, k.eps_out);
   knobs_ = k;
+  getParam(node, name, "use_measured_progress", use_measured_progress_, false);
+  getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
+  getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
+  getParam(node, name, "progress_length", progress_length_, 1.0);
+  if (!std::isfinite(progress_max_gap_) || progress_max_gap_ <= 0 ||
+      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0 ||
+      !std::isfinite(progress_length_) || progress_length_ <= 0)
+    throw std::invalid_argument("invalid measured progress parameters");
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
   // 궤적 계층 ② 노브 (경로 추종 cruise).
   getParam(node, name, "cruise_speed", cruise_speed_, cruise_speed_);
@@ -150,12 +159,15 @@ void CompassController::reset()
   std::lock_guard<std::mutex> lock(mutex_);
   state_ = compass::DecisionState{};
   has_last_now_ = false;
+  measured_progress_.reset();
 }
 
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   global_plan_ = path;
+  measured_progress_.reset();
+  if (use_measured_progress_) { state_.L_real = 0; state_.rho = 0; }
 }
 
 void CompassController::setSpeedLimit(const double & speed_limit, const bool & percentage)
@@ -246,6 +258,27 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   in.dt = (has_last_now_ && now > last_now_) ? (now - last_now_) : 0.1;
   last_now_ = now;
   has_last_now_ = true;
+
+  if (use_measured_progress_) {
+    const double stamp = pose.header.stamp.sec + pose.header.stamp.nanosec * 1e-9;
+    if (pose.header.frame_id != global_frame_ ||
+        (!global_plan_.poses.empty() && global_plan_.header.frame_id != global_frame_) ||
+        !std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
+      measured_progress_.reset();
+      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose or frame mismatch; holding command");
+      return cmd;
+    }
+    std::vector<compass::Point2D> path;
+    for (const auto& ps : global_plan_.poses) path.push_back({ps.pose.position.x, ps.pose.position.y});
+    const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
+      state_.c_star, path, progress_max_gap_, progress_max_speed_);
+    if (!progress.valid) {
+      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: %s; holding command", progress.reason);
+      return cmd;
+    }
+    in.lateral_progress_delta_m = progress.delta_m;
+    state_.L_plan = progress_length_;
+  }
 
   // 3) costmap 컨텍스트 주입.
   const nav2_costmap_2d::Costmap2D * costmap =

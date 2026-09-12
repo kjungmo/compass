@@ -77,6 +77,8 @@ def score(rows, opportunities, end_time, ending='timeout'):
         eligible = True
         if invalid:
             outcome, eligible = 'invalid_log', False
+        elif end_time <= op['confirmed']:
+            outcome, eligible = 'unconfirmed_opportunity', False
         elif completed is not None:
             outcome = 'timely' if completed <= op['deadline'] + 1e-9 else 'late'
         elif safety_time is not None:
