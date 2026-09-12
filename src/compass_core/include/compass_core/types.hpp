@@ -52,6 +52,9 @@ struct DecisionInput {
   std::vector<Person> people;  // 추적된 사람
   double dt = 0.1;             // 주기 간격 (s)
   double now = 0.0;            // 현재 시각 (s)
+  // Signed progress along the CURRENT commitment, measured over the preceding dt.
+  // nullopt preserves the legacy forward-speed approximation. Rebuild API consumers.
+  std::optional<double> lateral_progress_delta_m;
 };
 
 // 한 결정 주기의 출력 (research_spec §2.2).

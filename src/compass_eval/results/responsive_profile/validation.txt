@@ -1,0 +1,14 @@
+50000 traced/untraced cycles equal; commit, safety, no-challenger covered
+1500 canonical CSV rows unchanged
+blocked {'missed': 1}
+response {'timely': 1}
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.005s
+
+OK
+response bound, cap-only counterexample, measured zero/retreat/reset/NaN passed; bound=50 cycles
+Physical metric boundary cases: 8 passed.
+ROS/ament build: not executed.
+Physical simulator runs: 0; pilot cases are pending.
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
