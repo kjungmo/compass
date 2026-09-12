@@ -1,17 +1,17 @@
 # COMPASS completion checkpoint
 
 Status: the complete opt-in Nav2 candidate trajectory/environment/command path,
-including the zero-clearance correction, passed standalone and ROS Jazzy CI at
-remote PR #15 head 5e338c92 (run 34710326982). Round-5 observer/theorem fixes and
-the P5 rolling-window/HOLD implementation are integrated locally and pass the
-standalone gates; they still require publication to PR #15 and one ROS CI run.
+including the round-5 observer/theorem fixes and P5 rolling-window/HOLD
+implementation, is published at remote PR #15 head 7f5ce825 and passed both
+standalone and ROS Jazzy CI (run 34713494146). The authorized internal software
+gates are complete; only the explicitly external research/robot gates below remain.
 Do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
 
 - PR #2: review/observability-metrics, original remote head 27fd2519.
 - PR #14: review/responsive-progress, original remote head 41e7837e.
-- PR #15: review/completion-gates, based on PR #14.
+- PR #15: review/completion-gates, based on PR #14, tested head 7f5ce825.
 - PR #12: codex/round5-observer, original remote head 5343d457.
 - PR #13: codex/round5-theorems, original remote head 60bb5ed9.
   Their reviewed changes are integrated here; preserve those concurrent branches.
@@ -98,6 +98,10 @@ strict positive clearance in addition to the configured threshold.
 Run 34710326982 at remote PR #15 head 5e338c92 passed both standalone and ROS
 Jazzy jobs after that fix: all four packages built and all tests passed.
 Evidence: https://github.com/kjungmo/compass/actions/runs/34710326982
+Run 34713494146 at remote PR #15 head 7f5ce825 passed both standalone and ROS
+Jazzy jobs for the final integrated observer/theorem/P5 source: all four packages
+built, standalone validation passed, and all ROS tests passed.
+Evidence: https://github.com/kjungmo/compass/actions/runs/34713494146
 Local safety contract tests cover zero/small bounds, normal startup, STOP/HOLD,
 and nonfinite limits. The 50,000-cycle/1,500-row regression remains green with
 16 opportunity tests after these changes. The plan-republish gtest is now also covered by that successful ROS CI.
@@ -130,7 +134,8 @@ its ROS build and plan-republish regression passed at bb0e8293.
 - The two PR #12 observer review findings and two PR #13 theorem review findings
 are addressed in the integrated branch. Independent review of the new combined
 SHA remains external to implementation verification.
-No Gazebo test executed. Local ROS/container runtime is still absent.
+- No Gazebo test executed. The local environment still lacks a ROS/container
+runtime; the final integrated source instead passed the repository's ROS Jazzy CI.
 - The integrated LaTeX source passes numeric/checker validation. Its 40-page PDF
 was rebuilt with cached algorithm/algorithmicx packages and two pdfLaTeX passes;
 changed theorem/result pages were rendered and visually checked.
@@ -138,16 +143,13 @@ changed theorem/result pages were rendered and visually checked.
 opportunity/free-motion oracle and controller adapter before physical experiments.
 - Robot deployment and main merge require a separate concrete decision.
 
-## Continuation protocol
+## Completion handoff
 
-Check the completion PR CI once per scheduled run. If still running, wait.
-If failed, inspect logs and fix the concrete defect, then rerun only relevant gates.
-Preserve remote parent/head changes. Update this file with exact tested commits.
-Do not declare whole-system completion solely because CI passes. The latest user
-clarification keeps candidate-specific costs and control integration in software
-scope. After this CI, continue bounded candidate-trajectory/cost implementation
-and tests; preserve the archived baseline via an explicit option. Distinguish
-such internal code gaps from Gazebo/hardware measurement gates. Disable only
-when authorized software work is complete or further work is demonstrably blocked;
-record a precise remaining validation handoff and do not claim physical success. If platform limits prevent progress, record the blocker and stop
-repeating identical attempts. No usage-quota/reset-time API is available.
+The bounded internal implementation scope is complete at tested source head
+7f5ce825. Keep the archived baseline and opt-in defaults unchanged during review.
+Do not interpret CI, the deterministic unicycle diagnostic, or offline transition
+blocking as Gazebo/hardware motion, physical freezing, goal-success, collision,
+social-distance, or human legibility evidence. Any continuation now requires one
+of the explicit external gates above, independent review feedback, or a separate
+decision to merge/deploy. Do not resend either Omni email. Do not merge/deploy to
+main without that separate decision.
