@@ -7,6 +7,8 @@ core=(src/compass_core/src/*.cpp)
 inc=(-I src/compass_core/include -I src/compass_eval/include -I src/compass_nav2/include)
 g++ -std=c++17 -O2 "${inc[@]}" src/compass_core/src/topo_class.cpp src/compass_nav2/test/test_measured_progress.cpp -o "$out/progress"
 "$out/progress"
+g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_nav2/test/test_velocity_limits.cpp -o "$out/velocity"
+"$out/velocity"
 g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_nav2/src/path_tracking.cpp src/compass_eval/src/closed_loop_diagnostic.cpp -o "$out/closed_loop"
 result_dir=${1:-/tmp/compass_closed_loop}
 mkdir -p "$result_dir"

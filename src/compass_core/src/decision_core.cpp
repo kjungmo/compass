@@ -104,6 +104,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
     SafetyResult sr = run_safety_branch(st, S, v_cmd, ttc, now, k_, tb_);
     out.c_star = st.c_star;
     out.v_target = sr.v_target;
+    out.safety_velocity_limited = sr.velocity_limited;
     out.mode = st.mode;
     // HOLD 진입 시: 새 최선 class 로 커밋 + e_fwd,e_rev,ρ,드웰 리셋.
     if (st.mode == Mode::HOLD && !S.empty()) {

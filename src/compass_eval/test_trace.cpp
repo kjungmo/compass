@@ -28,6 +28,7 @@ int main(){
       auto ox=a.step_evals(e,x,5,c.v_in,i*DT,DT);
       auto oy=b.step_evals(e,y,5,c.v_in,i*DT,DT,&t);
       same(x,y);same(t.after,y);assert(ox.v_target==oy.v_target);
+      assert(ox.safety_velocity_limited==oy.safety_velocity_limited);
       assert(t.switched==!t.before.c_star.equals(t.after.c_star));
       if(t.commit_reset){saw_commit=true;assert(t.evidence_after_accumulate.value()>=t.threshold_used.value());assert(t.after.e_rev==0);}
       if(t.safety_branch){saw_safety=true;assert(!t.threshold_used);}

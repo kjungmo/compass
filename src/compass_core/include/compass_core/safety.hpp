@@ -12,6 +12,7 @@ struct SafetyResult {
   TopoClass c_star;        // 갱신된 커밋 class (전환했으면 새 값)
   double v_target = 0.0;   // 목표 속도 (감속/정지 반영)
   Mode mode = Mode::NORMAL;
+  bool velocity_limited = false;   // Braking bound, distinct from measured-speed passthrough.
   bool took_safety_branch = false;  // 안전 분기가 재량 분기를 선점했는지
 };
 

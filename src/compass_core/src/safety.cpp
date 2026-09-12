@@ -43,6 +43,7 @@ SafetyResult run_safety_branch(DecisionState & s,
     // (i) 드웰 보호 또는 (ii) 부분 임계 초과 -> 2단계 감속, 필요 시 3단계 정지.
     r.c_star = s.c_star;            // 1단계(전환) 생략
     r.v_target = decelerate(v_in, k);
+    r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   } else if (!safe_set.empty()) {
     // 1단계: 안전 전환.
@@ -55,6 +56,7 @@ SafetyResult run_safety_branch(DecisionState & s,
     // 𝒮 비어있음 -> 감속, 필요 시 정지.
     r.c_star = s.c_star;
     r.v_target = decelerate(v_in, k);
+    r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   }
 

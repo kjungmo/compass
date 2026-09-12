@@ -27,6 +27,7 @@
 
 #include "compass_nav2/people_conversion.hpp"
 #include "compass_nav2/path_tracking.hpp"
+#include "compass_nav2/velocity_limits.hpp"
 
 namespace compass_nav2
 {
@@ -165,9 +166,21 @@ void CompassController::reset()
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  bool geometry_changed = global_plan_.header.frame_id != path.header.frame_id ||
+    global_plan_.poses.size() != path.poses.size();
+  if (!geometry_changed) {
+    for (size_t i = 0; i < path.poses.size(); ++i) {
+      const auto& a = global_plan_.poses[i].pose.position;
+      const auto& b = path.poses[i].pose.position;
+      if (a.x != b.x || a.y != b.y) { geometry_changed = true; break; }
+    }
+  }
   global_plan_ = path;
-  measured_progress_.reset();
-  if (use_measured_progress_) { state_.L_real = 0; state_.rho = 0; }
+  // Republishing identical geometry with fresh stamps is not a new maneuver.
+  if (geometry_changed) {
+    measured_progress_.reset();
+    if (use_measured_progress_) { state_.L_real = 0; state_.rho = 0; }
+  }
 }
 
 void CompassController::setSpeedLimit(const double & speed_limit, const bool & percentage)
@@ -314,12 +327,9 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     }
   }
 
-  // 능동 안전 감속 존중: 코어가 *양의* 감속 상한(out.v_target > 0.05)을 보고할
-  // 때만 그것으로 cruise 를 클램프한다. 정지 상태의 0 이 cruise 를 죽이지
-  // 않도록 0(혹은 미세값)은 무시한다.
-  if (out.v_target > 0.05) {
-    v = std::min(v, out.v_target);
-  }
+  // A safety bound is authoritative even at zero; normal measured-speed
+  // passthrough is distinct so starting from rest remains possible.
+  v = applyCoreVelocityLimit(v, out);
 
   // 하드 상한 및 속도 한계 적용.
   double v_cap = max_linear_speed_;

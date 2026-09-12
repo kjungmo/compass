@@ -1,13 +1,13 @@
 # COMPASS completion checkpoint
 
-Status: ROS link failure fixed; awaiting CI rerun and final review. This is the checkpoint for authorized
+Status: PIC fix verified by ROS CI; safety-velocity and identical-plan fixes await new CI. This is the checkpoint for authorized
 continuation; do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
 
 - PR #2: review/observability-metrics, original remote head 27fd2519.
 - PR #14: review/responsive-progress, original remote head 41e7837e.
-- Completion branch: review/completion-gates, based on PR #14.
+- PR #15: review/completion-gates, based on PR #14.
 - Other round5 observer/theorem branches are concurrent work; do not overwrite them.
 
 The goal is a reviewable, tested software implementation with explicit research
@@ -24,8 +24,9 @@ motion is signed. Repeated/reversed time, stale gaps, pose jumps and absent path
 fail explicitly. ROS returns a zero command on invalid measurements.
 3. ROS parameters: progress_max_gap=.25 s, progress_max_speed=2 m/s,
 progress_length=1 m. These are proposed configured limits, not calibrated values.
-setPlan resets the measured epoch and cumulative progress; frequent replanning
-therefore limits accumulated hardening and must be evaluated in integration.
+setPlan preserves the measured epoch for identical XY geometry/frame despite new
+stamps. Changed geometry still resets progress; genuine frequent replanning
+therefore limits hardening and needs integration evaluation.
 Mixed equally split side classes are unsupported and cause a hold; no multi-person
 maneuver-progress estimator is claimed. A fixed plan-normal is a proxy for a
 single coherent maneuver, not a general ground-truth lateral-progress solution.
@@ -35,15 +36,24 @@ SCRIPTED costs and two candidate endpoints. Not the complete Nav2 controller,
 Gazebo, hardware dynamics, or an independent physical oracle. No stochastic seeds
 or repeated independent trials are claimed for this deterministic diagnostic.
 5. CI for standalone regression and ROS Jazzy colcon build/test.
+6. SafetyResult/DecisionOutput carry an explicit safety velocity-limit flag.
+The Nav2 command adapter honors zero/small braking bounds instead of treating
+these as normal measured-speed startup values. Default core decision behavior
+and archived CSV are unchanged; consumer binaries must rebuild for output layout.
+STOP/HOLD remain zero. The existing acceleration decrement semantics are unchanged.
+A ROS regression tests identical-path republish versus geometry/frame changes.
 
 ## Local evidence
 
-CI at remote commit 0921b70fcf338ee6c7b6f4e6d8b3b0430b642d9c:
-standalone passed; ROS Jazzy compiled core/messages/evaluator and controller
-sources, but the shared controller link failed because libcompass_core.a was
-not built with PIC (R_X86_64_PC32 relocation). Set POSITION_INDEPENDENT_CODE ON
-for compass_core; the next CI must validate the shared link and ROS tests.
-Evidence: https://github.com/kjungmo/compass/actions/runs/34698467661
+CI at remote commit af55731892eb099124e0c272dd3e12ced618edbe passed:
+core/messages/evaluator/controller build succeeded; colcon reports 50 tests,
+0 errors, 0 failures, 0 skipped. Standalone job also passed.
+Evidence: https://github.com/kjungmo/compass/actions/runs/34701856351
+This validates the PIC correction after run 34698467661 failed at shared linking.
+The newer safety-velocity and identical-plan changes still require their own ROS CI.
+Local safety contract tests cover zero/small bounds, normal startup, STOP/HOLD,
+and nonfinite limits. The 50,000-cycle/1,500-row regression remains green with
+16 opportunity tests after these changes. New plan-republish gtest is CI-only.
 
 Run bash scripts/test_completion_gates.sh. All estimator checks and 16 opportunity
 plus 8 physical-metric tests pass. Previous 50,000-cycle/1,500-row legacy regression
@@ -66,10 +76,10 @@ class; only the rule preference differs, aside from availability. Therefore the
 scripted cost response evidence is not validation of real Nav2 candidate ranking.
 A class-specific trajectory generator and cost evaluation are further algorithm
 work, not something to paper over by changing numerical knobs.
-- The wrapper's existing speed bootstrap can ignore a small/zero safety velocity
-limit outside STOP/HOLD. Review the safety command contract before robot use.
-- ROS build/test is pending; /opt/ros, colcon and container runtime are absent
-locally. Use CI output as evidence, not a guessed pass. No Gazebo test executed.
+- The small/zero safety-bound bootstrap defect is fixed in code with a regression;
+its ROS build and new plan-republish regression await the next CI.
+- ROS build/test passed at af557318; latest changes need their own CI.
+No Gazebo test executed. Local ROS/container runtime is still absent.
 - 480 physical cases remain pending: bind geometry, actor traces, independent
 opportunity/free-motion oracle and controller adapter before physical experiments.
 - Robot deployment and main merge require a separate concrete decision.
@@ -79,7 +89,11 @@ opportunity/free-motion oracle and controller adapter before physical experiment
 Check the completion PR CI once per scheduled run. If still running, wait.
 If failed, inspect logs and fix the concrete defect, then rerun only relevant gates.
 Preserve remote parent/head changes. Update this file with exact tested commits.
-When software CI passes and reviewable PRs clearly expose the above external
-research/robot gates, report that scoped completion and disable the continuation
-automation. If platform limits prevent progress, record the blocker and stop
+Do not declare whole-system completion solely because CI passes. The latest user
+clarification keeps candidate-specific costs and control integration in software
+scope. After this CI, continue bounded candidate-trajectory/cost implementation
+and tests; preserve the archived baseline via an explicit option. Distinguish
+such internal code gaps from Gazebo/hardware measurement gates. Disable only
+when authorized software work is complete or further work is demonstrably blocked;
+record a precise remaining validation handoff and do not claim physical success. If platform limits prevent progress, record the blocker and stop
 repeating identical attempts. No usage-quota/reset-time API is available.

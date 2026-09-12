@@ -61,6 +61,8 @@ struct DecisionInput {
 struct DecisionOutput {
   TopoClass c_star;   // 선택된 class
   double v_target = 0.0;  // 목표 속도 (m/s)
+  // True only when the safety ladder imposes a bound, including zero.
+  bool safety_velocity_limited = false;
   Mode mode = Mode::NORMAL;
 };
 
