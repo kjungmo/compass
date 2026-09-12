@@ -1,10 +1,17 @@
 # COMPASS completion checkpoint
 
-Status: repository-wide main merge preparation; repaired candidate awaiting
-final independent AI review and current-head CI. The earlier internal-completion
-conclusion at `7f5ce825`/`1f17ba42` is superseded. Those green runs did not cover
-the manuscript drift, missing consistency checks or safety defects subsequently
-identified. Do not use their success as approval of this candidate.
+Status: repository-wide source/paper preparation and independent AI review are
+complete for the scoped research merge. The verified source candidate is
+`54dfc43f85c2e91d1832be5e22ab69cf151e7c62`, tree
+`9f541eb9e643933fd849dbb2d9ef7706724f507b`.
+[CI run 34721916869](https://github.com/kjungmo/compass/actions/runs/34721916869)
+passed standalone, manuscript build and ROS Jazzy checks. The final handoff
+revision changes review/checkpoint documents only; the live PR checks must also
+be green for its exact head before a maintainer merges.
+
+This supersedes the earlier internal-only conclusion at `7f5ce825`/`1f17ba42`.
+Those older runs did not cover the manuscript drift, missing consistency checks
+or safety defects subsequently found and repaired. Main has not been merged.
 
 ## Integration scope
 
@@ -66,10 +73,14 @@ Initial investigation and remediation records are in
 [reviews/merge-docs.md](reviews/merge-docs.md) and
 [reviews/merge-consistency.md](reviews/merge-consistency.md).
 They are AI investigations, not human approvals or experimental evidence.
+The fresh, non-implementing investigators' final dispositions, corrected findings,
+CI history and source identities are consolidated in
+[reviews/final-integration.md](reviews/final-integration.md).
 
 ## Verification gate
 
-The final candidate must pass all of:
+The source candidate passed all of the following; the same commands remain
+required for subsequent changes:
 
 ```bash
 bash scripts/test_compass_observability.sh
@@ -88,8 +99,13 @@ candidate/safety contracts, 16 opportunity and 8 physical-scorer tests,
 response-profile and theorem-bound diagnostics, repository consistency, and
 manuscript compilation. They do not measure physical performance. ROS-specific
 gtests require actual ROS Jazzy CI: local dependency stand-ins used during
-development are explicitly not ROS validation. A fresh exact-candidate AI review
-and current-head green CI remain required before the integration PR is ready.
+development are explicitly not ROS validation. Actual ROS Jazzy CI built all
+five packages, ran all registered tests in the three test-bearing packages, and
+verified the simulation package's installed assets and Python syntax. Colcon
+reported 73 aggregated test entries, zero errors/failures/skips. The final
+40-page PDF was rebuilt and its changed pages visually checked. Three independent
+AI COMMENT reviews are recorded on PR #15; current-head checks and any human
+approval rules still govern the separate merge action.
 
 The deterministic unicycle diagnostic remains scoped: `legacy_proxy` times out
 at 60 s, while both measured profiles reach the declared goal at 17.45 s. These
@@ -113,5 +129,7 @@ fixture uses scripted costs and is neither full Nav2/Gazebo nor hardware.
 
 Do not repeatedly build or invent optional extensions to fill these external
 research gaps. Do not send email, merge to main, deploy, or delete branches as
-part of this preparation. At handoff, record the final candidate and CI links;
-any subsequent code change invalidates that exact-candidate readiness decision.
+part of this preparation. The exact source candidate, review and CI links are
+recorded above; any subsequent code/paper/configuration change requires renewed
+scoped review and verification. A handoff-document-only descendant does not
+silently replace the recorded implementation evidence.

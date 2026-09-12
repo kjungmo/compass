@@ -29,6 +29,10 @@ They are AI-agent reviews, not human approvals or independent empirical evidence
 Fresh reviewers must assess the repaired exact candidate before readiness is
 declared; a clean thread count is not a review.
 
+The final independent dispositions, corrected findings and exact-source evidence
+are recorded in [reviews/final-integration.md](reviews/final-integration.md).
+They cover the repaired integration, not just the original stacked PR delta.
+
 Required gates for this research merge:
 
 - Current main is an ancestor of the final candidate; no unreviewed incoming
@@ -63,6 +67,26 @@ physical/research conditions remain pending should stay open or be explicitly
 split when the maintainer chooses to update the issue tracker.
 
 ## Separate decisions after preparation
+
+For the maintainer's subsequent merge decision:
+
+1. Open PR #15 and confirm its base is `main`, its reviewed head has not changed,
+   and all three current-head jobs (standalone, paper, ROS Jazzy) are green.
+2. Recheck that main is still the recorded baseline (or review any new incoming
+   changes), there is no conflict, and any current branch protection, requested
+   changes or approval requirement is satisfied. Never bypass a new rule.
+3. Merge the integrated PR once. A merge commit preserves the inherited stack
+   ancestry. This preparation does not execute that action or enable auto-merge.
+4. The merged tree contains the affected implementation, tests, configs, current
+   evaluation outputs, canonical LaTeX/PDF/figures, companion documents, package
+   metadata and CI together. Unchanged files remain unchanged. Source packages
+   must be rebuilt; merging is not installation or deployment.
+5. Reconcile superseded component PRs separately, without replaying overlapping
+   patches. Preserve their branches unless the maintainer authorizes cleanup.
+
+The workflow also runs on subsequent pushes/merges to main. A green pre-merge
+run does not replace checking that post-merge run, and a green post-merge run
+does not establish physical performance.
 
 Source packages are versioned 0.2.0 to signal changed C++ layouts/interfaces;
 all consumers must rebuild. This is not a release publication. Defaults preserve
