@@ -64,6 +64,10 @@ pluginlib_export_plugin_description_file(nav2_core compass_controller_plugin.xml
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  add_executable(test_candidate_cost test/test_candidate_cost.cpp src/path_tracking.cpp)
+  target_include_directories(test_candidate_cost PRIVATE include)
+  target_link_libraries(test_candidate_cost compass_core::compass_core)
+  add_test(NAME candidate_cost_contract COMMAND test_candidate_cost)
   add_executable(test_velocity_limits test/test_velocity_limits.cpp)
   target_include_directories(test_velocity_limits PRIVATE include)
   target_link_libraries(test_velocity_limits compass_core::compass_core)

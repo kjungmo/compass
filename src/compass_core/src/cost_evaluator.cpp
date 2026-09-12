@@ -110,10 +110,83 @@ double CostEvaluator::J(const TopoClass & c, const DecisionInput & in,
     return std::numeric_limits<double>::infinity();
   }
 
+  double goal, social, effort;
+  const auto trajectory = env.candidate_trajectory(c);
+  if (trajectory) {
+    const auto unavailable = std::numeric_limits<double>::infinity();
+    const auto finite_pose = [](const SE2& p) {
+      return std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.theta);
+    };
+    const auto& path = *trajectory;
+    if (!std::isfinite(env.corridor_width(c)) || !std::isfinite(env.clearance(c)))
+      return unavailable;
+    // Fixed horizon prevents a short or empty candidate winning by omitting cost.
+    if (path.size() < 2 || path.size() > 10001 || !finite_pose(in.robot_pose) ||
+        !std::isfinite(in.local_goal.x) || !std::isfinite(in.local_goal.y) ||
+        path.front().t != 0 || std::abs(path.back().t - 1.) > 1e-9)
+      return unavailable;
+    if (std::hypot(path.front().pose.x-in.robot_pose.x,
+                   path.front().pose.y-in.robot_pose.y) > 1e-8 ||
+        std::abs(std::remainder(path.front().pose.theta-in.robot_pose.theta,
+                               2*std::acos(-1.))) > 1e-8) return unavailable;
+    for (size_t i=0; i<path.size(); ++i) {
+      const auto& s=path[i];
+      if (!std::isfinite(s.t) || !finite_pose(s.pose) ||
+          !std::isfinite(s.command.vx) || !std::isfinite(s.command.wz) ||
+          (i && (s.t <= path[i-1].t || s.t-path[i-1].t > .1+1e-9)))
+        return unavailable;
+      if (i) {
+        const auto& prev=path[i-1];
+        const double dt=s.t-prev.t,v=prev.command.vx,w=prev.command.wz;
+        SE2 predicted=prev.pose;
+        if (std::abs(w)<1e-12) {
+          predicted.x+=v*std::cos(predicted.theta)*dt;
+          predicted.y+=v*std::sin(predicted.theta)*dt;
+        } else {
+          predicted.x+=v/w*(std::sin(predicted.theta+w*dt)-std::sin(predicted.theta));
+          predicted.y-=v/w*(std::cos(predicted.theta+w*dt)-std::cos(predicted.theta));
+        }
+        predicted.theta+=w*dt;
+        if (!finite_pose(predicted) || std::hypot(predicted.x-s.pose.x,predicted.y-s.pose.y)>1e-8 ||
+            std::abs(std::remainder(predicted.theta-s.pose.theta,2*std::acos(-1.)))>1e-8)
+          return unavailable;
+      }
+    }
+    for (const auto& p:in.people) {
+      if (!finite_pose(p.pose) || !std::isfinite(p.vel.vx)) return unavailable;
+      for (double x:p.cov) if (!std::isfinite(x)) return unavailable;
+      const double cross=.5*(p.cov[1]+p.cov[2]);
+      if (p.cov[0]<0 || p.cov[3]<0 || p.cov[0]*p.cov[3]<cross*cross)
+        return unavailable;
+    }
+    goal=std::hypot(path.back().pose.x-in.local_goal.x,
+                    path.back().pose.y-in.local_goal.y);
+    social=effort=0;
+    double previous_social=0;
+    for (size_t i=0; i<path.size(); ++i) {
+      const auto& s=path[i];double density=0;
+      for (auto p:in.people) {
+        // Constant heading/velocity prediction; not a learned human-motion model.
+        p.pose.x+=p.vel.vx*std::cos(p.pose.theta)*s.t;
+        p.pose.y+=p.vel.vx*std::sin(p.pose.theta)*s.t;
+        density+=social_kernel({s.pose.x,s.pose.y},p);
+      }
+      if (i) {
+        const double dt=s.t-path[i-1].t;
+        social+=.5*(previous_social+density)*dt;
+        effort+=path[i-1].command.wz*path[i-1].command.wz*dt;
+      }
+      previous_social=density;
+    }
+    if (!std::isfinite(goal)||!std::isfinite(social)||!std::isfinite(effort))
+      return unavailable;
+  } else {
+    goal=j_goal_raw(c,in);social=j_social_raw(c,in);effort=j_effort_raw(c,in);
+  }
   // 항별 정규화 (고정 보정 상수 -> 시불변).
-  const double jg = clip01((j_goal_raw(c, in)   - goal_min_)   / (goal_max_   - goal_min_));
-  const double js = clip01((j_social_raw(c, in) - social_min_) / (social_max_ - social_min_));
-  const double je = clip01((j_effort_raw(c, in) - effort_min_) / (effort_max_ - effort_min_));
+  const double jg = clip01((goal - goal_min_) / (goal_max_ - goal_min_));
+  const double js = clip01((social - social_min_) / (social_max_ - social_min_));
+  const double je = clip01((effort - effort_min_) / (effort_max_ - effort_min_));
   const double jr = clip01((j_rule_raw(c, in)   - rule_min_)   / (rule_max_   - rule_min_));
 
   return k_.w_g * jg + k_.w_s * js + k_.w_e * je + k_.w_r * jr;

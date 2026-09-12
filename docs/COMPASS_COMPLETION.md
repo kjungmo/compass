@@ -1,6 +1,8 @@
 # COMPASS completion checkpoint
 
-Status: PIC fix verified by ROS CI; safety-velocity and identical-plan fixes await new CI. This is the checkpoint for authorized
+Status: safety-velocity and identical-plan fixes verified by ROS CI. Candidate
+trajectory cost seam and bounded rollout implemented; Nav2 environment/command
+integration remains open, and the new changes await CI. This is the checkpoint for authorized
 continuation; do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
@@ -45,15 +47,23 @@ A ROS regression tests identical-path republish versus geometry/frame changes.
 
 ## Local evidence
 
+Candidate trajectory change: completion gates pass, including candidate ranking
+and malformed-rollout rejection. The 50,000-cycle state-equivalence check and
+all 1,500 canonical CSV rows remain exact; 16 opportunity and 8 physical-scorer
+tests pass. These are local software checks, not new physical results.
+
 CI at remote commit af55731892eb099124e0c272dd3e12ced618edbe passed:
 core/messages/evaluator/controller build succeeded; colcon reports 50 tests,
 0 errors, 0 failures, 0 skipped. Standalone job also passed.
 Evidence: https://github.com/kjungmo/compass/actions/runs/34701856351
 This validates the PIC correction after run 34698467661 failed at shared linking.
-The newer safety-velocity and identical-plan changes still require their own ROS CI.
+Safety-velocity and identical-plan changes at bb0e8293c1b949e398df9f4efb0df5748898cfd2
+passed both standalone and ROS Jazzy jobs:
+https://github.com/kjungmo/compass/actions/runs/34702249850
+The candidate-trajectory change needs a new CI run.
 Local safety contract tests cover zero/small bounds, normal startup, STOP/HOLD,
 and nonfinite limits. The 50,000-cycle/1,500-row regression remains green with
-16 opportunity tests after these changes. New plan-republish gtest is CI-only.
+16 opportunity tests after these changes. The plan-republish gtest is now also covered by that successful ROS CI.
 
 Run bash scripts/test_completion_gates.sh. All estimator checks and 16 opportunity
 plus 8 physical-metric tests pass. Previous 50,000-cycle/1,500-row legacy regression
@@ -71,14 +81,16 @@ Re-running emits the underlying motion JSONL. No physical/Gazebo claim is closed
 - PR #14: conditional research-only acceptance after CI; not a production-ready
 response guarantee. Intermittent switches rise .4 -> .6, mid-reversal stays zero,
 and a warranted oracle has not validated either scenario.
-- End-to-end blocker: CostEvaluator goal/social/effort terms ignore candidate
-class; only the rule preference differs, aside from availability. Therefore the
-scripted cost response evidence is not validation of real Nav2 candidate ranking.
-A class-specific trajectory generator and cost evaluation are further algorithm
-work, not something to paper over by changing numerical knobs.
+- End-to-end blocker: the new optional candidate_trajectory seam computes goal,
+social and effort costs from class-specific rollouts. Its generator uses the
+existing path-tracking controller and exact unicycle integration. However, the
+production CostmapEnvQuery still supplies no trajectory and the Nav2 command
+adapter still follows its legacy path. Thus this is tested groundwork, not a
+completed Nav2 candidate-ranking fix. See CANDIDATE_TRAJECTORIES.md for the
+remaining bounded integration work and explicit limitations.
 - The small/zero safety-bound bootstrap defect is fixed in code with a regression;
-its ROS build and new plan-republish regression await the next CI.
-- ROS build/test passed at af557318; latest changes need their own CI.
+its ROS build and plan-republish regression passed at bb0e8293.
+- ROS build/test passed at bb0e8293; candidate cost changes need their own CI.
 No Gazebo test executed. Local ROS/container runtime is still absent.
 - 480 physical cases remain pending: bind geometry, actor traces, independent
 opportunity/free-motion oracle and controller adapter before physical experiments.
