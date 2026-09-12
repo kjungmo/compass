@@ -308,8 +308,13 @@ bool CostmapEnvQuery::executionSafe(
     return false;
   }
   const auto trajectory = trajectoryAtSpeed(c, speed);
-  return !trajectory.empty() && trajectoryClearance(trajectory) >= d_safe &&
-    trajectoryTtc(trajectory) >= ttc_min;
+  if (trajectory.empty()) {
+    return false;
+  }
+  const double clear = trajectoryClearance(trajectory);
+  // Zero clearance is infeasible even if a caller explicitly configures
+  // d_safe=0; touching an obstacle or leaving the map is never executable.
+  return clear > 0.0 && clear >= d_safe && trajectoryTtc(trajectory) >= ttc_min;
 }
 
 }  // namespace compass_nav2

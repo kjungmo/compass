@@ -1,8 +1,9 @@
 # COMPASS completion checkpoint
 
 Status: candidate trajectory cost seam verified by ROS CI. Opt-in Nav2 swept
-environment and selected-command integration are implemented locally and await
-their own CI. This is the checkpoint for authorized
+environment and selected-command integration built in ROS CI; one boundary test
+exposed zero-clearance acceptance at d_safe=0. The explicit infeasibility fix is
+implemented locally and awaits CI. This is the checkpoint for authorized
 continuation; do not resend either Omni email. Do not merge/deploy to main.
 
 ## Remote stack and scope
@@ -71,6 +72,10 @@ Safety-velocity and identical-plan changes at bb0e8293c1b949e398df9f4efb0df57488
 passed both standalone and ROS Jazzy jobs:
 https://github.com/kjungmo/compass/actions/runs/34702249850
 The subsequent Nav2 environment/command integration needs a new CI run.
+Run 34708554568 built all four packages and passed standalone checks, but its ROS
+test stage failed 1 of 59 tests: map-edge clearance was 0 as intended while
+executionSafe accepted it when the test supplied d_safe=0. The fix now requires
+strict positive clearance in addition to the configured threshold.
 Local safety contract tests cover zero/small bounds, normal startup, STOP/HOLD,
 and nonfinite limits. The 50,000-cycle/1,500-row regression remains green with
 16 opportunity tests after these changes. The plan-republish gtest is now also covered by that successful ROS CI.
