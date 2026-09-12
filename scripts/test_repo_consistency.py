@@ -132,7 +132,16 @@ class ConsistencyTests(unittest.TestCase):
             source = root / "src/compass_core/src/version.cpp"
             source.parent.mkdir()
             source.write_text('const char * version() { return "0.2.0"; }\n', encoding="utf-8")
+            smoke = root / "src/compass_core/test/test_smoke.cpp"
+            smoke.parent.mkdir(parents=True, exist_ok=True)
+            valid_smoke = 'EXPECT_STREQ(compass::version(), "0.2.0");\n'
+            smoke.write_text(valid_smoke, encoding="utf-8")
             gate.check_package_versions(root)
+            for invalid in (valid_smoke.replace("0.2.0", "0.1.0"), "// missing version assertion\n"):
+                smoke.write_text(invalid, encoding="utf-8")
+                with self.assertRaisesRegex(gate.CheckError, "test_smoke.cpp"):
+                    gate.check_package_versions(root)
+            smoke.write_text(valid_smoke, encoding="utf-8")
             source.write_text('const char * version() { return "0.1.0"; }\n', encoding="utf-8")
             with self.assertRaisesRegex(gate.CheckError, "version.cpp"):
                 gate.check_package_versions(root)

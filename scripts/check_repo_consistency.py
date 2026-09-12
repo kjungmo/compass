@@ -230,6 +230,10 @@ def check_package_versions(root):
     source = (root / "src/compass_core/src/version.cpp").read_text(encoding="utf-8")
     reported = re.findall(r'version\s*\(\s*\)\s*\{\s*return\s+"([^"]+)"', source)
     require(reported == [version], f"version.cpp returns {reported}, package manifests declare {version}")
+    smoke = (root / "src/compass_core/test/test_smoke.cpp").read_text(encoding="utf-8")
+    expected = re.findall(r'EXPECT_STREQ\(\s*compass::version\(\)\s*,\s*"([^"]+)"\s*\)', smoke)
+    require(expected == [version],
+            f"test_smoke.cpp expects {expected}, package manifests declare {version}")
 
 
 def markdown_destinations(text):
