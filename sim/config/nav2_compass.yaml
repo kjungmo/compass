@@ -36,6 +36,12 @@ controller_server:
 
     FollowPath:
       plugin: "compass_nav2::CompassController"
+      # Opt-in measurement; legacy experiment remains the default.
+      use_measured_progress: false
+      use_candidate_trajectories: false
+      progress_max_gap: 0.25
+      progress_max_speed: 2.0
+      progress_length: 1.0
 
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)

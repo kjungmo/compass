@@ -199,56 +199,56 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "full (제안)",clean_commit,47,1,0.1,0.0456065,2.45,0
 "full (제안)",clean_commit,48,1,0.1,0.0456065,2.35,0
 "full (제안)",clean_commit,49,1,0.1,0.0456065,2.35,0
-"full (제안)",intermittent,0,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,1,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,2,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,3,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,4,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,5,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,6,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,7,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,8,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,9,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,10,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,11,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,12,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,13,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,14,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,15,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,16,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,17,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,18,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,19,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,20,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,21,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,22,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,23,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,24,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,25,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,26,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,27,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,28,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,29,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,30,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,31,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,32,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,33,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,34,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,35,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,36,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,37,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,38,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,39,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,40,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,41,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,42,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,43,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,44,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,45,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,46,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,47,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,48,1,0.1,0.0456065,10,1
-"full (제안)",intermittent,49,1,0.1,0.0456065,10,1
+"full (제안)",intermittent,0,1,0.1,0.0456065,4.05,0
+"full (제안)",intermittent,1,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,2,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,3,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,4,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,5,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,6,1,0.1,0.0456065,3.15,0
+"full (제안)",intermittent,7,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,8,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,9,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,10,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,11,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,12,1,0.1,0.0456065,4.05,0
+"full (제안)",intermittent,13,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,14,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,15,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,16,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,17,1,0.1,0.0456065,4.05,0
+"full (제안)",intermittent,18,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,19,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,20,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,21,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,22,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,23,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,24,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,25,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,26,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,27,1,0.1,0.0456065,4.05,0
+"full (제안)",intermittent,28,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,29,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,30,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,31,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,32,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,33,1,0.1,0.0456065,4.05,0
+"full (제안)",intermittent,34,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,35,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,36,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,37,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,38,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,39,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,40,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,41,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,42,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,43,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,44,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,45,1,0.1,0.0456065,3.15,0
+"full (제안)",intermittent,46,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,47,1,0.1,0.0456065,4.25,0
+"full (제안)",intermittent,48,1,0.1,0.0456065,4.15,0
+"full (제안)",intermittent,49,1,0.1,0.0456065,4.15,0
 "-hysteresis",near_tie,0,0,0,0,0.05,0
 "-hysteresis",near_tie,1,0,0,0,0.05,0
 "-hysteresis",near_tie,2,0,0,0,0.05,0
@@ -449,56 +449,56 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-hysteresis",clean_commit,47,1,0.1,0.0456065,2.05,0
 "-hysteresis",clean_commit,48,1,0.1,0.0456065,1.95,0
 "-hysteresis",clean_commit,49,1,0.1,0.0456065,1.95,0
-"-hysteresis",intermittent,0,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,1,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,2,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,3,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,4,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,5,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,0,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,1,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,2,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,3,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,4,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,5,1,0.1,0.0456065,2.85,0
 "-hysteresis",intermittent,6,1,0.1,0.0456065,2.75,0
-"-hysteresis",intermittent,7,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,8,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,9,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,10,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,11,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,12,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,13,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,14,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,15,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,16,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,17,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,18,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,19,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,20,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,21,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,22,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,23,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,24,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,25,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,26,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,27,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,28,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,29,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,30,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,31,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,32,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,33,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,34,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,35,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,36,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,37,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,38,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,39,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,40,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,41,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,42,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,43,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,44,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,45,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,46,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,47,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,48,1,0.1,0.0456065,10,1
-"-hysteresis",intermittent,49,1,0.1,0.0456065,10,1
+"-hysteresis",intermittent,7,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,8,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,9,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,10,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,11,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,12,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,13,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,14,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,15,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,16,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,17,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,18,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,19,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,20,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,21,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,22,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,23,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,24,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,25,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,26,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,27,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,28,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,29,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,30,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,31,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,32,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,33,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,34,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,35,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,36,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,37,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,38,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,39,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,40,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,41,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,42,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,43,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,44,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,45,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,46,1,0.1,0.0456065,2.85,0
+"-hysteresis",intermittent,47,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,48,1,0.1,0.0456065,2.95,0
+"-hysteresis",intermittent,49,1,0.1,0.0456065,2.95,0
 "-progress hardening",near_tie,0,0,0,0,0.05,0
 "-progress hardening",near_tie,1,0,0,0,0.05,0
 "-progress hardening",near_tie,2,0,0,0,0.05,0
@@ -699,56 +699,56 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-progress hardening",clean_commit,47,1,0.1,0.0456065,2.45,0
 "-progress hardening",clean_commit,48,1,0.1,0.0456065,2.35,0
 "-progress hardening",clean_commit,49,1,0.1,0.0456065,2.35,0
-"-progress hardening",intermittent,0,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,1,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,2,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,3,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,4,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,5,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,6,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,7,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,8,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,9,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,10,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,11,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,12,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,13,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,14,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,15,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,16,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,17,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,18,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,19,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,20,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,21,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,22,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,23,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,24,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,25,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,26,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,27,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,28,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,29,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,30,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,31,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,32,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,33,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,34,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,35,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,36,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,37,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,38,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,39,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,40,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,41,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,42,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,43,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,44,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,45,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,46,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,47,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,48,1,0.1,0.0456065,10,1
-"-progress hardening",intermittent,49,1,0.1,0.0456065,10,1
+"-progress hardening",intermittent,0,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,1,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,2,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,3,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,4,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,5,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,6,1,0.1,0.0456065,3.15,0
+"-progress hardening",intermittent,7,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,8,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,9,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,10,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,11,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,12,1,0.1,0.0456065,3.15,0
+"-progress hardening",intermittent,13,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,14,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,15,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,16,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,17,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,18,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,19,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,20,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,21,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,22,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,23,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,24,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,25,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,26,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,27,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,28,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,29,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,30,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,31,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,32,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,33,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,34,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,35,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,36,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,37,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,38,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,39,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,40,1,0.1,0.0456065,4.25,0
+"-progress hardening",intermittent,41,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,42,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,43,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,44,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,45,1,0.1,0.0456065,3.15,0
+"-progress hardening",intermittent,46,1,0.1,0.0456065,4.05,0
+"-progress hardening",intermittent,47,1,0.1,0.0456065,4.25,0
+"-progress hardening",intermittent,48,1,0.1,0.0456065,4.15,0
+"-progress hardening",intermittent,49,1,0.1,0.0456065,4.15,0
 "-accumulator (즉시 argmin)",near_tie,0,100,10,0.999982,3.55,0
 "-accumulator (즉시 argmin)",near_tie,1,95,9.5,0.998524,10,1
 "-accumulator (즉시 argmin)",near_tie,2,88,8.8,0.990342,10,1
@@ -758,10 +758,10 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",near_tie,6,110,11,0.991952,10,1
 "-accumulator (즉시 argmin)",near_tie,7,91,9.1,0.994729,9.55,0
 "-accumulator (즉시 argmin)",near_tie,8,92,9.2,0.995898,10,1
-"-accumulator (즉시 argmin)",near_tie,9,90,9,0.993414,9.95,0
+"-accumulator (즉시 argmin)",near_tie,9,90,9,0.993414,10,1
 "-accumulator (즉시 argmin)",near_tie,10,91,9.1,0.994729,10,1
 "-accumulator (즉시 argmin)",near_tie,11,100,10,0.999982,4.65,0
-"-accumulator (즉시 argmin)",near_tie,12,105,10.5,0.997795,9.95,0
+"-accumulator (즉시 argmin)",near_tie,12,105,10.5,0.997795,10,1
 "-accumulator (즉시 argmin)",near_tie,13,104,10.4,0.998524,7.35,0
 "-accumulator (즉시 argmin)",near_tie,14,96,9.6,0.999107,10,1
 "-accumulator (즉시 argmin)",near_tie,15,92,9.2,0.995898,1.95,0
@@ -781,12 +781,12 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",near_tie,29,86,8.6,0.98668,10,1
 "-accumulator (즉시 argmin)",near_tie,30,108,10.8,0.994729,10,1
 "-accumulator (즉시 argmin)",near_tie,31,118,11.8,0.974917,1.75,0
-"-accumulator (즉시 argmin)",near_tie,32,98,9.8,0.999836,9.75,0
+"-accumulator (즉시 argmin)",near_tie,32,98,9.8,0.999836,10,1
 "-accumulator (즉시 argmin)",near_tie,33,119,11.9,0.972114,10,1
 "-accumulator (즉시 argmin)",near_tie,34,101,10.1,0.999836,2.25,0
 "-accumulator (즉시 argmin)",near_tie,35,105,10.5,0.997795,10,1
 "-accumulator (즉시 argmin)",near_tie,36,93,9.3,0.996919,10,1
-"-accumulator (즉시 argmin)",near_tie,37,101,10.1,0.999836,9.95,0
+"-accumulator (즉시 argmin)",near_tie,37,101,10.1,0.999836,10,1
 "-accumulator (즉시 argmin)",near_tie,38,106,10.6,0.996919,10,1
 "-accumulator (즉시 argmin)",near_tie,39,93,9.3,0.996919,1.45,0
 "-accumulator (즉시 argmin)",near_tie,40,105,10.5,0.997795,8.75,0
@@ -798,7 +798,7 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",near_tie,46,100,10,0.999982,3.95,0
 "-accumulator (즉시 argmin)",near_tie,47,92,9.2,0.995898,10,1
 "-accumulator (즉시 argmin)",near_tie,48,101,10.1,0.999836,10,1
-"-accumulator (즉시 argmin)",near_tie,49,88,8.8,0.990342,9.85,0
+"-accumulator (즉시 argmin)",near_tie,49,88,8.8,0.990342,10,1
 "-accumulator (즉시 argmin)",transient_spike,0,2,0.2,0.0811261,0.05,0
 "-accumulator (즉시 argmin)",transient_spike,1,2,0.2,0.0811261,0.05,0
 "-accumulator (즉시 argmin)",transient_spike,2,2,0.2,0.0811261,0.05,0
@@ -852,7 +852,7 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",mid_reversal,0,15,1.5,0.385676,10,1
 "-accumulator (즉시 argmin)",mid_reversal,1,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,2,19,1.9,0.454493,10,1
-"-accumulator (즉시 argmin)",mid_reversal,3,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,3,17,1.7,0.421019,9.55,0
 "-accumulator (즉시 argmin)",mid_reversal,4,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,5,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,6,15,1.5,0.385676,10,1
@@ -860,9 +860,9 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",mid_reversal,8,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,9,9,0.9,0.265761,10,1
 "-accumulator (즉시 argmin)",mid_reversal,10,13,1.3,0.348236,10,1
-"-accumulator (즉시 argmin)",mid_reversal,11,19,1.9,0.454493,10,1
+"-accumulator (즉시 argmin)",mid_reversal,11,19,1.9,0.454493,9.35,0
 "-accumulator (즉시 argmin)",mid_reversal,12,17,1.7,0.421019,10,1
-"-accumulator (즉시 argmin)",mid_reversal,13,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,13,13,1.3,0.348236,9.65,0
 "-accumulator (즉시 argmin)",mid_reversal,14,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,15,13,1.3,0.348236,10,1
 "-accumulator (즉시 argmin)",mid_reversal,16,17,1.7,0.421019,10,1
@@ -871,12 +871,12 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",mid_reversal,19,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,20,9,0.9,0.265761,10,1
 "-accumulator (즉시 argmin)",mid_reversal,21,11,1.1,0.308401,10,1
-"-accumulator (즉시 argmin)",mid_reversal,22,17,1.7,0.421019,10,1
+"-accumulator (즉시 argmin)",mid_reversal,22,17,1.7,0.421019,9.65,0
 "-accumulator (즉시 argmin)",mid_reversal,23,13,1.3,0.348236,10,1
 "-accumulator (즉시 argmin)",mid_reversal,24,9,0.9,0.265761,10,1
 "-accumulator (즉시 argmin)",mid_reversal,25,15,1.5,0.385676,10,1
 "-accumulator (즉시 argmin)",mid_reversal,26,17,1.7,0.421019,10,1
-"-accumulator (즉시 argmin)",mid_reversal,27,13,1.3,0.348236,10,1
+"-accumulator (즉시 argmin)",mid_reversal,27,13,1.3,0.348236,9.55,0
 "-accumulator (즉시 argmin)",mid_reversal,28,17,1.7,0.421019,10,1
 "-accumulator (즉시 argmin)",mid_reversal,29,19,1.9,0.454493,10,1
 "-accumulator (즉시 argmin)",mid_reversal,30,21,2.1,0.486277,10,1
@@ -887,7 +887,7 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",mid_reversal,35,15,1.5,0.385676,10,1
 "-accumulator (즉시 argmin)",mid_reversal,36,15,1.5,0.385676,10,1
 "-accumulator (즉시 argmin)",mid_reversal,37,13,1.3,0.348236,10,1
-"-accumulator (즉시 argmin)",mid_reversal,38,11,1.1,0.308401,10,1
+"-accumulator (즉시 argmin)",mid_reversal,38,11,1.1,0.308401,9.65,0
 "-accumulator (즉시 argmin)",mid_reversal,39,13,1.3,0.348236,10,1
 "-accumulator (즉시 argmin)",mid_reversal,40,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,41,19,1.9,0.454493,10,1
@@ -895,7 +895,7 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-accumulator (즉시 argmin)",mid_reversal,43,17,1.7,0.421019,10,1
 "-accumulator (즉시 argmin)",mid_reversal,44,17,1.7,0.421019,10,1
 "-accumulator (즉시 argmin)",mid_reversal,45,15,1.5,0.385676,10,1
-"-accumulator (즉시 argmin)",mid_reversal,46,9,0.9,0.265761,10,1
+"-accumulator (즉시 argmin)",mid_reversal,46,9,0.9,0.265761,9.55,0
 "-accumulator (즉시 argmin)",mid_reversal,47,11,1.1,0.308401,10,1
 "-accumulator (즉시 argmin)",mid_reversal,48,7,0.7,0.219719,10,1
 "-accumulator (즉시 argmin)",mid_reversal,49,9,0.9,0.265761,10,1
@@ -1249,20 +1249,20 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "simple-dwell (O4)",intermittent,47,0,0,0,0.05,0
 "simple-dwell (O4)",intermittent,48,0,0,0,0.05,0
 "simple-dwell (O4)",intermittent,49,0,0,0,0.05,0
-"-class correspondence",near_tie,0,102,10.2,0.999545,9.85,0
+"-class correspondence",near_tie,0,102,10.2,0.999545,10,1
 "-class correspondence",near_tie,1,100,10,0.999982,10,1
 "-class correspondence",near_tie,2,81,8.1,0.974917,10,1
 "-class correspondence",near_tie,3,93,9.3,0.996919,1.15,0
 "-class correspondence",near_tie,4,94,9.4,0.997795,10,1
 "-class correspondence",near_tie,5,106,10.6,0.996919,7.55,0
-"-class correspondence",near_tie,6,96,9.6,0.999107,9.95,0
+"-class correspondence",near_tie,6,96,9.6,0.999107,10,1
 "-class correspondence",near_tie,7,102,10.2,0.999545,1.15,0
 "-class correspondence",near_tie,8,91,9.1,0.994729,10,1
 "-class correspondence",near_tie,9,103,10.3,0.999107,10,1
 "-class correspondence",near_tie,10,93,9.3,0.996919,10,1
 "-class correspondence",near_tie,11,88,8.8,0.990342,9.35,0
 "-class correspondence",near_tie,12,107,10.7,0.995898,10,1
-"-class correspondence",near_tie,13,107,10.7,0.995898,9.95,0
+"-class correspondence",near_tie,13,107,10.7,0.995898,10,1
 "-class correspondence",near_tie,14,98,9.8,0.999836,10,1
 "-class correspondence",near_tie,15,99,9.9,0.999982,3.05,0
 "-class correspondence",near_tie,16,103,10.3,0.999107,10,1
@@ -1271,19 +1271,19 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-class correspondence",near_tie,19,103,10.3,0.999107,10,1
 "-class correspondence",near_tie,20,90,9,0.993414,10,1
 "-class correspondence",near_tie,21,98,9.8,0.999836,10,1
-"-class correspondence",near_tie,22,106,10.6,0.996919,9.75,0
+"-class correspondence",near_tie,22,106,10.6,0.996919,10,1
 "-class correspondence",near_tie,23,96,9.6,0.999107,10,1
 "-class correspondence",near_tie,24,87,8.7,0.988585,10,1
-"-class correspondence",near_tie,25,99,9.9,0.999982,9.95,0
+"-class correspondence",near_tie,25,99,9.9,0.999982,10,1
 "-class correspondence",near_tie,26,101,10.1,0.999836,10,1
 "-class correspondence",near_tie,27,88,8.8,0.990342,0.65,0
 "-class correspondence",near_tie,28,108,10.8,0.994729,6.55,0
 "-class correspondence",near_tie,29,96,9.6,0.999107,8.95,0
 "-class correspondence",near_tie,30,94,9.4,0.997795,5.95,0
 "-class correspondence",near_tie,31,100,10,0.999982,2.55,0
-"-class correspondence",near_tie,32,94,9.4,0.997795,9.95,0
+"-class correspondence",near_tie,32,94,9.4,0.997795,10,1
 "-class correspondence",near_tie,33,100,10,0.999982,1.85,0
-"-class correspondence",near_tie,34,92,9.2,0.995898,9.95,0
+"-class correspondence",near_tie,34,92,9.2,0.995898,10,1
 "-class correspondence",near_tie,35,97,9.7,0.999545,10,1
 "-class correspondence",near_tie,36,102,10.2,0.999545,10,1
 "-class correspondence",near_tie,37,107,10.7,0.995898,10,1
@@ -1291,12 +1291,12 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-class correspondence",near_tie,39,96,9.6,0.999107,10,1
 "-class correspondence",near_tie,40,104,10.4,0.998524,10,1
 "-class correspondence",near_tie,41,106,10.6,0.996919,7.05,0
-"-class correspondence",near_tie,42,91,9.1,0.994729,9.75,0
+"-class correspondence",near_tie,42,91,9.1,0.994729,10,1
 "-class correspondence",near_tie,43,109,10.9,0.993414,0.75,0
 "-class correspondence",near_tie,44,109,10.9,0.993414,3.35,0
 "-class correspondence",near_tie,45,95,9.5,0.998524,10,1
 "-class correspondence",near_tie,46,96,9.6,0.999107,4.85,0
-"-class correspondence",near_tie,47,90,9,0.993414,9.95,0
+"-class correspondence",near_tie,47,90,9,0.993414,10,1
 "-class correspondence",near_tie,48,98,9.8,0.999836,8.95,0
 "-class correspondence",near_tie,49,95,9.5,0.998524,3.05,0
 "-class correspondence",transient_spike,0,2,0.2,0.0811261,0.05,0
@@ -1351,22 +1351,22 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-class correspondence",transient_spike,49,2,0.2,0.0811261,0.05,0
 "-class correspondence",mid_reversal,0,41,4.1,0.733826,10,1
 "-class correspondence",mid_reversal,1,49,4.9,0.80525,10,1
-"-class correspondence",mid_reversal,2,41,4.1,0.733826,10,1
-"-class correspondence",mid_reversal,3,45,4.5,0.771205,10,1
+"-class correspondence",mid_reversal,2,41,4.1,0.733826,9.35,0
+"-class correspondence",mid_reversal,3,45,4.5,0.771205,9.45,0
 "-class correspondence",mid_reversal,4,47,4.7,0.788631,10,1
 "-class correspondence",mid_reversal,5,51,5.1,0.821083,10,1
 "-class correspondence",mid_reversal,6,45,4.5,0.771205,10,1
-"-class correspondence",mid_reversal,7,51,5.1,0.821083,10,1
-"-class correspondence",mid_reversal,8,39,3.9,0.713815,10,1
+"-class correspondence",mid_reversal,7,51,5.1,0.821083,9.35,0
+"-class correspondence",mid_reversal,8,39,3.9,0.713815,9.25,0
 "-class correspondence",mid_reversal,9,45,4.5,0.771205,10,1
 "-class correspondence",mid_reversal,10,43,4.3,0.752946,10,1
 "-class correspondence",mid_reversal,11,51,5.1,0.821083,10,1
-"-class correspondence",mid_reversal,12,51,5.1,0.821083,10,1
+"-class correspondence",mid_reversal,12,51,5.1,0.821083,9.65,0
 "-class correspondence",mid_reversal,13,49,4.9,0.80525,10,1
 "-class correspondence",mid_reversal,14,41,4.1,0.733826,10,1
-"-class correspondence",mid_reversal,15,37,3.7,0.692879,10,1
-"-class correspondence",mid_reversal,16,43,4.3,0.752946,10,1
-"-class correspondence",mid_reversal,17,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,15,37,3.7,0.692879,9.35,0
+"-class correspondence",mid_reversal,16,43,4.3,0.752946,9.55,0
+"-class correspondence",mid_reversal,17,49,4.9,0.80525,9.55,0
 "-class correspondence",mid_reversal,18,51,5.1,0.821083,10,1
 "-class correspondence",mid_reversal,19,45,4.5,0.771205,10,1
 "-class correspondence",mid_reversal,20,35,3.5,0.670979,10,1
@@ -1380,7 +1380,7 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-class correspondence",mid_reversal,28,51,5.1,0.821083,10,1
 "-class correspondence",mid_reversal,29,43,4.3,0.752946,10,1
 "-class correspondence",mid_reversal,30,45,4.5,0.771205,10,1
-"-class correspondence",mid_reversal,31,47,4.7,0.788631,10,1
+"-class correspondence",mid_reversal,31,47,4.7,0.788631,9.55,0
 "-class correspondence",mid_reversal,32,43,4.3,0.752946,10,1
 "-class correspondence",mid_reversal,33,41,4.1,0.733826,10,1
 "-class correspondence",mid_reversal,34,49,4.9,0.80525,10,1
@@ -1393,9 +1393,9 @@ variant,scenario,seed,switches,sign_change_rate,decision_entropy,t_legible_s,cen
 "-class correspondence",mid_reversal,41,49,4.9,0.80525,10,1
 "-class correspondence",mid_reversal,42,41,4.1,0.733826,10,1
 "-class correspondence",mid_reversal,43,49,4.9,0.80525,10,1
-"-class correspondence",mid_reversal,44,49,4.9,0.80525,10,1
+"-class correspondence",mid_reversal,44,49,4.9,0.80525,9.65,0
 "-class correspondence",mid_reversal,45,43,4.3,0.752946,10,1
-"-class correspondence",mid_reversal,46,39,3.9,0.713815,10,1
+"-class correspondence",mid_reversal,46,39,3.9,0.713815,9.45,0
 "-class correspondence",mid_reversal,47,43,4.3,0.752946,10,1
 "-class correspondence",mid_reversal,48,59,5.9,0.876948,10,1
 "-class correspondence",mid_reversal,49,47,4.7,0.788631,10,1

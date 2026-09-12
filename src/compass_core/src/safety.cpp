@@ -1,31 +1,52 @@
 // safety.cpp
 #include "compass_core/safety.hpp"
 #include <algorithm>
+#include <cmath>
+#include <stdexcept>
 namespace compass {
 
 namespace {
-// 창 W 밖(now - t > W)의 안전 전환 기록 제거.
+// P5 counts the open-left window (now-W, now].
 void prune_window(DecisionState & s, double now, double W) {
-  while (!s.safe_switch_times.empty() && now - s.safe_switch_times.front() > W) {
+  while (!s.safe_switch_times.empty() && s.safe_switch_times.front() <= now - W) {
     s.safe_switch_times.pop_front();
   }
 }
-double decelerate(double v_in, const Knobs & k) {
-  return std::max(0.0, v_in - k.a_brake);
+double decelerate(double v_in, double dt, const Knobs & k) {
+  return std::max(0.0, v_in - k.a_brake * dt);
 }
 }  // namespace
 
 SafetyResult run_safety_branch(DecisionState & s,
                                const std::vector<ClassEval> & S_set,
-                               double v_in, double ttc, double now,
+                               double v_in, double ttc, double now, double dt,
                                const Knobs & k, TieBreaker & tb) {
   SafetyResult r;
   r.took_safety_branch = true;   // P3: 안전 분기가 재량 분기를 항상 선점
 
-  // 1) 스래시 카운트 + 창 기록.
-  s.n_thrash += 1;
-  s.safe_switch_times.push_back(now);
+  // HOLD is absorbing until the caller explicitly releases DecisionState.
+  if (s.mode == Mode::HOLD) {
+    r.c_star = s.c_star;
+    r.v_target = 0.0;
+    r.velocity_limited = true;
+    r.mode = Mode::HOLD;
+    return r;
+  }
+
+  if (!std::isfinite(now) || !std::isfinite(k.W) || k.W <= 0.0)
+    throw std::invalid_argument("safety window requires finite time and positive W");
+  if (!std::isfinite(dt) || dt <= 0.0 ||
+      !std::isfinite(k.a_brake) || k.a_brake < 0.0)
+    throw std::invalid_argument("braking requires positive dt and nonnegative finite acceleration");
+  if (!s.safe_switch_times.empty() && now < s.safe_switch_times.back())
+    throw std::invalid_argument("safety intervention time must be monotonic");
+
+  // Record at most one qualifying intervention per decision time, then count
+  // only events in the declared rolling window.
+  if (s.safe_switch_times.empty() || now > s.safe_switch_times.back())
+    s.safe_switch_times.push_back(now);
   prune_window(s, now, k.W);
+  s.n_thrash = static_cast<int>(s.safe_switch_times.size());
 
   // 부분 임계: 창 내 안전 전환 수가 N_thrash 의 과반(>= N_thrash/2)에 도달하면
   // 1단계(전환)를 생략하고 감속 우선 (research_spec §3 step 2 partial_over).
@@ -42,7 +63,8 @@ SafetyResult run_safety_branch(DecisionState & s,
   if (in_dwell || partial_over) {
     // (i) 드웰 보호 또는 (ii) 부분 임계 초과 -> 2단계 감속, 필요 시 3단계 정지.
     r.c_star = s.c_star;            // 1단계(전환) 생략
-    r.v_target = decelerate(v_in, k);
+    r.v_target = decelerate(v_in, dt, k);
+    r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   } else if (!safe_set.empty()) {
     // 1단계: 안전 전환.
@@ -54,12 +76,17 @@ SafetyResult run_safety_branch(DecisionState & s,
   } else {
     // 𝒮 비어있음 -> 감속, 필요 시 정지.
     r.c_star = s.c_star;
-    r.v_target = decelerate(v_in, k);
+    r.v_target = decelerate(v_in, dt, k);
+    r.velocity_limited = true;
     if (ttc < k.ttc_stop) { s.mode = Mode::STOP; }
   }
 
   // 스래시 가드 (P5): N_thrash 도달 시 HOLD 강제.
-  if (s.n_thrash >= k.n_thrash) { s.mode = Mode::HOLD; }
+  if (window_count >= k.n_thrash) {
+    s.mode = Mode::HOLD;
+    r.v_target = 0.0;
+    r.velocity_limited = true;
+  }
 
   r.mode = s.mode;
   return r;

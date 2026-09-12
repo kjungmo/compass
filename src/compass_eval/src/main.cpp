@@ -166,12 +166,12 @@ static void run_latency() {
 }
 
 // R5 보조: ρ-구동률(횡 진행률 v_lat) 민감도. ρ 가 빠르게 포화하면 progress
-// hardening 이 E_th 를 E0(1+k_rho) 로 올려 정당한 전환마저 봉쇄(freezing)하는
-// 구간을 특성화한다. clean_commit(명확한 L 우위)에서 full 의 전환·가독성을 측정.
+// hardening 이 E_th 를 E0(1+k_rho) 로 올려 정당한 전환을 봉쇄하는 오프라인
+// 입력 구간을 특성화한다. 이는 물리 freezing 측정이 아니다.
 static void run_rho_sweep() {
   printf("# COMPASS R5 보조 — ρ-구동률(v_lat) 민감도 (full, clean_commit, 50 seeds)\n");
   printf("ρ 는 횡 기동 진행도. v_lat 이 클수록 ρ 가 빨리 포화 -> E_th=E0(1+k_rho) 로\n");
-  printf("상승해 명확한 우위에서도 전환이 봉쇄(freezing)됨. (코어의 v_lat=|v_cmd| 단순화 노출)\n\n");
+  printf("상승해 명확한 우위에서도 전환이 봉쇄됨. 물리 freezing 측정은 아님.\n\n");
   printf("| v_lat (m/s) | ρ_end(근사) | 전환율(전환=1 비율) | 평균 전환수 | 평균 t-legible(s) | 검열수/50 |\n");
   printf("|---|---|---|---|---|---|\n");
   const int SEEDS = 50;
@@ -189,8 +189,8 @@ static void run_rho_sweep() {
     printf("| %.2f | %.2f | %d/%d | %.2f | %.2f | %d |\n",
            vlat, rho_end, switched, SEEDS, sw_sum / SEEDS, leg_sum / SEEDS, cens);
   }
-  printf("\n(전환=1 비율이 1.0 -> 0.0 으로 떨어지는 v_lat 이 freezing 임계. 기본 노브의 좁은\n");
-  printf("비봉쇄 구간을 보여주며, R5 의 ρ-경화·v_lat 민감도 측정 항목과 직결.)\n");
+  printf("\n(전환=1 비율이 1.0 -> 0.0 으로 떨어지는 v_lat 은 오프라인 전환 봉쇄 구간을\n");
+  printf("한정한다. 로봇 정지·물리 freezing·목표 실패를 입증하지 않는다.)\n");
 }
 
 int main(int argc, char ** argv) {
