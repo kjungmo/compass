@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 namespace compass {
 
 DecisionCore::DecisionCore(Knobs k) : k_(k), cost_(k) {}
@@ -50,7 +51,7 @@ DecisionOutput DecisionCore::step(const DecisionInput & in, DecisionState & st,
   // ttc(c*) — 현재 커밋 class 의 TTC (안전 사다리 입력).
   const double ttc_cstar = env.ttc(st.c_star);
   const double v_in = in.robot_vel.vx;
-  return step_evals(evals, st, ttc_cstar, v_in, in.now, in.dt, trace);
+  return step_evals(evals, st, ttc_cstar, v_in, in.now, in.dt, trace, in.lateral_progress_delta_m);
 }
 
 DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
@@ -62,8 +63,19 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
 DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
     DecisionState & st, double ttc, double v_in, double now, double dt,
     DecisionTrace * trace) {
+  return step_evals(evals, st, ttc, v_in, now, dt, trace, std::nullopt);
+}
+
+DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
+    DecisionState & st, double ttc, double v_in, double now, double dt,
+    DecisionTrace * trace, std::optional<double> progress_delta_m) {
+  if (progress_delta_m && (!std::isfinite(*progress_delta_m) ||
+      !std::isfinite(dt) || dt <= 0))
+    throw std::invalid_argument("measured progress requires finite delta and positive dt");
+  bool discretionary_commit = false;
   if (trace) {
     *trace = DecisionTrace{};
+    trace->measured_progress_delta_m = progress_delta_m;
     trace->now = now; trace->dt = dt; trace->v_input = v_in;
     trace->before = st; trace->candidates = evals;
   }
@@ -145,6 +157,7 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
     // 전환 조건: e_rev >= E_th(ρ).
     if (switch_ready(st, k_)) {
       st.c_star = c_prime;
+      discretionary_commit = true;
       if (trace) trace->commit_reset = true;
       st.reset_on_commit();   // e_rev, ρ, L_real, e_fwd 리셋
     }
@@ -154,7 +167,14 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
   // ---- 4) ρ 갱신 · 출력 -------------------------------------------------
   // ΔL_k = v_lat·dt − b_k 근사: 전진 속도 기반 cross-track 진행 (단순 양수 진행).
   const double v_lat = std::abs(v_cmd);
-  st.L_real += v_lat * dt;
+  // Measured delta belongs to the pre-step commitment: discard it on a commit.
+  // Retreat decreases progress, bounded below by zero. Legacy calls stay identical.
+  if (progress_delta_m) {
+    if (!discretionary_commit)
+      st.L_real = std::max(0.0, st.L_real + *progress_delta_m);
+  } else {
+    st.L_real += v_lat * dt;
+  }
   if (st.L_plan > 0.0) {
     st.rho = std::max(0.0, std::min(1.0, st.L_real / st.L_plan));
   }

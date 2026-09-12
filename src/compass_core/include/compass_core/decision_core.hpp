@@ -23,6 +23,7 @@ struct DecisionTrace {
                         evidence_after_accumulate, threshold_used, rho_used;
   bool safety_branch = false, challenger_reset = false, commit_reset = false;
   bool switched = false;
+  std::optional<double> measured_progress_delta_m;
 };
 
 class DecisionCore {
@@ -48,6 +49,11 @@ public:
   DecisionOutput step_evals(const std::vector<ClassEval> &, DecisionState &,
                            double ttc, double v_in, double now, double dt,
                            DecisionTrace *);
+
+  // Explicit signed measured progress; invalid values reject before state mutation.
+  DecisionOutput step_evals(const std::vector<ClassEval> &, DecisionState &,
+                           double ttc, double v_in, double now, double dt,
+                           DecisionTrace *, std::optional<double> progress_delta_m);
 
   const Knobs & knobs() const { return k_; }
 

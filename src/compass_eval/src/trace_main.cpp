@@ -1,5 +1,6 @@
 #include "compass_eval/harness.hpp"
 #include <fstream>
+#include "compass_core/response_profile.hpp"
 #include <iomanip>
 #include <iostream>
 #include <locale>
@@ -17,7 +18,7 @@ static void num(std::ostream& o, std::optional<double> x) {
 }
 int main(int argc, char** argv) {
   try {
-    if(argc!=5) throw std::runtime_error("usage: compass_trace scenario seed v_input output.jsonl");
+    if(argc!=5 && argc!=6 && argc!=7) throw std::runtime_error("usage: compass_trace scenario seed v_input output.jsonl [legacy|responsive] [measured_progress_mps]");
     Scn scn=Scn::NearTie; bool found=false;
     for(auto x:all_scns()) if(std::string(argv[1])==scn_name(x)){scn=x;found=true;}
     if(!found) throw std::runtime_error("unknown scenario");
@@ -30,14 +31,28 @@ int main(int argc, char** argv) {
     std::ofstream o(argv[4]); if(!o)throw std::runtime_error("cannot open output");
     o.imbue(std::locale::classic()); o<<std::setprecision(17)<<std::boolalpha;
     auto cycles=make_scenario(scn,static_cast<uint32_t>(seed),v);
-    DecisionCore core{Knobs{}}; DecisionState st; st.c_star.set(PID,Side::R);
+    Knobs knobs;
+    if (argc>=6) {
+      const std::string profile=argv[5];
+      if (profile=="responsive") knobs=responsive_profile();
+      else if (profile!="legacy") throw std::runtime_error("unknown profile");
+    }
+    std::optional<double> delta;
+    if(argc==7) {
+      const double rate=std::stod(argv[6], &end);
+      if(end!=std::string(argv[6]).size() || !std::isfinite(rate))
+        throw std::runtime_error("invalid measured progress rate");
+      delta=rate*DT;
+    }
+    DecisionCore core{knobs}; DecisionState st; st.c_star.set(PID,Side::R);
     for(size_t i=0;i<cycles.size();++i) {
       auto c=cycles[i]; DecisionTrace t;
       core.step_evals({mk(Side::R,c.J_R,c.safe_R),mk(Side::L,c.J_L,c.safe_L)},
-                     st,c.ttc,c.v_in,i*DT,DT,&t);
+                     st,c.ttc,c.v_in,i*DT,DT,&t,delta);
       o<<"{\"schema\":1,\"cycle\":"<<i<<",\"t\":"<<t.now<<",\"dt\":"<<t.dt
        <<",\"before\":";cls(o,t.before.c_star);o<<",\"class\":";cls(o,t.after.c_star);
       o<<",\"challenger\":";if(t.challenger)cls(o,*t.challenger);else o<<"null";
+      o<<",\"measured_progress_delta_m\":";num(o,t.measured_progress_delta_m);
       o<<",\"advantage\":";num(o,t.advantage);
       o<<",\"e_before\":"<<t.before.e_rev<<",\"e_after_challenger_reset\":";num(o,t.evidence_after_challenger_reset);
       o<<",\"e_accumulated\":";num(o,t.evidence_after_accumulate);
