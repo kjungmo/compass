@@ -26,6 +26,7 @@
 #include "tf2/utils.hpp"
 
 #include "compass_nav2/people_conversion.hpp"
+#include "compass_nav2/candidate_rollout.hpp"
 #include "compass_nav2/path_tracking.hpp"
 #include "compass_nav2/velocity_limits.hpp"
 
@@ -113,6 +114,7 @@ void CompassController::loadKnobs(
   getParam(node, name, "eps_out", k.eps_out, k.eps_out);
   knobs_ = k;
   getParam(node, name, "use_measured_progress", use_measured_progress_, false);
+  getParam(node, name, "use_candidate_trajectories", use_candidate_trajectories_, false);
   getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
   getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
   getParam(node, name, "progress_length", progress_length_, 1.0);
@@ -265,6 +267,17 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   in.local_goal = computeLocalGoal(robot);
   in.people = extractPeople(robot);
 
+  std::vector<compass::Point2D> path;
+  path.reserve(global_plan_.poses.size());
+  for (const auto & ps : global_plan_.poses) {
+    path.push_back({ps.pose.position.x, ps.pose.position.y});
+  }
+  PathTrackGains gains;
+  gains.k_e = k_e_;
+  gains.k_theta = k_theta_;
+  gains.k_side = k_side_;
+  gains.max_w = max_angular_speed_;
+
   const double now = cmd.header.stamp.sec + cmd.header.stamp.nanosec * 1e-9;
   in.now = now;
   // 첫 주기 또는 시계 역행 시 공칭 dt; 그 외엔 실측 주기 간격.
@@ -281,8 +294,6 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
       RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose or frame mismatch; holding command");
       return cmd;
     }
-    std::vector<compass::Point2D> path;
-    for (const auto& ps : global_plan_.poses) path.push_back({ps.pose.position.x, ps.pose.position.y});
     const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
       state_.c_star, path, progress_max_gap_, progress_max_speed_);
     if (!progress.valid) {
@@ -293,10 +304,32 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     state_.L_plan = progress_length_;
   }
 
+  // Compute the exact nominal speed used for opt-in candidate evaluation.
+  // Goal taper and external speed limits belong before the rollout is assessed.
+  double v = cruise_speed_;
+  if (!global_plan_.poses.empty() && goal_decel_dist_ > 0.0) {
+    const auto & gp = global_plan_.poses.back().pose.position;
+    const double dist_to_goal = std::hypot(gp.x - robot.x, gp.y - robot.y);
+    if (dist_to_goal < goal_decel_dist_) {
+      v *= (dist_to_goal / goal_decel_dist_);
+    }
+  }
+  double v_cap = max_linear_speed_;
+  if (speed_limit_ > 0.0) {
+    v_cap = speed_limit_is_pct_ ? max_linear_speed_ * (speed_limit_ / 100.0) : speed_limit_;
+  }
+  if (!std::isfinite(v) || !std::isfinite(v_cap) || v_cap < 0.0) {
+    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+      "Invalid controller speed configuration; holding command");
+    return cmd;
+  }
+  v = std::clamp(v, 0.0, v_cap);
+
   // 3) costmap 컨텍스트 주입.
   const nav2_costmap_2d::Costmap2D * costmap =
     costmap_ros_ ? costmap_ros_->getCostmap() : nullptr;
-  env_.setContext(costmap, robot, in.local_goal, in.people, rvel);
+  env_.setContext(costmap, robot, in.local_goal, in.people, rvel,
+    use_candidate_trajectories_, path, v, gains);
 
   // 4) 결정 코어 1주기 — DecisionState 는 멤버로 보존된다.
   compass::DecisionOutput out = core_->step(in, state_, env_);
@@ -315,28 +348,28 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   // 속도로 쓰고, 목표(global_plan_ 최종 자세) 근처에서 선형 테이퍼로 0 까지
   // 줄여 목표에서 멈춘다. 이어서 max_linear_speed_(하드 상한)·speed_limit_
   // 으로 캡한다.
-  double v = cruise_speed_;
-
-  // 목표 근처 선형 감속: global_plan_ 의 최종 자세까지 거리가 goal_decel_dist_
-  // 미만이면 비율만큼 cruise 를 줄인다 (거리 0 -> v 0).
-  if (!global_plan_.poses.empty() && goal_decel_dist_ > 0.0) {
-    const auto & gp = global_plan_.poses.back().pose.position;
-    const double dist_to_goal = std::hypot(gp.x - robot.x, gp.y - robot.y);
-    if (dist_to_goal < goal_decel_dist_) {
-      v *= (dist_to_goal / goal_decel_dist_);
-    }
-  }
-
   // A safety bound is authoritative even at zero; normal measured-speed
   // passthrough is distinct so starting from rest remains possible.
-  v = applyCoreVelocityLimit(v, out);
+  v = use_candidate_trajectories_ ?
+    applyCandidateVelocityLimit(v, out) : applyCoreVelocityLimit(v, out);
 
-  // 하드 상한 및 속도 한계 적용.
-  double v_cap = max_linear_speed_;
-  if (speed_limit_ > 0.0) {
-    v_cap = speed_limit_is_pct_ ? max_linear_speed_ * (speed_limit_ / 100.0) : speed_limit_;
-  }
+  // Safety may only reduce the already capped nominal rollout speed.
   v = std::clamp(v, 0.0, v_cap);
+
+  if (use_candidate_trajectories_) {
+    const auto execution = env_.trajectoryAtSpeed(out.c_star, v);
+    if (execution.empty() ||
+        !env_.executionSafe(out.c_star, v, knobs_.d_safe, knobs_.ttc_min)) {
+      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+        "Candidate command changed safety outcome or is unavailable; holding command");
+      return cmd;
+    }
+    // Sample zero is the exact command of the rollout revalidated after all
+    // speed modifiers; angular velocity is not recomputed on another path.
+    cmd.twist.linear.x = execution.front().command.vx;
+    cmd.twist.angular.z = execution.front().command.wz;
+    return cmd;
+  }
 
   // class 의 측면 부호로 약한 횡 편향을 더한다 (R -> 우측, L -> 좌측).
   double side_bias = 0.0;
@@ -352,17 +385,6 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   // 예전의 베어링 비례 조향(ω = 1.0·yaw_err)은 감쇠가 없어 직선 복도에서도
   // ±0.8 m 위빙(limit cycle)을 냈다. 횡오차·헤딩오차를 직접 되먹이는 PD 로
   // 바꿔 과감쇠 수렴을 얻고, side_bias 로 사회적 측면 커밋을 보존한다.
-  std::vector<compass::Point2D> path;
-  path.reserve(global_plan_.poses.size());
-  for (const auto & ps : global_plan_.poses) {
-    path.push_back({ps.pose.position.x, ps.pose.position.y});
-  }
-  PathTrackGains gains;
-  gains.k_e = k_e_;
-  gains.k_theta = k_theta_;
-  gains.k_side = k_side_;
-  gains.max_w = max_angular_speed_;
-
   cmd.twist.linear.x = v;
   cmd.twist.angular.z = pathTrackingAngularZ(robot, path, side_bias, gains);
   return cmd;

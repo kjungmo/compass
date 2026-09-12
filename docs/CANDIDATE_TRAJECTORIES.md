@@ -36,20 +36,23 @@ invalid trajectories, unsupported classes and legacy fallback. Both completion
 gates and ROS CMake register it. Existing 50,000-cycle state equivalence and
 1,500-row archived CSV regression must remain exact.
 
-## Remaining software gate
+## Nav2 opt-in integration
 
-1. Add an explicit opt-in Nav2 mode whose environment caches these trajectories
-for the cycle. Evaluate swept robot clearance and predicted person encounters on
-the same trajectories; unknown/out-of-map geometry must fail closed. The existing
-offset-ray clearance and class-independent TTC are not sufficient for this mode.
-2. Execute the evaluated candidate command. Account for goal taper, speed limits,
-and safety braking before final acceptance; a modified command needs validation
-on its own rollout. Do not assume that slowing a dynamic encounter is safer.
-3. Test obstacle-side discrimination, unknown cells, approaching/receding people,
-speed-limit/braking consistency and selected-command correspondence in ROS CI.
-Keep the legacy default and document unsupported mixed-side maneuvers explicitly.
+`use_candidate_trajectories=false` preserves the legacy default. When enabled,
+`CostmapEnvQuery` supplies the generated trajectory and checks the circular robot
+proxy along it. Unknown cells, map boundaries and a missing costmap fail closed.
+Person TTC uses the same rollout and constant-velocity predictions. The adapter
+builds candidates after goal taper and external speed caps. A safety-reduced
+speed is regenerated and revalidated; the first command of that exact rollout is
+then emitted. Slower motion is not presumed safe for dynamic encounters.
 
-Only after these gates should the new path be evaluated end to end. Existing
+The ROS test covers obstacle-side discrimination, unknown cells, map boundaries,
+missing maps, approaching/receding people, changed-speed revalidation and emitted
+sample correspondence. It must pass ROS CI before this software gate is closed.
+The circular footprint and 0.30 m person radius are declared evaluation proxies,
+not platform-calibrated geometry.
+
+Only after CI should the new path be evaluated end to end. Existing
 scripted-cost closed-loop results do not become evidence for it retroactively.
 Gazebo/robot freezing, goal success, warranted-switch responsiveness and human
 motion-legibility measurements remain separate external validation gates.

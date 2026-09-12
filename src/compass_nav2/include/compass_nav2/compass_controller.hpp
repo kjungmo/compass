@@ -109,6 +109,7 @@ protected:
   CostmapEnvQuery env_;
   MeasuredProgress measured_progress_;
   bool use_measured_progress_{false};
+  bool use_candidate_trajectories_{false};
   double progress_max_gap_{0.25};
   double progress_max_speed_{2.0};
   double progress_length_{1.0};

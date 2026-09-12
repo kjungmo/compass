@@ -38,6 +38,7 @@ controller_server:
       plugin: "compass_nav2::CompassController"
       # Opt-in measurement; legacy experiment remains the default.
       use_measured_progress: false
+      use_candidate_trajectories: false
       progress_max_gap: 0.25
       progress_max_speed: 2.0
       progress_length: 1.0

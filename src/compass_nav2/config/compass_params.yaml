@@ -15,6 +15,7 @@ controller_server:
 
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
+      use_candidate_trajectories: false  # research opt-in; evaluated trajectory execution
 
       # ---- 궤적 계층 ② (경로 추종 cruise) ----
       cruise_speed: 0.45         # m/s; NORMAL 기본 순항 속도

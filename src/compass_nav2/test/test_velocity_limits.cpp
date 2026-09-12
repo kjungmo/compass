@@ -8,6 +8,7 @@
 #include <iostream>
 int main() {
   using namespace compass; using compass_nav2::applyCoreVelocityLimit;
+  using compass_nav2::applyCandidateVelocityLimit;
   Knobs k;DecisionCore core{k};DecisionState s;s.c_star.set(7,Side::R);
   // All unavailable: first safety cycle is NORMAL + zero braking bound.
   auto out=core.step_evals({},s,2.,.03,0,.05);
@@ -22,6 +23,11 @@ int main() {
   ClassEval e;e.cls=s.c_star;e.J=.5;e.safe=true;e.available=true;
   out=core.step_evals({e},s,5.,0.,0,.05);
   assert(!out.safety_velocity_limited && applyCoreVelocityLimit(.45,out)==.45);
+  out.v_target=.2;
+  assert(!out.safety_velocity_limited && applyCandidateVelocityLimit(.45,out)==.45);
+  out.safety_velocity_limited=true;
+  assert(applyCandidateVelocityLimit(.45,out)==.2);
+  out.safety_velocity_limited=false;
   out.mode=Mode::STOP;assert(applyCoreVelocityLimit(.45,out)==0);
   out.mode=Mode::HOLD;assert(applyCoreVelocityLimit(.45,out)==0);
   out.mode=Mode::NORMAL;out.safety_velocity_limited=true;

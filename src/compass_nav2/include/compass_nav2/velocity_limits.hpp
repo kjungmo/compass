@@ -13,4 +13,15 @@ inline double applyCoreVelocityLimit(double cruise, const compass::DecisionOutpu
   // Preserve the existing measured-speed bootstrap for normal decisions.
   return out.v_target > .05 ? std::min(cruise, out.v_target) : cruise;
 }
+
+// Candidate rollouts are evaluated at `cruise`; ordinary core output is the
+// measured-speed pass-through, not a new command. Only an explicit safety bound
+// may alter that evaluated speed. STOP/HOLD are still authoritative.
+inline double applyCandidateVelocityLimit(double cruise, const compass::DecisionOutput& out) {
+  if (!std::isfinite(cruise) || cruise < 0 ||
+      out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) return 0;
+  if (!out.safety_velocity_limited) return cruise;
+  if (!std::isfinite(out.v_target)) return 0;
+  return std::min(cruise, std::max(0., out.v_target));
+}
 }

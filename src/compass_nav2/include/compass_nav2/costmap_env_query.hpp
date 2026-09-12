@@ -17,6 +17,7 @@
 
 #include "compass_core/env_query.hpp"
 #include "compass_core/types.hpp"
+#include "compass_nav2/candidate_rollout.hpp"
 #include "nav2_costmap_2d/costmap_2d.hpp"
 
 namespace compass_nav2
@@ -40,24 +41,43 @@ public:
     const compass::SE2 & robot_pose,
     const compass::Point2D & local_goal,
     const std::vector<compass::Person> & people,
-    const compass::Twist2D & robot_vel);
+    const compass::Twist2D & robot_vel,
+    bool use_candidate_trajectories = false,
+    const std::vector<compass::Point2D> & global_path = {},
+    double candidate_speed = 0.0,
+    const PathTrackGains & gains = {});
 
+  std::optional<compass::CandidateTrajectory> candidate_trajectory(
+    const compass::TopoClass & c) const override;
   double corridor_width(const compass::TopoClass & c) const override;
   double clearance(const compass::TopoClass & c) const override;
   double ttc(const compass::TopoClass & c) const override;
   bool feasible(const compass::TopoClass & c) const override;
+
+  // Rebuild and assess the command that will actually be emitted after speed
+  // caps/braking. This prevents validating one rollout and executing another.
+  compass::CandidateTrajectory trajectoryAtSpeed(
+    const compass::TopoClass & c, double speed) const;
+  bool executionSafe(
+    const compass::TopoClass & c, double speed, double d_safe, double ttc_min) const;
 
 private:
   // class 의 측면 부호 합 (L=-1, R=+1)의 평균 -> 횡 오프셋 방향. 빈 class 면 0.
   double lateral_bias(const compass::TopoClass & c) const;
   // (wx,wy) 가 lethal/inscribed 이상으로 점유되었는지.
   bool occupied(double wx, double wy) const;
+  double trajectoryClearance(const compass::CandidateTrajectory & trajectory) const;
+  double trajectoryTtc(const compass::CandidateTrajectory & trajectory) const;
 
   const nav2_costmap_2d::Costmap2D * costmap_ = nullptr;
   compass::SE2 robot_pose_;
   compass::Point2D local_goal_;
   std::vector<compass::Person> people_;
   compass::Twist2D robot_vel_;
+  bool use_candidate_trajectories_ = false;
+  std::vector<compass::Point2D> global_path_;
+  double candidate_speed_ = 0.0;
+  PathTrackGains gains_;
 
   // 보존적 기본값 (costmap 부재 시).
   static constexpr double kDefaultClearance = 5.0;     // m
@@ -65,6 +85,9 @@ private:
   static constexpr double kDefaultTtc = 10.0;          // s
   static constexpr double kRayMax = 4.0;               // m, 전방 ray 길이 상한
   static constexpr double kLateralStep = 0.25;         // m, class 부호당 횡 오프셋
+  static constexpr double kRobotRadius = 0.25;         // m, bounded rollout model
+  static constexpr double kPersonRadius = 0.30;        // m, evaluation proxy
+  static constexpr double kClearanceScan = 2.0;        // m
 };
 
 }  // namespace compass_nav2
