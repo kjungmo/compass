@@ -292,6 +292,11 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   const double now = cmd.header.stamp.sec + cmd.header.stamp.nanosec * 1e-9;
   in.now = now;
   // 첫 주기 또는 시계 역행 시 공칭 dt; 그 외엔 실측 주기 간격.
+  // dt contract (issue #6): any positive measured interval is accepted and no
+  // validated upper bound h_max is enforced. Knobs::lambda is applied per update,
+  // so its physical leak time -dt/ln(lambda) changes with dt; only the
+  // accumulated-time form of P2 is claimed for this adapter (manuscript
+  // Remark rem:vardt). A per-second leak would be a separate algorithm change.
   in.dt = (has_last_now_ && now > last_now_) ? (now - last_now_) : 0.1;
   last_now_ = now;
   has_last_now_ = true;
