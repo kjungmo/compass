@@ -21,9 +21,9 @@ measured values.
 
 | # | Printed | Where | Artifact | Field / derivation | Check |
 |---|---|---|---|---|---|
-| M1 | `Aggregate behavioral consistency and legibility` | Table 2 (tab:main), all 30 cells | `src/compass_eval/results/ablation_raw.csv` | mean, sample SD, censored sum per variant (N=250) | `table:main` |
+| M1 | `Aggregate behavioral consistency and endpoint-suffix observer statistic` | Table 2 (tab:main), all 30 cells | `src/compass_eval/results/ablation_raw.csv` | mean, sample SD, censored sum per variant (N=250) | `table:main` |
 | M2 | `Switches per encounter by scenario` | Table 3 (tab:scenario), all 30 cells | `src/compass_eval/results/ablation_raw.csv` | switches mean/SD per variant x scenario (N=50) | `table:scenario` |
-| M3 | `Time-to-legible by scenario` | Table 7 (tab:legibility), all 30 cells | `src/compass_eval/results/ablation_raw.csv` | t_legible_s mean, censored count per cell | `table:legibility` |
+| M3 | `Endpoint-suffix time $t_{\text{sfx}}$ by scenario` | Table 7 (tab:legibility), all 30 cells | `src/compass_eval/results/ablation_raw.csv` | t_legible_s (= t_sfx) mean, censored count per cell | `table:legibility` |
 | M4 | `changes its decision 98.16 times` | Introduction | `ablation_raw.csv` | switches, accumulator, near_tie, mean | `csv:accumulator/near_tie/switches/mean=98.16` |
 | M5 | `averages 0.40 decision changes per encounter against 29.74` | Introduction | `ablation_raw.csv` | switches, full, all, mean | `csv:full/*/switches/mean=0.40` |
 | M6 | `against 29.74 for argmin` | Introduction | `ablation_raw.csv` | switches, accumulator, all, mean | `csv:accumulator/*/switches/mean=29.74` |
@@ -32,14 +32,14 @@ measured values.
 | M9 | `yield 29.74 and 37.20 decision changes per encounter` | Fig. 4 caption | `ablation_raw.csv` | switches, correspondence, all, mean | `csv:correspondence/*/switches/mean=37.20` |
 | M10 | `$-$accumulator 98.16$\pm$7.85` | Sec. 4.2 | `src/compass_eval/results/R1_ablation.md` | per-scenario switches table, argmin near_tie | `lit:src/compass_eval/results/R1_ablation.md::98.16+/-7.85` |
 | M11 | `while argmin has 2 (entering and returning)` | Sec. 4.2 | `ablation_raw.csv` | switches, accumulator, transient_spike, mean | `csv:accumulator/transient_spike/switches/mean=2` |
-| M12 | `the proposed method has 1 switch, with t-legible 2.37 s` | Sec. 4.2 | `ablation_raw.csv` | t_legible_s, full, clean_commit, mean | `csv:full/clean_commit/t_legible_s/mean=2.37` |
+| M12 | `the proposed method has 1 switch, with $t_{\text{sfx}}$ 2.37 s` | Sec. 4.2 | `ablation_raw.csv` | t_legible_s, full, clean_commit, mean | `csv:full/clean_commit/t_legible_s/mean=2.37` |
 | M13 | `censoring 72/250 and 71/250` | Sec. 4.2 | `ablation_raw.csv` | censored, correspondence, all, sum | `csv:correspondence/*/censored/sum=71` |
-| M14 | `\code{near\_tie} t-legible 7.9 s vs. 0.05 s` | Sec. 4.2 | `ablation_raw.csv` | t_legible_s, accumulator, near_tie, mean (7.90) | `csv:accumulator/near_tie/t_legible_s/mean=7.9` |
+| M14 | `\code{near\_tie} $t_{\text{sfx}}$ 7.9 s vs. 0.05 s` | Sec. 4.2 | `ablation_raw.csv` | t_legible_s, accumulator, near_tie, mean (7.90) | `csv:accumulator/near_tie/t_legible_s/mean=7.9` |
 | M15 | `switches once at 1.55--2.10 s across the 50 seeds` | Sec. 4.3 | `src/compass_eval/results/README.md` | R1 interpretation, intermittent switch times | `lit:src/compass_eval/results/README.md::1.55--2.10초` |
-| M16 | `has 0/50 censored trials, with mean t-legible 4.11 s` | Sec. 4.3 | `ablation_raw.csv` | t_legible_s, full, intermittent, mean | `csv:full/intermittent/t_legible_s/mean=4.11` |
-| M17 | `(0/50 censored, t-legible 0.05 s)` | Sec. 4.3 | `ablation_raw.csv` | t_legible_s, dwell, intermittent, mean | `csv:dwell/intermittent/t_legible_s/mean=0.05` |
+| M16 | `has 0/50 censored trials, with mean $t_{\text{sfx}}$ 4.11 s` | Sec. 4.3 | `ablation_raw.csv` | t_legible_s, full, intermittent, mean | `csv:full/intermittent/t_legible_s/mean=4.11` |
+| M17 | `(0/50 censored, $t_{\text{sfx}}$ 0.05 s)` | Sec. 4.3 | `ablation_raw.csv` | t_legible_s, dwell, intermittent, mean | `csv:dwell/intermittent/t_legible_s/mean=0.05` |
 | M18 | `Simple dwell's total censoring (50/50)` | Sec. 4.3 | `ablation_raw.csv` | censored, dwell, mid_reversal, sum | `csv:dwell/mid_reversal/censored/sum=50` |
-| M19 | `(50/50, t-legible $\approx$ 2.4 s) for $v_{\text{lat}} \le 0.20$ m/s` | Sec. 4.3 | `src/compass_eval/results/README.md` | R5 summary (R5 rows 2.37/2.40/2.57 s) | `lit:src/compass_eval/results/README.md::t-legible≈2.4 s` |
+| M19 | `(50/50, $t_{\text{sfx}} \approx$ 2.4 s) for $v_{\text{lat}} \le 0.20$ m/s` | Sec. 4.3 | `src/compass_eval/results/README.md` | R5 summary (R5 rows 2.37/2.40/2.57 s) | `lit:src/compass_eval/results/README.md::≈2.4 s)하지만` |
 | M20 | `\textbf{switching is blocked (0/50) for $v_{\text{lat}} \ge 0.35$ m/s}` | Sec. 4.3, Fig. 5 | `src/compass_eval/results/R5_rho_sweep.md` | row v_lat=0.35 | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.35 \| 1.00 \| 0/50 \|` |
 | M21 | `$v_{\text{lat}} \in (0.20, 0.35)$` | Abstract, Sec. 4.3, 5, App. D | `R5_rho_sweep.md` | last committing / first blocked row | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.20 \| 1.00 \| 50/50 \|` |
 | M22 | `from 0.05 to 0.50 m/s` | Sec. 4.3 | `R5_rho_sweep.md` | sweep range | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.50 \|` |
@@ -55,13 +55,16 @@ measured values.
 | M32 | `horizon 10 s` | Sec. 4.1 | `R1_ablation.md` | dt/horizon line | `lit:src/compass_eval/results/R1_ablation.md::dt=0.050 s, horizon=200 cycles (10.0 s)` |
 | M33 | `The 3,750-run paired scripted sweep` | Sec. 3.6 | `src/compass_eval/RESPONSIVENESS.md` | sweep size | `lit:src/compass_eval/RESPONSIVENESS.md::3,750 runs` |
 | M34 | `(the software helper conservatively returns 50)` | Sec. 3.6 | `src/compass_eval/RESPONSIVENESS.md` | helper bound | `lit:src/compass_eval/RESPONSIVENESS.md::conservative 50-cycle bound` |
+| M35 | `The numerical correction changes 200 rows (all become uncensored). The follow-up rule changes 47 further rows` | Sec. 4.1 | `src/compass_eval/results/observer_versions/README.md` | per-row comparison summary (checked by `scripts/check_observer_versions.py`) | `lit:src/compass_eval/results/observer_versions/README.md::200 rows change observer output (200 uncensored, 0 newly censored)` |
+| M36 | `found 22 final-sample-only crossings` | Sec. 4.1 | `observer_versions/README.md` | rows uncensored at 9.95 s in 5343d45 | `lit:src/compass_eval/results/observer_versions/README.md::(22 at 9.95 s, 25 at 9.75 or 9.85 s` |
+| M37 | `changes 47 further rows, all in the immediate-argmin and synthetic correspondence-loss comparators` | Sec. 4.1 | `observer_versions/README.md` | changed rows by variant | `lit:src/compass_eval/results/observer_versions/README.md::47 rows change observer output (0 uncensored, 47 newly censored)` |
 
 ## Harness and implementation constants
 
 | # | Printed | Where | Artifact | Field / derivation | Check |
 |---|---|---|---|---|---|
 | H1 | `($\varepsilon = 0.2$, $p^* = 0.9$ in this measurement)` | Sec. 4.1 | `src/compass_eval/include/compass_eval/harness.hpp` | observer eps, pstar | `lit:src/compass_eval/include/compass_eval/harness.hpp::const double eps = 0.2, pstar = 0.9;` |
-| H2 | `requires at least 0.30 s of observed follow-up` | Sec. 4.1 | `harness.hpp` | hold_s | `lit:src/compass_eval/include/compass_eval/harness.hpp::constexpr double hold_s = 0.30;` |
+| H2 | `A value is reported only if at least 0.30 s of observed follow-up follows that first sample` | Sec. 4.1 | `harness.hpp` | EndpointSuffixFollowup030 follow_up_s | `lit:src/compass_eval/include/compass_eval/harness.hpp::constexpr double follow_up_s = 0.30;` |
 | H3 | `a continuous 0.6 s dwell timer` | Sec. 4.1 | `harness.hpp` | run_dwell T_dwell | `lit:src/compass_eval/include/compass_eval/harness.hpp::std::lround(0.6 / DT)` |
 | H4 | `randomly selects a label when $\|J_R-J_L\|<0.10$` | Sec. 4.1 | `harness.hpp` | correspondence-loss band | `lit:src/compass_eval/include/compass_eval/harness.hpp::const double band = 0.10;` |
 | H5 | `verified at \code{harness.hpp:56}` | Sec. 4.3 | `harness.hpp` line 56 | mid_reversal ramp to +0.25 | `lit:src/compass_eval/include/compass_eval/harness.hpp::case Scn::Reversal:    adv = -0.25 + 0.50 * (double(i) / (T - 1));` |
@@ -69,9 +72,12 @@ measured values.
 | H7 | `with a 0.1 s fallback on the first cycle` | Table 1 | `src/compass_nav2/src/compass_controller.cpp` | dt fallback | `lit:src/compass_nav2/src/compass_controller.cpp::(now - last_now_) : 0.1;` |
 | H8 | `\code{progress\_max\_gap=0.25} s` | App. A | `compass_controller.cpp` | getParam default | `lit:src/compass_nav2/src/compass_controller.cpp::"progress_max_gap", progress_max_gap_, 0.25` |
 | H9 | `\code{progress\_max\_speed=2.0} m/s` | App. A | `compass_controller.cpp` | getParam default | `lit:src/compass_nav2/src/compass_controller.cpp::"progress_max_speed", progress_max_speed_, 2.0` |
-| H10 | `\code{progress\_length=1.0} m` | App. A | `compass_controller.cpp` | getParam default | `lit:src/compass_nav2/src/compass_controller.cpp::"progress_length", progress_length_, 1.0` |
+| H10 | `($0.133$~m at the default gains)` | Sec. 3.6 | `compass_params.yaml`, `measured_progress.hpp` | k_side/k_e tracker equilibrium used by planned_offset | `calc:0.4/3.0=0.133` |
 | H11 | `The separate research profile sets $k_\rho=0.5$` | Sec. 3.6 | `src/compass_core/include/compass_core/response_profile.hpp` | responsive_profile | `lit:src/compass_core/include/compass_core/response_profile.hpp::k.k_rho = 0.5` |
 | H12 | `that is at most eight labels` | Sec. 4.4 | derived from K_cap=3 | 2^3 | `calc:2**3=8` |
+| H13 | `harness.hpp:170-239` | Sec. 4.1 | `harness.hpp` | observer implementation span (enum ObserverRule .. end of compute) | `lit:src/compass_eval/include/compass_eval/harness.hpp::enum class ObserverRule { ProbabilitySpace9fe495a, LogOddsSuffix5343d45, EndpointSuffixFollowup030 };` |
+| H14 | `fixes provisional thresholds (0.02~m/s, 2~s, 0.3~m goal distance, 0.5~m clearance)` | App. D | `scripts/physical_metrics.py` | freezing predicate | `lit:scripts/physical_metrics.py::frozen=(r['speed_mps']<=.02 and r['goal_distance_m']>.3 and` |
+| H15 | `with a 0.1~s fallback, and enforces no upper bound $h_{\max}$` | Remark 9 | `compass_controller.cpp` | dt fallback, no upper bound | `lit:src/compass_nav2/src/compass_controller.cpp::(now - last_now_) : 0.1;` |
 
 ## Default knobs (Table 5, tab:params; also used in derivations)
 
@@ -82,7 +88,7 @@ measured values.
 | K3 | `\code{k\_rho} & 1.0` | Table 5 | `compass_params.yaml` | k_rho | `yaml:k_rho=1.0` |
 | K4 | `\code{p} & 2` | Table 5 | `compass_params.yaml` | p | `yaml:p=2` |
 | K5 | `\code{lambda} & 0.97` | Table 5 | `compass_params.yaml` | lambda | `yaml:lambda=0.97` |
-| K6 | `($\tau_{\text{leak}} \approx 1.64$ s)` | Table 5 | derived | -dt/ln(lambda) | `calc:-0.05/log(0.97)=1.64` |
+| K6 | `($\tau_{\text{leak}} \approx 1.64$ s at $dt=0.05$ s)` | Table 5 | derived | -dt/ln(lambda) | `calc:-0.05/log(0.97)=1.64` |
 | K7 | `\code{e\_max\_rev} & 0.50` | Table 5 | `compass_params.yaml` | e_max_rev | `yaml:e_max_rev=0.50` |
 | K8 | `\code{d\_safe} & 0.5` | Table 5 | `compass_params.yaml` | d_safe | `yaml:d_safe=0.5` |
 | K9 | `\code{ttc\_min} & 2.0` | Table 5 | `compass_params.yaml` | ttc_min | `yaml:ttc_min=2.0` |
@@ -107,30 +113,30 @@ measured values.
 
 | # | Printed | Where | Artifact | Field / derivation | Check |
 |---|---|---|---|---|---|
-| D1 | `\le \sum_X w_X = 2.8$ for the default weights` | Remark 9 | `compass_params.yaml` | w_g+w_s+w_e+w_r | `calc:1.0+1.0+0.3+0.5=2.8` |
-| D2 | `dt = 0.1375 < E_0 = 0.30$` | Remark 9 | derived | (2.8-0.05)*0.05 | `calc:(2.8-0.05)*0.05=0.1375` |
-| D3 | `$N_{\min}(0) = 3$ cycles ($0.15$ s)` | Abstract, Remark 9 | derived | ceil(0.30/0.1375) | `calc:ceil(0.30/((2.8-0.05)*0.05))=3` |
-| D4 | `$N_{\min}(0) = 7$ cycles ($0.35$ s)` | Abstract, Remark 9 | derived | ceil(0.30/((1-0.05)*0.05)) | `calc:ceil(0.30/((1-0.05)*0.05))=7` |
-| D5 | `$N_{\min}(0) = 14$ cycles ($0.70$ s)` | Remark 9 | derived | ceil(0.30/((0.5-0.05)*0.05)) | `calc:ceil(0.30/((0.5-0.05)*0.05))=14` |
-| D6 | `$(D_{\max}-\Dfloor)\,dt = 0.045 > E_0$` | Remark 9, 11 | derived boundary instance | (0.95-0.05)*0.05 | `calc:(0.95-0.05)*0.05=0.045` |
-| D7 | `give $\bar\rho = 0.5$` | Remark 11 | derived | ((0.045/0.03-1)/1)^(1/1) | `calc:(0.045/0.03-1)/1=0.5` |
+| D1 | `\le \sum_X w_X = 2.8$ for the default weights` | Remark 10 | `compass_params.yaml` | w_g+w_s+w_e+w_r | `calc:1.0+1.0+0.3+0.5=2.8` |
+| D2 | `dt = 0.1375 < E_0 = 0.30$` | Remark 10 | derived | (2.8-0.05)*0.05 | `calc:(2.8-0.05)*0.05=0.1375` |
+| D3 | `$N_{\min}(0) = 3$ cycles ($0.15$ s)` | Abstract, Remark 10 | derived | ceil(0.30/0.1375) | `calc:ceil(0.30/((2.8-0.05)*0.05))=3` |
+| D4 | `$N_{\min}(0) = 7$ cycles ($0.35$ s)` | Abstract, Remark 10 | derived | ceil(0.30/((1-0.05)*0.05)) | `calc:ceil(0.30/((1-0.05)*0.05))=7` |
+| D5 | `$N_{\min}(0) = 14$ cycles ($0.70$ s)` | Remark 10 | derived | ceil(0.30/((0.5-0.05)*0.05)) | `calc:ceil(0.30/((0.5-0.05)*0.05))=14` |
+| D6 | `$(D_{\max}-\Dfloor)\,dt = 0.045 > E_0$` | Remark 10, 12 | derived boundary instance | (0.95-0.05)*0.05 | `calc:(0.95-0.05)*0.05=0.045` |
+| D7 | `give $\bar\rho = 0.5$` | Remark 12 | derived | ((0.045/0.03-1)/1)^(1/1) | `calc:(0.045/0.03-1)/1=0.5` |
 | D8 | `yields $x=0.33\ge E_0=0.30$ from zero` | Remark 8 | derived | (2.8-0.05)*0.12 | `calc:(2.8-0.05)*0.12=0.33` |
-| D9 | `only when $D>0.23$` | Remark 10 | derived | 0.05+0.30*(1-0.97)/0.05 | `calc:0.05+0.30*(1-0.97)/0.05=0.23` |
-| D10 | `gives 76, 24, 17, and 7 cycles` | Remark 10 | derived Eq. (nresp) | N_resp(D=0.25) | `calc:n_resp(0.25,0.30)=76` |
-| D11 | `gives 76, 24, 17, and 7 cycles` | Remark 10 | derived Eq. (nresp) | N_resp(D=0.40) | `calc:n_resp(0.40,0.30)=24` |
-| D12 | `gives 76, 24, 17, and 7 cycles` | Remark 10 | derived Eq. (nresp) | N_resp(D=0.50) | `calc:n_resp(0.50,0.30)=17` |
-| D13 | `gives 76, 24, 17, and 7 cycles` | Remark 10 | derived Eq. (nresp) | N_resp(D=1.0) | `calc:n_resp(1.0,0.30)=7` |
-| D14 | `(3.80, 1.20, 0.85, and 0.35 s)` | Remark 10 | derived | 76*0.05 | `calc:76*0.05=3.80` |
-| D15 | `$\rho>\sqrt{2/3}\approx0.8165$` | Remark 10 | derived | (0.50/0.30-1)^(1/2) | `calc:sqrt(0.50/0.30-1)=0.8165` |
-| D16 | `The value $0.41$ is only the leak-equilibrium threshold` | Remark 10 | derived | 0.05+0.60*(1-0.97)/0.05 | `calc:0.05+0.60*(1-0.97)/0.05=0.41` |
+| D9 | `only when $D>0.23$` | Remark 11 | derived | 0.05+0.30*(1-0.97)/0.05 | `calc:0.05+0.30*(1-0.97)/0.05=0.23` |
+| D10 | `gives 76, 24, 17, and 7 cycles` | Remark 11 | derived Eq. (nresp) | N_resp(D=0.25) | `calc:n_resp(0.25,0.30)=76` |
+| D11 | `gives 76, 24, 17, and 7 cycles` | Remark 11 | derived Eq. (nresp) | N_resp(D=0.40) | `calc:n_resp(0.40,0.30)=24` |
+| D12 | `gives 76, 24, 17, and 7 cycles` | Remark 11 | derived Eq. (nresp) | N_resp(D=0.50) | `calc:n_resp(0.50,0.30)=17` |
+| D13 | `gives 76, 24, 17, and 7 cycles` | Remark 11 | derived Eq. (nresp) | N_resp(D=1.0) | `calc:n_resp(1.0,0.30)=7` |
+| D14 | `(3.80, 1.20, 0.85, and 0.35 s)` | Remark 11 | derived | 76*0.05 | `calc:76*0.05=3.80` |
+| D15 | `$\rho>\sqrt{2/3}\approx0.8165$` | Remark 11 | derived | (0.50/0.30-1)^(1/2) | `calc:sqrt(0.50/0.30-1)=0.8165` |
+| D16 | `The value $0.41$ is only the leak-equilibrium threshold` | Remark 11 | derived | 0.05+0.60*(1-0.97)/0.05 | `calc:0.05+0.60*(1-0.97)/0.05=0.41` |
 | D17 | `lowering the maximum threshold to $0.45<e_{\max}=0.50$` | Sec. 3.6 | derived | 0.30*(1+0.5) | `calc:0.30*(1+0.5)=0.45` |
 | D18 | `the response bound is 49 cycles` | Sec. 3.6 | derived Eq. (nresp) | N_resp(D=0.40, E=0.45) | `calc:n_resp(0.40,0.45)=49` |
 | D19 | `= 0.583 < 0.60$` | Sec. 4.3 | derived | (0.40-0.05)*0.05/(1-0.97) | `calc:(0.40-0.05)*0.05/(1-0.97)=0.583` |
-| D20 | `switches within $N_{\text{resp}} = 24$ cycles ($1.2$ s)` | Sec. 4.3 | derived | 24*0.05 | `calc:n_resp(0.40,0.30)*0.05=1.2` |
-| D21 | `even at $D_{\text{sus}} = 0.25$ the response-time bound is $N_{\text{resp}} = 76$ cycles ($3.8$ s)` | Sec. 4.3 | derived | 76*0.05 | `calc:n_resp(0.25,0.30)*0.05=3.8` |
-| D22 | `it exceeds $0.23$ only in the final $8$ cycles ($0.4$ s)` | Sec. 4.3 | derived from harness ramp (H5) | count of cycles with ramp > 0.23 | `calc:ramp_cycles_above(0.23)=8` |
-| D23 | `leaves $\Erev \approx 0.21 < E_0$ at the end of the horizon` | Sec. 4.3 | derived from harness ramp (H5) | noiseless leaky recursion | `calc:ramp_end_evidence()=0.21` |
+| D20 | `the advantage would switch within the upper bound $N_{\text{resp}} = 24$ cycles ($1.2$ s)` | Sec. 4.3 | derived | 24*0.05, noiseless model | `calc:n_resp(0.40,0.30)*0.05=1.2` |
 | D24 | `\approx 0.075$, which is smaller than $E_0=0.3$` | App. D | derived | (0.5-0.05)*0.05/(1-0.7) | `calc:(0.5-0.05)*0.05/(1-0.7)=0.075` |
 | D25 | `raises $\Eth$ to $E_0(1+k_\rho) = 0.60$` | Sec. 4.3 | derived | 0.30*(1+1) | `calc:0.30*(1+1.0)=0.60` |
-| D26 | `Events at $t=0,4,8,\ldots$ with $W=3$ s never exceed one event per window` | Remark 14 | `scripts/check_switch_bounds.py` | sparse-window counterexample | `lit:scripts/check_switch_bounds.py::assert sum(t-3<x<=t for x in range(0,t+1,4))==1` |
+| D26 | `Events at $t=0,4,8,\ldots$ with $W=3$ s never exceed one event per window` | Remark 16 | `scripts/check_switch_bounds.py` | sparse-window counterexample | `lit:scripts/check_switch_bounds.py::assert sum(t-3<x<=t for x in range(0,t+1,4))==1` |
 | D27 | `The largest observed maximum is about 1.30\% of a 50 ms (20 Hz) period` | Sec. 4.4 | `R3_latency.md` | K=3 occupancy | `lit:src/compass_eval/results/R3_latency.md::1.3025%` |
+| D28 | `it is $1.64$~s for $h=0.05$~s, $3.28$~s for the adapter's $0.1$~s fallback, and $0.82$~s for $h=0.025$~s` | Remark 9 | derived | -h/ln(0.97) at h=0.1 (0.05, 0.025 likewise) | `calc:-0.1/log(0.97)=3.28` |
+| D29 | `and $0.82$~s for $h=0.025$~s` | Remark 9 | derived | -0.025/ln(0.97) | `calc:-0.025/log(0.97)=0.82` |
+| D30 | `keeps $\rho\le0.5$ and $\Eth\le0.375<e_{\max}$ throughout` | Sec. 4.3 | derived | rho <= v_lat*T*dt/L_plan = 0.05*10/1; E0*(1+k_rho*0.5^2) | `calc:0.30*(1+1.0*(0.05*200*0.05/1.0)**2)=0.375` |

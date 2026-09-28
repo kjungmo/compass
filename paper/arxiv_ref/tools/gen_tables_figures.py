@@ -71,13 +71,13 @@ def main_table(rows):
     body = "\n".join(lines)
     return r"""\begin{table}[t]
 \centering
-\caption{\textbf{Aggregate behavioral consistency and legibility} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The t-legible mean\stdv{SD} includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the illegibility (censoring-rate) column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation.}
+\caption{\textbf{Aggregate behavioral consistency and endpoint-suffix observer statistic} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The $t_{\text{sfx}}$ mean\stdv{SD} (\cref{subsec:setup}; not $t_{\text{legible}}$ with a fixed hold) includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the censoring-rate column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation.}
 \label{tab:main}
 \small
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
-Variant & Switches/enc.$\downarrow$ & Sign-change (/s)$\downarrow$ & Entropy (bits)$\downarrow$ & t-legible (s)$\downarrow$ & Illegibility$\downarrow$ \\
+Variant & Switches/enc.$\downarrow$ & Sign-change (/s)$\downarrow$ & Entropy (bits)$\downarrow$ & $t_{\text{sfx}}$ (s)$\downarrow$ & Censored$\downarrow$ \\
 \midrule
 """ + body + r"""
 \bottomrule
@@ -124,7 +124,7 @@ def legibility_table(rows):
         lines.append(f"{label} & " + " & ".join(cells) + " \\\\")
     return r"""\begin{table}[t]
 \centering
-\caption{\textbf{Time-to-legible by scenario} from the decision-stream proxy observer (mean in seconds; parentheses: right-censored trials out of 50). Censored trials enter the mean at the 10.0~s horizon. These values measure the stability of the decision stream, not motion legibility.}
+\caption{\textbf{Endpoint-suffix time $t_{\text{sfx}}$ by scenario} from the decision-stream observer with the post-hoc 0.30~s follow-up rule (mean in seconds; parentheses: right-censored trials out of 50). Censored trials enter the mean at the 10.0~s horizon. These values measure the stability of the decision stream, not motion legibility.}
 \label{tab:legibility}
 \small
 \resizebox{\linewidth}{!}{%

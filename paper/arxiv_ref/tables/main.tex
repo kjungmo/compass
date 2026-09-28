@@ -1,12 +1,12 @@
 \begin{table}[t]
 \centering
-\caption{\textbf{Aggregate behavioral consistency and legibility} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The t-legible mean\stdv{SD} includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the illegibility (censoring-rate) column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation.}
+\caption{\textbf{Aggregate behavioral consistency and endpoint-suffix observer statistic} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The $t_{\text{sfx}}$ mean\stdv{SD} (\cref{subsec:setup}; not $t_{\text{legible}}$ with a fixed hold) includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the censoring-rate column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation.}
 \label{tab:main}
 \small
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
-Variant & Switches/enc.$\downarrow$ & Sign-change (/s)$\downarrow$ & Entropy (bits)$\downarrow$ & t-legible (s)$\downarrow$ & Illegibility$\downarrow$ \\
+Variant & Switches/enc.$\downarrow$ & Sign-change (/s)$\downarrow$ & Entropy (bits)$\downarrow$ & $t_{\text{sfx}}$ (s)$\downarrow$ & Censored$\downarrow$ \\
 \midrule
 Full (proposed) & \textbf{0.40\stdv{0.49}} & \textbf{0.040\stdv{0.049}} & \textbf{0.018\stdv{0.022}} & 1.33\stdv{1.66} & \textbf{0/250} \\
 $-$Hysteresis & \textbf{0.40\stdv{0.49}} & \textbf{0.040\stdv{0.049}} & \textbf{0.018\stdv{0.022}} & \textbf{1.00\stdv{1.20}} & \textbf{0/250} \\
