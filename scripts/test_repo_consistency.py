@@ -200,6 +200,21 @@ class ConsistencyTests(unittest.TestCase):
             with self.assertRaisesRegex(gate.CheckError, "figure copies differ"):
                 gate.check_artifact_manifest(root)
 
+    def test_result_provenance_detects_changed_or_unlisted_file(self):
+        gate.check_result_provenance(gate.ROOT)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shutil.copytree(gate.ROOT / gate.RESULTS, root / gate.RESULTS)
+            gate.check_result_provenance(root)
+            raw = root / gate.RESULTS / "ablation_raw.csv"
+            raw.write_bytes(raw.read_bytes() + b"\n")
+            with self.assertRaisesRegex(gate.CheckError, "SHA-256 mismatch"):
+                gate.check_result_provenance(root)
+            shutil.copyfile(gate.ROOT / gate.RESULTS / "ablation_raw.csv", raw)
+            (root / gate.RESULTS / "extra.csv").write_text("x\n", encoding="utf-8")
+            with self.assertRaisesRegex(gate.CheckError, "differ from result files"):
+                gate.check_result_provenance(root)
+
     def test_failure_checks_survive_python_optimization(self):
         command = [sys.executable, "-O", "-c",
                    "import check_repo_consistency as g; g.mean_sd('10.00±0.00', [0, 0], 2, 'intentional failure')"]

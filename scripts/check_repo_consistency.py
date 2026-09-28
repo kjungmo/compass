@@ -274,6 +274,26 @@ def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def check_result_provenance(root):
+    """Every committed result file must be listed with its current SHA-256 (#11)."""
+    results = root / RESULTS
+    record = results / "PROVENANCE.md"
+    text = record.read_text(encoding="utf-8")
+    begin, end = "<!-- provenance-hashes:begin -->", "<!-- provenance-hashes:end -->"
+    require(begin in text and end in text, f"{record.relative_to(root)}: hash table markers missing")
+    block = text.split(begin, 1)[1].split(end, 1)[0]
+    listed = {}
+    for match in re.finditer(r"^\|\s*`([^`]+)`\s*\|\s*`([0-9a-f]{64})`\s*\|", block, re.M):
+        require(match[1] not in listed, f"PROVENANCE.md: duplicate entry {match[1]}")
+        listed[match[1]] = match[2]
+    present = {path.relative_to(results).as_posix() for path in results.rglob("*")
+               if path.is_file() and path.name not in ("README.md", "PROVENANCE.md")}
+    require(set(listed) == present,
+            f"PROVENANCE.md: listed {sorted(set(listed) ^ present)} differ from result files")
+    for relative, digest in listed.items():
+        require(sha256(results / relative) == digest, f"PROVENANCE.md: SHA-256 mismatch for {relative}")
+
+
 def check_artifact_manifest(root):
     manifest_path = root / "paper/arxiv/artifact_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -316,7 +336,8 @@ def main(argv=None):
               ("active README scope", lambda: check_readme_scope(root)),
               ("package versions", lambda: check_package_versions(root)),
               ("local Markdown links", lambda: check_local_links(root)),
-              ("artifact snapshot", lambda: check_artifact_manifest(root))]
+              ("artifact snapshot", lambda: check_artifact_manifest(root)),
+              ("result provenance", lambda: check_result_provenance(root))]
     if groups is not None:
         checks[:0] = [("result tables", lambda: check_result_tables(root, groups)),
                       ("results summary", lambda: check_results_summary(root, groups))]

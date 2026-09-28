@@ -37,7 +37,8 @@ python3 scripts/check_observer_versions.py    # archives == regenerated columns
 
 `scripts/test_compass_observability.sh` regenerates the file and requires byte
 equality; `scripts/check_observer_versions.py` requires every version column to
-equal its archived raw CSV.
+equal its archived raw CSV. SHA-256 values of all result files are recorded in
+[`../PROVENANCE.md`](../PROVENANCE.md).
 
 Summary (mean includes censored rows at the 10 s horizon value; not an estimate
 of eventual attainment):
