@@ -155,10 +155,13 @@ scenarios × 50 seeds), **not** physical-simulation performance. Success rate,
 collisions, social distance, and external baselines are deliberately left as a
 pre-registered protocol in the paper's *planned evaluation* (§5.6). Every
 number below is quoted from the committed measurement records under
-[`src/compass_eval/results/`](src/compass_eval/results/). The observer was corrected
-using log-odds and 0.30 s of observed follow-up: current CSV observer fields are
-not byte-identical to the original `9fe495a` archive. Decision-label metrics in
-that battery are unchanged. Numerical checks cover the CSV/table correspondence;
+[`src/compass_eval/results/`](src/compass_eval/results/). The observer's
+numerical saturation was fixed with log-odds; separately, a 0.30 s observed
+follow-up rule, chosen after review and not preregistered, now defines the
+reported endpoint-suffix statistic `t_sfx` (not a fixed-hold `t_legible`). All
+three observer result versions and a per-row comparison are kept in
+[`observer_versions/`](src/compass_eval/results/observer_versions/README.md).
+Decision-label metrics in that battery are unchanged. Numerical checks cover the CSV/table correspondence;
 they do not validate every prose claim or certify physical performance.
 Default knob values and both opt-in flags are preserved; runtime safety-defect
 corrections intentionally change Nav2 behavior, including legacy TTC/occupancy,
@@ -180,9 +183,9 @@ to the original archive.
 - **R5 — offline transition blocking:** the scripted progress-rate input exposes
   a switch-blocking interval at **v_lat ∈ (0.20, 0.35) m/s**. It does not measure
   a stopped robot, physical freezing, collision rate or goal failure.
-- **Corrected decision-stream observer:** argmin and the synthetic
-  no-correspondence comparator are censored in **72/250** and **71/250** runs,
-  respectively. This common label-stream scoring convention is not evidence of
+- **Decision-stream observer (endpoint-suffix `t_sfx`, post-hoc 0.30 s
+  follow-up rule):** argmin and the synthetic no-correspondence comparator are
+  censored in **72/250** and **71/250** runs, respectively. This common label-stream scoring convention is not evidence of
   human or motion legibility.
 - **Hypothesis correction (negative result kept):** removing hysteresis or
   progress hardening alone causes no regression in this regime — the primary

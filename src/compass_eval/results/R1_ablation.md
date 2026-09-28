@@ -4,7 +4,7 @@ N = 250 runs/variant (5 scenarios x 50 seeds), dt=0.050 s, horizon=200 cycles (1
 
 ## 종합 (전 시나리오 평균 +/- 표준편차, N=250)
 
-| 변형 | 전환수/조우 | 부호변화율(/s) | 결정엔트로피(bits) | time-to-legible(s) | 검열율 |
+| 변형 | 전환수/조우 | 부호변화율(/s) | 결정엔트로피(bits) | endpoint-suffix t_sfx(s) | 검열율 |
 |---|---|---|---|---|---|
 | full (제안) | 0.40 +/- 0.49 | 0.040 +/- 0.049 | 0.018 +/- 0.022 | 1.33 +/- 1.66 | 0/250 |
 | -hysteresis | 0.40 +/- 0.49 | 0.040 +/- 0.049 | 0.018 +/- 0.022 | 1.00 +/- 1.20 | 0/250 |
@@ -24,7 +24,7 @@ N = 250 runs/variant (5 scenarios x 50 seeds), dt=0.050 s, horizon=200 cycles (1
 | simple-dwell (O4) | 0.00+/-0.00 | 2.00+/-0.00 | 1.00+/-0.00 | 1.00+/-0.00 | 0.00+/-0.00 |
 | -class correspondence | 98.12+/-6.37 | 2.00+/-0.00 | 46.00+/-4.75 | 0.00+/-0.00 | 39.88+/-4.11 |
 
-## 시나리오별 time-to-legible (s, 평균; 괄호=검열수/50)
+## 시나리오별 endpoint-suffix t_sfx (s, 평균; 괄호=검열수/50)
 
 | 변형 | near_tie | transient_spike | mid_reversal | clean_commit | intermittent |
 |---|---|---|---|---|---|
