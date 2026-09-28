@@ -22,12 +22,10 @@ inline compass::CandidateTrajectory candidateRollout(
       segment=true;
   }
   if(!segment) return {};
-  double side=0;
-  for(const auto& pair:cls.pairs()) {
-    const double next=pair.second==compass::Side::L?1.:-1.;
-    if(side && side!=next) return {};
-    side=next;
-  }
+  // Shared steering side bias (issue #8); only single-side classes (|b| = 1)
+  // or the empty class (b = 0) have a rollout here.
+  const double side=compass::side_bias(cls);
+  if(!cls.pairs().empty() && std::abs(side)!=1.) return {};
   compass::CandidateTrajectory result;
   compass::SE2 p=robot;
   constexpr double dt=.05;

@@ -316,9 +316,10 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     if (progress.anchor) {
       // Issue #8: L_plan is the planned lateral offset of the committed class,
       // fixed when its epoch is anchored: progress already credited to this
-      // commitment plus the tracker's remaining planned offset (0 => no
-      // lateral maneuver, rho stays 0). Not a calibrated or validated model.
-      state_.L_plan = state_.L_real + measured_progress_.planned_offset(k_side_, k_e_);
+      // commitment plus the tracker's remaining planned offset, derived from the
+      // same side bias the steering term uses (0 => no lateral maneuver, rho
+      // stays 0). Not a calibrated or validated model.
+      state_.L_plan = measured_progress_.anchored_plan_length(state_.L_real, k_side_, k_e_);
     }
   }
 
@@ -406,14 +407,8 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   }
 
   // class 의 측면 부호로 약한 횡 편향을 더한다 (R -> 우측, L -> 좌측).
-  double side_bias = 0.0;
-  for (const auto & [id, s] : out.c_star.pairs()) {
-    (void)id;
-    side_bias += (s == compass::Side::R) ? -1.0 : 1.0;
-  }
-  if (out.c_star.size() > 0) {
-    side_bias /= static_cast<double>(out.c_star.size());
-  }
+  // Shared with L_plan (issue #8): mean of the pair signs, 0 if empty/balanced.
+  const double side_bias = compass::side_bias(out.c_star);
 
   // 조향: 경로 추종 cross-track + heading PD (pathTrackingAngularZ).
   // 예전의 베어링 비례 조향(ω = 1.0·yaw_err)은 감쇠가 없어 직선 복도에서도

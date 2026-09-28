@@ -22,4 +22,9 @@ public:
 private:
   std::map<uint64_t, Side> pairs_;   // sorted by id
 };
+// Steering side bias of a class: the mean of its pair signs (L = +1, R = -1),
+// in [-1, 1]. Empty and balanced (cancelling) classes return 0, i.e. no lateral
+// bias. This is the single definition used by the path tracker's side-bias term,
+// the candidate rollouts and the planned lateral offset L_plan (issue #8).
+double side_bias(const TopoClass & c);
 }  // namespace compass

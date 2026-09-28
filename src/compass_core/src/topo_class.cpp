@@ -1,6 +1,15 @@
 // topo_class.cpp
 #include "compass_core/topo_class.hpp"
 namespace compass {
+double side_bias(const TopoClass & c) {
+  if (c.size() == 0) return 0.0;
+  double sum = 0.0;
+  for (const auto & [id, s] : c.pairs()) {
+    (void)id;
+    sum += (s == Side::R) ? -1.0 : 1.0;
+  }
+  return sum / static_cast<double>(c.size());
+}
 int TopoClass::hamming(const TopoClass & a, const TopoClass & b) {
   int d = 0;
   for (const auto & [id, s] : a.pairs_) {

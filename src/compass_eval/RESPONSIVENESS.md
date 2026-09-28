@@ -69,8 +69,10 @@ enables the other, and parameters are read at controller configuration time.
 The estimator's declared defaults are `progress_max_gap=0.25 s` and
 `progress_max_speed=2.0 m/s`; these are proposed limits, not calibrated
 measurements. In measured mode `L_plan` is the planned lateral offset fixed at
-each epoch anchor: the path tracker's equilibrium offset `k_side/k_e` toward
-the class side (0.133 m at default gains) minus the anchor's signed offset,
+each epoch anchor: the path tracker's equilibrium offset `k_side*|b|/k_e` toward
+the class side, where `b = compass::side_bias(class)` is the mean pair sign the
+steering term also uses (0.133 m at default gains for a single-side class, one
+third of that for a 2 L + 1 R class; a balanced class is rejected) minus the anchor's signed offset,
 plus progress already credited to the same commitment; a non-positive value
 means no lateral maneuver and keeps `rho=0` (issue #8). The former
 `progress_length=1.0 m` knob is removed. The legacy default still uses the
