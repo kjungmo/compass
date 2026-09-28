@@ -1,0 +1,36 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Selected legacy/shared default values}; research options and parameter sources are specified in the accompanying text.}
+\label{tab:params}
+\small
+\begin{tabular}{@{}lrp{0.40\linewidth}@{}}
+\toprule
+Knob & Value & Meaning \\
+\midrule
+\code{delta\_floor} & 0.05 & Instantaneous switching margin $\Dfloor$ (dimensionless) \\
+\code{E0} & 0.30 & Baseline threshold $\Eth(0)$ (normalized-cost seconds) \\
+\code{k\_rho} & 1.0 & Progress-hardening coefficient $k_\rho$ \\
+\code{p} & 2 & Progress-hardening exponent \\
+\code{lambda} & 0.97 & Leak coefficient $\lambda$ ($\tau_{\text{leak}} \approx 1.64$ s) \\
+\code{e\_max\_rev} & 0.50 & Evidence clip $e_{\max}$ (normalized-cost seconds) \\
+\code{d\_safe} & 0.5 & Hard safety distance (m) \\
+\code{ttc\_min} & 2.0 & Minimum TTC (s) \\
+\code{W} & 3.0 & Thrash window length (s) \\
+\code{n\_thrash} & 4 & Thrash threshold (count) \\
+\code{w\_g}/\code{w\_s}/\code{w\_e}/\code{w\_r} & 1.0/1.0/0.3/0.5 & Cost-term weights \\
+\code{sigma\_front}/\code{sigma\_rear}/\code{sigma\_s} & 1.2/0.6/0.5 & Proxemics widths (m) \\
+\code{K\_cap} & 3 & Explicit-dimension cap \\
+\code{a\_brake} & 0.5 & Acceleration bound (m/s$^2$); speed decrement $a_{\rm brake}dt$ \\
+\code{ttc\_stop} & 0.8 & Stop-trigger TTC threshold (s) \\
+\code{T\_safe\_dwell} & 0.6 & Safety-dwell protection time (s) \\
+\code{eps\_in}/\code{eps\_out} & 0.02/0.06 & Tie entry/exit hysteresis $\varepsilon_{\text{in}}$/$\varepsilon_{\text{out}}$ \\
+\code{controller\_frequency} & 20.0 & \code{controller\_server} cycle rate (Hz) \\
+\code{max\_linear\_speed} & 0.5 & Linear-speed hard cap (m/s) \\
+\code{cruise\_speed} & 0.45 & Default cruise speed (m/s) \\
+\code{max\_angular\_speed} & 1.0 & Yaw-rate cap (rad/s) \\
+\code{goal\_decel\_dist} & 0.6 & Deceleration-start distance near goal (m) \\
+\code{lookahead\_dist} & 1.0 & Local-goal lookahead distance (m) \\
+\code{k\_e}/\code{k\_theta}/\code{k\_side} & 3.0/3.0/0.4 & Path-tracking cross-track error, heading, lateral-bias gains \\
+\bottomrule
+\end{tabular}
+\end{table}

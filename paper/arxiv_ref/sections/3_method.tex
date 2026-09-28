@@ -1,0 +1,495 @@
+\section{\sname: Commitment-Based Passing Decisions at the Decision Layer}\label{sec:method}
+
+\sname\ is a decision-layer planner: at every control cycle it chooses which topological passing \Class\ to commit to, and whether to proceed, decelerate, stop, or hold, before a trajectory layer instantiates that choice. We first formulate the decision problem and its assumptions (\cref{subsec:formulation}). \sname\ then enumerates track-ID-indexed topological classes and keeps them in correspondence across cycles (\cref{subsec:enum}), scores each class with a normalized, asymmetric social cost (\cref{subsec:cost}), accumulates the challenger's advantage in a single leaky evidence variable that governs discretionary switching (\cref{subsec:switch}), and overrides that rule lexicographically whenever the committed class becomes unsafe (\cref{subsec:safety}). \Cref{subsec:algo} integrates these stages into one control cycle (\cref{alg:compass}) and states the implemented interface. \Cref{subsec:props} states and proves the five properties P1--P5; \cref{subsec:observer,subsec:groups,subsec:leak} define the legibility observer, the group and vulnerable-pedestrian extensions, and the analysis of the leak against a simple dwell timer.
+
+\subsection{Formulating the Decision Layer: Layers, Assumptions, and Objective}\label{subsec:formulation}
+
+\noindent\textbf{Layer separation.} We separate social navigation into three layers. (i) The \emph{decision layer} --- the layer that determines discrete intents such as which side to pass on, and whether to yield, proceed, overtake, or stop. (ii) The \emph{trajectory layer} --- the layer that instantiates a given decision as a curvature-continuous ($G^2$) trajectory. (iii) The \emph{presentation layer} --- the layer that visually reveals the planned trajectory to people (e.g., an AR overlay). The contribution of this paper lies entirely in the decision layer; the ideal trajectory interface is a design assumption, not an end-to-end validation claim for the current adapter (implementation scope in \cref{subsec:algo}).
+
+\noindent\textbf{Notation.} Let $k$ denote the control cycle and $dt$ the cycle interval. Let $\mathcal{C}_k$ denote the set of candidate topological \Class{es} at cycle $k$, and let $J_k(c) \in \mathbb{R}^+ \cup \{\infty\}$ denote the representative trajectory cost of class $c$ ($\infty$ when unavailable). Let $c^*_{k-1}$ denote the previously committed \Class, and let $\mathcal{S}_k = \{c \in \mathcal{C}_k : \mathrm{Safe}_k(c)\}$ denote the safe/available set. Prediction of person $i$ is provided by a Kalman constant-velocity estimator, giving a mean trajectory $\hat p_i(t)$ and covariance $\Sigma_i(t)$, where $\Sigma_i(t)$ grows with the prediction horizon. A notation table is given in \cref{app:notation}.
+
+\begin{assumption}[Assumptions and scope]\label{asm:scope}
+(a) Planar (2D) navigation. (b) A short prediction horizon $[0,T]$ (typically 2--4 seconds). (c) Person tracking and data association are provided by an external module. (d) The trajectory generator, given a \Class, corridor, and target speed, is assumed capable of generating a trackable trajectory and of realizing a commanded \emph{cross-track progress rate} of at least $v_{\text{lat,min}} > 0$ (used in P4). Here $v_{\text{lat,min}}$ is not the vehicle body's lateral (swerve) velocity but the per-unit-time progress rate of the cross-track coordinate toward the planned lateral offset; for non-holonomic drives (differential, Ackermann) it is realized as the product of forward speed and steering (curvature), while for holonomic drives it is realized as a direct lateral-velocity component. Hence $v_{\text{lat,min}} > 0$ presupposes forward clearance and a positive forward speed. (e) Pedestrian passing conventions (e.g., right-side passing) are a locale setting and are not assumed to be a universal constant (\cref{subsec:cost}, \cref{app:sensitivity}).
+\end{assumption}
+
+\noindent\textbf{Objective.} A decision policy maps, at each cycle, the retained decision state and the current $(\mathcal{C}_k, J_k, \mathcal{S}_k)$ to a committed class $c^*_k$, a target speed, and a mode. For cycles $s<t$, write
+\begin{equation}
+N^{\mathrm{disc}}_{(s,t]} \;=\; \sum_{k=s+1}^{t} \mathbb{1}\!\left[\,c^*_k \neq c^*_{k-1}\ \text{and the change is made by the discretionary branch}\,\right]
+\label{eq:objective}
+\end{equation}
+for the number of discretionary decision changes in $(s,t]$; changes made by the safety branch are not counted. We design a decision policy that prioritizes the supplied safety/availability predicates at every active decision cycle and bounds the discretionary decision changes counted by \eqref{eq:objective}. Physical safety, motion legibility, goal progress, and social comfort require independent validation and are not guaranteed by branch priority.
+
+\subsection{Enumerating Topological Classes: Cross-Cycle Correspondence by Track ID}\label{subsec:enum}
+
+\textbf{Enumeration.} We index the $K$ relevant agents (typically 1--3) within the radius of influence and prediction horizon by track ID. The \Class\ label is defined as a vector of left/right passing signs over each relevant agent. The lifecycle and winding-sign procedures below are intended design contracts; the current input-order top-K implementation is distinguished explicitly at the end of this subsection and in \cref{subsec:latency}.
+\begin{equation}\label{eq:classlabel}
+c = (s_{\mathrm{id}_1}, \ldots, s_{\mathrm{id}_K}), \qquad s \in \{L, R\}
+\end{equation}
+Among the up to $2^K$ combinations, any combination whose corresponding corridor width is narrower than the sum of the robot's width and the safety margin is immediately pruned with $J = \infty$. This corridor-width comparison presupposes a \textbf{circular-footprint approximation} (treating the robot's width as an orientation-independent constant); for elongated rectangular footprints, the occupied area varies with orientation during rotation, making pruning and availability decisions conservative, which we discuss separately in \cref{sec:disc} (rectangular-footprint conservatism). The left/right sign of each \Class\ is computed from the winding sign (cross-product integral or H-signature integral) by which the representative path winds around the predicted human positions. Front/rear (temporal-axis) passing is not treated as a separate \Class\ but handled through the asymmetric social cost of \cref{subsec:cost}. A more rigorous spatiotemporal homotopy extension is discussed as future work in \cref{sec:disc}. The combinatorial explosion of enumeration and the analytical bound on the number of effective \Class{es} after pruning are analyzed in \cref{subsec:latency}.
+
+\textbf{Cross-cycle correspondence (key).} For ``retain the previous $c^*$'' to be meaningful, $c^*$ must be re-identified every cycle. Because \Class\ identity is bound to track IDs rather than geometry, correspondence reduces to label matching such as ``right of agent \#7, left of agent \#12,'' which rides for free on IDs already provided by the tracking module. The design specifies the following lifecycle rules (\cref{fig:lifecycle}).
+
+\begin{itemize}
+\item \textbf{Creation} (a relevant agent enters, or a new corridor appears): a new \Class\ appears as a challenger but starts from evidence $e=0$, so there is no immediate jump.
+\item \textbf{Extinction} (a relevant agent leaves): the corresponding dimension is removed from all labels. If $c^*$ was distinguished solely by that person, it is absorbed into a coarser \Class; progress $\rho$ is retained if the actual path is unchanged, and reset if it changes.
+\item \textbf{Temporary unavailability} (corridor closes, $J=\infty$): identity is retained but passage is momentarily blocked. If $c^*$ is affected, the safety override takes over, and the identity is remembered for a short TTL so that a momentary flicker does not break the commitment.
+\item \textbf{Merge} (two people form one cluster): the two dimensions collapse into one, leaving only the sign shared by both sides, with ``between'' becoming $\infty$. The old $c^*$ is mapped to the surviving coarser \Class. Merge decisions use not only spatial proximity but also interaction cues (mutual stillness, mutual orientation, sustained proximity); details are given in \cref{subsec:groups}.
+\item \textbf{Split} (a cluster separates): the reverse process --- the old $c^*$ is mapped to the child that is consistent with the robot's current lateral offset and heading.
+\end{itemize}
+
+\input{figures/lifecycle}
+
+These lifecycle rules specify the intended correspondence layer. The current decision-core enumeration constructs labels for the first $K_{\rm cap}$ input tracks; the presence of label operations does not establish an integrated TTL, merge/split, winding-sign, or group-lifecycle manager. The offline two-label harness holds track identity fixed, so it validates neither those lifecycle rules nor their effect in a tracker. The accumulator is the implemented and measured temporal decision mechanism.
+
+
+\subsection{Scoring Classes: A Normalized Asymmetric Social Cost}\label{subsec:cost}
+
+\input{figures/social_cost}
+
+The cost of each \Class\ is defined as a weighted sum integrated over the horizon $[0,T]$ along the representative trajectory $\tau_c$.
+\begin{equation}\label{eq:cost}
+J(c) = w_g J_{\text{goal}} + w_s J_{\text{social}} + w_e J_{\text{effort}} + w_r J_{\text{rule}}, \qquad J(c) = \infty \text{ if unavailable}
+\end{equation}
+
+\begin{itemize}
+\item \textbf{Progress $J_{\text{goal}}$.} Distance from the local goal $g$ at the end of the horizon: $J_{\text{goal}} = \lVert p_r(T) - g \rVert$. This penalizes detour/stopping \Class{es}.
+\item \textbf{Asymmetric social cost $J_{\text{social}}$.} A proxemics cost field is laid over each person and integrated for intrusion (\cref{fig:socialcost}).
+\begin{align}
+J_{\text{social}} &= \sum_i \int_0^T g_i(p_r(t), t)\, dt \\
+g_i(p,t) &= \exp\!\left(-\tfrac{1}{2}\, \delta^\top M_i(t)^{-1} \delta\right), \qquad \delta = p - \hat p_i(t) \\
+M_i(t) &= R_i(t)\, \mathrm{diag}(\sigma_h^2, \sigma_s^2)\, R_i(t)^\top + \Sigma_i(t)
+\end{align}
+
+Here the heading component $\sigma_h$ is set to be front/rear asymmetric ($\sigma_{\text{front}}$ for the front half-plane, $\sigma_{\text{rear}}$ for the rear). This makes the cost of cutting in front of a person differ from that of passing behind them, so that the choice of passing side aligns with social norms. \textbf{$\sigma_{\text{rear}}$ appears in two distinct mechanisms in this paper and must be distinguished. (i) As the base shape of the cost-field asymmetry, $\sigma_{\text{front}} > \sigma_{\text{rear}}$ (the static shape in which the front personal-space region is wider than the rear), and (ii) as a contextual upward adjustment in the overtaking regime (a dynamic adjustment that deliberately raises the rear cost to suppress the surprise of a blind-spot approach) --- these are distinct operating principles: the former induces yielding to the rear in head-on encounters, and the latter suppresses rear approach during overtaking/close passing.} In addition, the predictive covariance $\Sigma_i(t)$ is added to the cost field, so that the personal-space ellipse widens further into the future and the robot gives wider berth accordingly. $\sigma_s$ determines the lateral width. Which of $\sigma_{\text{front}}$ or $\sigma_{\text{rear}}$ applies to a given person is computed from that person's heading and the robot--person relative motion. That is, $\sigma_{\text{front}}$ is applied in the head-on-encounter regime where the robot crosses the person's front half-plane, and $\sigma_{\text{rear}}$ is applied in the overtaking regime where the robot enters the person's rear half-plane; half-plane assignment is determined by projecting $\delta$ into local coordinates referenced to the person's heading. \textbf{Here, the $\sigma_{\text{rear}}$ regime switch (head-on encounter $\leftrightarrow$ overtaking) is not driven by a separate variable but by the same variable as the rear half-plane projection judgment above (the sign of $\delta$'s local projection onto the person's heading) --- that is, the selection of the cost-field asymmetry and the assignment to the overtaking regime are consistently derived from a single judgment.}
+
+\textbf{Parameter grounding and locale configurability.} $\sigma_{\text{front}}$, $\sigma_{\text{rear}}$, $\sigma_s$, and the passing-side preference are not treated as universal constants but as \textbf{locale/culture configuration values}. The basic form of the asymmetric Gaussian proxemics is grounded in Kirby \citep{kirby2010thesis}, and the forward-extended shape draws on Hall's personal-space zones \citep{hall1966hidden} and the social navigation survey \citep{riosmartinez2015survey}. However, we do not adopt the unconditional assumption that ``passing behind is always preferable.'' Since approach from a person's blind spot (rear) can plausibly induce surprise or discomfort --- a design consideration this paper adopts, rather than a finding reported in the surveys cited above --- this cost exposes $\sigma_{\text{rear}}$ as a \textbf{context-dependent knob}, so that (i) rear yielding is preferred in head-on encounters, while (ii) the rear cost is raised during overtaking/close passing to suppress blind-spot entry. The passing-side preference is locale-dependent and configurable (e.g., some pedestrian environments are reported to favor the right, others the left, or a mix). For an experimental study of a single population (Bordeaux, France) showing that avoidance-side conventions in pedestrian crowds can emerge through self-organization, see \citep{moussaid2009experimental}; however, since that study is not a cross-cultural comparison, we do not extrapolate it as direct evidence that ``the passing side varies by culture''; this paper takes the conservative choice of not fixing the passing side as a universal constant but separating it out as a \code{locale.keep\_side} $\in \{\text{right}, \text{left}, \text{none}\}$ setting. The design of the sensitivity analysis for these parameters is described in \cref{app:sensitivity}, and their measurement is left to the planned evaluation (\cref{app:planned}).
+
+
+\item \textbf{Effort/smoothness $J_{\text{effort}}$.} $J_{\text{effort}} = \int_0^T (\alpha \kappa^2 + \beta a^2 + \gamma \dot\kappa^2)\, dt$. The $\dot\kappa$ (curvature rate) term induces $G^2$ continuity, which directly benefits smooth tracking and the curvature display of the presentation layer.
+\item \textbf{Rule $J_{\text{rule}}$.} A soft penalty for pedestrian traffic conventions (preference per \code{locale.keep\_side}) and lane keeping. The design of the sensitivity curve for the weight $w_r$ is given in \cref{app:sensitivity}.
+\end{itemize}
+
+\textbf{Hard availability.} $J = \infty$ if any of the following holds: static collision ($d_{\text{obs}} < r_{\text{safe}}$), insufficient corridor width, violation of kinematic limits, or violation of the hard safety distance $d_{\text{safe}}$ from a predicted person. This is a dual structure in which soft discomfort is handled by $J_{\text{social}}$ while physical/safety constraints are handled by hard availability.
+
+\textbf{Normalization, range, and units.} For each term $X$, choose finite calibration bounds with $J_X^{\max}>J_X^{\min}$ and use $\hat J_X=\mathrm{clip}((J_X-J_X^{\min})/(J_X^{\max}-J_X^{\min}),0,1)$. With nonnegative finite weights, available finite costs satisfy $0\le J=\sum_Xw_X\hat J_X\le\sum_Xw_X$, so $|D_k|\le\sum_Xw_X$. Unavailable classes are excluded from discretionary comparison; their infinite cost is not an admissible accumulator input. This bound is a property of the normalized cost path, not of arbitrary externally supplied \code{step\_evals} inputs.
+
+Fixed pre-calibrated constants preserve the meaning of normalized advantage across cycles. If cost units are rescaled, the calibration constants must co-transform to preserve affine invariance; that can be done for fixed constants as well as per-cycle statistics. Per-cycle min--max statistics instead change the raw-cost margin with the candidate range: a narrower range requires a \emph{smaller}, not larger, raw-cost difference to exceed the same normalized $\Dfloor$. That changes its semantic interpretation, but P2 still holds whenever its stated normalized advantage bound holds. P1 separately requires its explicit distributional hypotheses.
+
+$J$, $D_k$ and $\Dfloor$ are dimensionless under normalized weights. Because updates multiply by $dt$ measured in seconds, evidence $e$, $E_0$ and $e_{\max}$ have normalized-cost--second units; $\lambda$, $k_\rho$, $\rho$ and $p$ are dimensionless, and $\theta^*$ has reciprocal-evidence units. Hence $\theta^*E_0$ is dimensionless. The value $\Dfloor=0.05$ is five percent of one unit-weight normalized term, not five percent of the full weighted range when $\sum_Xw_X=2.8$. The numerical knob values and reported experiments are unchanged by making these units explicit.
+
+
+\subsection{Accumulating Evidence: A Unified Commitment Switching Rule}\label{subsec:switch}
+
+Let the challenger be $c'_k = \operatorname*{argmin}_{c \in \mathcal{S}_k,\, c \ne c^*} J_k(c)$, and the challenger advantage $D_k = J_k(c^*_{k-1}) - J_k(c'_k)$. We integrate the margin, dwell, and progress hardening into a single leaky-evidence-accumulation equation.
+\begin{align}
+e_k &= \mathrm{clip}\big(\lambda\, e_{k-1} + (D_k - \Dfloor)\, dt,\ 0,\ e_{\max}\big) \label{eq:accum}\\
+\text{Switching condition:}\quad & e_k \ge \Eth(\rho_k) \\
+\Eth(\rho) &= E_0 \cdot (1 + k_\rho \rho^p), \qquad p \ge 1 \label{eq:eth}\\
+\rho_k &= \mathrm{clip}\!\left(\frac{|\text{realized cross-track progress}|}{|\text{planned lateral offset of } c^*|},\ 0,\ 1\right)
+\end{align}
+
+Here $\Dfloor$ is the instantaneous margin (a dimensionless fraction of the normalized range per \cref{subsec:cost}; advantage beyond this is dissipated by leak $\lambda \in (0,1]$), $\Eth$ is the persistence requirement (dwell), and $k_\rho \rho^p$ is progress hardening (point of no return). An equivalence relation gives intuition. If $\lambda = 1$ and the advantage is a constant $\bar D > \Dfloor$, then $e$ grows as $(\bar D - \Dfloor)t$, switching at $t = \Eth/(\bar D - \Dfloor)$; hence the larger the advantage, the faster the switch (proportional urgency), and as $\Eth \to 0^+$ this reduces to a pure margin, while a large $\Eth$ means a long dwell. When the challenge target changes ($c'$ changes), we reset $e \leftarrow 0$, and at the moment of switching/committing, we reset $e \leftarrow 0, \rho \leftarrow 0$.
+
+Here, $\Dfloor$ is a dimensionless switching margin under the normalization premise of \cref{subsec:cost}, and its absolute meaning is held constant across cycles only when the normalization constants are fixed as pre-calibrated constants (time-invariance of the normalization map) (see the drift analysis in \cref{subsec:cost}). If per-cycle min--max statistics are used, the effective margin of the same $\Dfloor$ drifts with the candidate set, so care is needed in interpreting margin-dependent statements such as the safety dwell and the switching-rate lower bound.
+
+The linear case ($p=1$) hardens uniformly, while the superlinear case ($p>1$) is a ``point of no return''-emphasizing form that allows slack through the middle of the maneuver but locks sharply near the end.
+
+\noindent\textbf{Challenger tie-breaking.} If $c'_k = \operatorname*{argmin}$ is not unique (two challengers' normalized costs are tied within numerical tolerance $\varepsilon$), the argmin can waver from cycle to cycle, and the $c' \ne \text{prev}_{c'}$ reset becomes a new source of oscillation that disturbs the accumulator. To prevent this, when tied, we fix a single challenger by the following \textbf{deterministic priority order}.
+
+\begin{enumerate}
+\item \textbf{Prefer the previous challenger.} If the previous cycle's $c'$ ($\text{prev}_{c'}$) is in the current tied set, select it (temporal consistency of challenger identity). Because this priority rule applies only within a set of costs tied within the exit threshold $\varepsilon_{\text{out}}$, choosing $\text{prev}_{c'}$ costs no more than $\varepsilon_{\text{out}}$ (the hysteresis exit threshold) relative to the optimal challenger --- i.e., it does not sacrifice more than $\varepsilon_{\text{out}}$ of optimality (consistent with the $\varepsilon_{\text{in}} < \varepsilon_{\text{out}}$ entry/exit hysteresis in the paragraph below).
+\item \textbf{Topological distance from $c^*$.} Otherwise, select the challenger with the \textbf{smaller} label Hamming distance (number of differing signs) from the current commitment $c^*$ (preferring the adjacent \Class\ with lower switching cost).
+\item \textbf{Deterministic lexicographic order.} If still tied, select the smallest by lexicographic order of \Class\ labels (ascending ID, with $L < R$ at each position).
+\end{enumerate}
+
+Because this rule is deterministic, $c'$ does not waver across cycles within a tied configuration, eliminating the artificial oscillation caused by accumulator resets. Meanwhile, $e \leftarrow 0$ fires only when $c'$ genuinely changes (an advantage reversal, not a tie).
+
+\noindent\textbf{Hysteresis at the tie boundary itself.} Because boundary chattering can also occur at the tie threshold $\varepsilon$ itself (if the cost difference wobbles near $\varepsilon$, ``tied $\leftrightarrow$ untied'' can flicker across cycles), we place entry/exit hysteresis on the $\varepsilon$ boundary. That is, we separate the threshold $\varepsilon_{\text{in}}$ at which two challengers \textbf{enter} a tied set from the untied state and the threshold $\varepsilon_{\text{out}}$ at which they \textbf{exit} the tied set, with $\varepsilon_{\text{in}} < \varepsilon_{\text{out}}$, so that once a pair of challengers is bound as tied, they are only released as untied when their cost difference exceeds $\varepsilon_{\text{out}}$. This blocks the secondary oscillation in which the tiebreak's own activation/deactivation wobbles at the boundary.
+
+\noindent\textbf{Conservatism trade-off of the safety dwell.} The safety dwell and progress hardening of \cref{subsec:safety} reduce oscillation by delaying switching, but at the cost of equally delaying the response when a genuinely better alternative appears. That is, increasing $\Dfloor \cdot E_0 \cdot k_\rho$ strengthens anti-oscillation but increases the delay of legitimate replanning (conservatism), and this trade-off's operating point is tuned via the sensitivity analysis of \cref{app:sensitivity}.
+
+
+\subsection{Overriding for Safety: Lexicographic Priority and a HOLD Guard}\label{subsec:safety}
+
+Safety/availability is judged by
+\begin{equation}
+\mathrm{Safe}_k(c) = [\text{clearance} \ge d_{\text{safe}}] \wedge [\text{TTC} \ge \text{TTC}_{\min}] \wedge [\text{kinematically feasible}].
+\label{eq:safe}
+\end{equation}
+If the committed $c^*$ leaves the safe set, all accumulation and hardening from \cref{subsec:switch} are entirely disregarded (margin is zero in an emergency), and the system drops down the following ladder.
+
+\begin{enumerate}
+\item Switch to a safe alternative \Class\ (if one exists).
+\item Otherwise, decelerate to buy time.
+\item If still hazardous, stop and yield (this is a commanded fallback; collision freedom additionally depends on braking and the environment).
+\end{enumerate}
+
+\noindent\textbf{Hysteresis on the safety branch itself.} If the safety ladder chatters at stage 1 (switching) --- i.e., high-frequency repeated safety switches --- this itself becomes a new source of oscillation. To prevent this, we also impose minimal hysteresis on the safety branch. (i) \textbf{Safety dwell.} During a brief protection window $T_{\text{safe\_dwell}}$ immediately following a safety switch, further safety switches are blocked; if the violation persists, the system falls straight through to stage 2 (deceleration). That is, ``if a safety switch was just attempted and safety is immediately violated again,'' the system does not chatter at stage 1 again but transitions to \textbf{deceleration priority}. (ii) \textbf{Deceleration-priority condition.} If the number of qualifying safety interventions within the rolling window reaches a threshold (a partial threshold of $N_{\text{thrash}}$ below), stage 1 is skipped and the system starts directly from stage 2. These conditions suppress repeated safety switching while active; as windows expire or the environment changes, they do not imply globally monotone mode descent.
+
+\noindent\textbf{Thrash guard.} A qualifying event is an invocation of the unsafe-commitment branch, including interventions that decelerate without changing class. At most one event per decision time is retained in $(t-W,t]$, giving the window count
+\begin{equation}
+C_W(t)=\#\{i:t-W<\tau_i\le t\}
+\label{eq:window}
+\end{equation}
+over qualifying event times $\tau_i$. If this count reaches $N_{\rm thrash}$, the controller enters zero-command HOLD and retains it until explicit external release; this is not a deadlock-recovery guarantee. The release operation clears mode/window/dwell state. Any re-commit and progress re-anchoring are separate state operations, not an implicit effect of release.
+
+\subsection{Integrating the Cycle: Algorithm and Trajectory Interface}\label{subsec:algo}
+
+\begin{algorithm}[t]
+\caption{\sname\ decision-layer control cycle (\cref{fig:decisionflow})}\label{alg:compass}
+\DontPrintSemicolon
+\SetKwFunction{TieBreak}{TieBreak}
+\KwData{$c^*,e,\rho,L_{\rm real},L_{\rm plan}$, event deque $Q$, $\text{prev}_{c'}$, dwell expiry, mode}
+\For{each cycle at time $t_k$ with interval $h_k$}{
+  $\mathcal{C}\leftarrow$ class enumeration; evaluate normalized $J(c)$ and safe/available set $\mathcal{S}$\;
+  \If{mode $=$ HOLD}{\textbf{output} zero command; \textbf{continue} \tcp*{explicit release required}}
+  \If(\tcp*[f]{Safety}){$c^*\notin\mathcal{S}$}{
+    Record $t_k$ once in $Q$; remove $\tau\le t_k-W$; $n_{\rm thrash}\leftarrow |Q|$\;
+    \uIf{dwell protection active \textbf{or} $n_{\rm thrash}\ge \max(1,\lfloor N_{\rm thrash}/2\rfloor)$}{
+      $v_{\rm target}\leftarrow\max(0,v_{\rm in}-a_{\rm brake}h_k)$ \tcp*{interval-scaled speed bound}
+    }
+    \uElseIf{$\mathcal{S}\ne\emptyset$}{
+      $c^*\leftarrow$ \TieBreak{$\mathcal{S}$}; $e,\rho,L_{\rm real}\leftarrow0$; dwell expiry $\leftarrow t_k+T_{\rm safe\_dwell}$\;
+    }
+    \Else{$v_{\rm target}\leftarrow\max(0,v_{\rm in}-a_{\rm brake}h_k)$\;}
+    On a braking branch with $\mathrm{TTC}<\mathrm{TTC}_{\rm stop}$, set mode $\leftarrow$ STOP\;
+    \If{$n_{\rm thrash}\ge N_{\rm thrash}$}{
+      mode $\leftarrow$ HOLD; $v_{\rm target}\leftarrow0$\;
+      If $\mathcal{S}\ne\emptyset$, select its least-cost class and reset $e,\rho,L_{\rm real}$ and dwell\;
+    }
+    \textbf{output} safety result; \textbf{continue} \tcp*{no progress update on this branch}
+  }
+  \If(\tcp*[f]{Discretionary}){$\mathcal{S}\setminus\{c^*\}\ne\emptyset$}{
+    $c'\leftarrow$ \TieBreak{$\mathcal{S}\setminus\{c^*\},\text{prev}_{c'},c^*$}; $D\leftarrow J(c^*)-J(c')$\;
+    \lIf{$c'\ne\text{prev}_{c'}$}{$e\leftarrow0$}
+    $e\leftarrow\mathrm{clip}(\lambda e+(D-\Dfloor)h_k,0,e_{\max})$\;
+    \lIf{$e\ge E_0(1+k_\rho\rho^p)$}{$c^*\leftarrow c'$; $e,\rho,L_{\rm real}\leftarrow0$}
+    $\text{prev}_{c'}\leftarrow c'$\;
+  }
+  Update progress using the declared measured-displacement or legacy-proxy contract\;
+  \textbf{output} $\{c^*,v_{\rm target},\text{mode},\text{safety velocity limit}\}$ to the command adapter\;
+}
+\end{algorithm}
+
+\Cref{alg:compass} integrates the stages above into one decision cycle; its structure is shown conceptually in \cref{fig:decisionflow}. The cycle interval is measured rather than assumed,
+\begin{equation}
+h_k=\begin{cases} t_k-t_{k-1}, & k>1 \text{ and } t_k>t_{k-1},\\ 0.1\ \text{s}, & \text{first cycle or non-advancing clock,}\end{cases}
+\label{eq:hk}
+\end{equation}
+and every braking branch applies the interval-scaled speed bound
+\begin{equation}
+v_{\rm target}=\max(0,\,v_{\rm in}-a_{\rm brake}h_k),
+\label{eq:brake}
+\end{equation}
+which is a command limit, not a physical braking-distance guarantee.
+
+The implementation is a controller plugin, \code{compass\_nav2::CompassController}, implementing the \code{nav2\_core::Controller} interface of ROS2 \texttt{Nav2}~\citep{macenski2020nav2}, hosted by the \code{controller\_server}. One decision cycle executes per \code{computeVelocityCommands} call; the cycle rate is set by the \code{controller\_server}'s \code{controller\_frequency} parameter (20.0 Hz in the example configuration); the costmap comes from \code{Costmap2DROS}, and human tracks are received via a subscription to \code{/people} (\code{compass\_msgs/People}). The plugin complies with the \texttt{Nav2} lifecycle contract (\code{configure}/\code{activate}/\code{deactivate}/\code{cleanup}), outputs \code{TwistStamped}, and maintains corresponding state (labels, $e$, $\rho$, $\text{prev}_{c'}$, safety dwell and intervention-window state) across cycles.
+
+\noindent\textbf{Implemented opt-in scope and evidence versions.} The reported R1/R5 experiments use the legacy scripted-cost entry point, fixed two-label inputs, default knobs, and the historical forward-speed progress proxy. Corrected observer outputs are regenerated from the unchanged decision streams; R3 is a separate historical decision-core latency measurement, not a benchmark of the newly added adapter. The new options \code{use\_measured\_progress} and \code{use\_candidate\_trajectories} default to false. Measured progress uses signed pose displacement on a frozen path normal; invalid intervals fail explicitly, a commitment change discards the previous maneuver's increment, and changed plan geometry re-anchors progress. It is not a general multi-person progress estimator.
+
+The optional candidate path evaluates and executes a matched one-second unicycle rollout with a circular-footprint costmap proxy and constant-velocity person prediction. Empty, invalid, unsupported mixed-side, unknown-map and out-of-map candidates fail closed. A changed braking speed requires regeneration and revalidation before command emission. This supplies bounded candidate-specific cost and command plumbing, not a proof that the rollout realizes each label's homotopy or satisfies the ideal $G^2$ generator, group-lifecycle, sensing-freshness, braking-distance or P4 actuation assumptions. The safety speed bound subtracts $a_{\rm brake}h_k$, with $a_{\rm brake}$ expressed as acceleration and $h_k$ the validated cycle interval; command limiting is not a physical braking-distance guarantee. STOP/HOLD are enforced as zero commands by the adapter. Source/configuration and software-test limits are documented in \code{docs/CANDIDATE\_TRAJECTORIES.md} and \code{src/compass\_eval/RESPONSIVENESS.md}.
+
+The separate research profile sets $k_\rho=0.5$, lowering the maximum threshold to $0.45<e_{\max}=0.50$. For persistent selected advantage $D\ge0.40$ at $dt=0.05$, $\lambda=0.97$, and uninterrupted updates, the response bound is 49 cycles (the software helper conservatively returns 50). It does not satisfy the default profile's interior permanent-lock containment for that advantage range. The 3,750-run paired scripted sweep and deterministic scripted-cost unicycle diagnostic are supplementary software evidence; neither is a Gazebo/robot experiment, an independent physical oracle, or evidence for the new candidate path retroactively. Their original inputs and result sets remain separately identified.
+
+\noindent\textbf{System interface of the decision layer.} \Cref{tab:interface} transcribes the interface contract directly from the implementation code.
+
+\input{tables/interface}
+
+Here $dt$ is not a fixed constant but the measured inter-call interval (distinct from the offline harness's fixed $dt=0.05$ s in \cref{subsec:setup}), as in \eqref{eq:hk}, and the absence of a message-age cutoff for \code{/people} is a fact of the implementation as-is --- the TTL of \cref{subsec:enum} is the TTL of \Class\ identity, a separate mechanism from this. Meanwhile, end-to-end pipeline characteristics --- executor scheduling jitter, rmw/DDS queueing, TF delay, costmap update concurrency, \code{controller\_server} dispatch overhead, and the effect of input-freshness handling --- are not characterized in this paper; their measurement belongs to the planned evaluation (\cref{app:planned}).
+
+\subsection{Analyzing Properties: Anti-Oscillation, Response, Safety, Completion, and HOLD}\label{subsec:props}
+
+We state five properties as propositions. P1, P2, and P4 include proofs; P3 and P5 are argued. This paper formulates P1 as a probabilistic statement (a per-cycle upper bound on switching probability and rate) and P4 on the basis of $\rho$ dynamics, a lower bound on the lateral-progress rate, and the \textbf{containment of the reachable upper bound of the single-challenger accumulator}.
+
+One point of scope is worth stating before the propositions rather than after them. The anti-oscillation guarantee this paper \textbf{carries in its headline claims is P2} (\cref{prop:p2}): a deterministic lower bound of $N_{\min}(\rho) = \lceil \Eth(\rho)/((D_{\max}-\Dfloor)\,dt)\rceil$ control cycles on the interval between two consecutive discretionary switches, which holds on every sample path and assumes nothing about the distribution of $D_k$ beyond the range bound $D_k \le D_{\max}$. Two qualifications are stated with it rather than left implicit. First, the bound is informative only under the non-vacuity condition $E_0 > (D_{\max}-\Dfloor)\,dt$ ($N_{\min}(0) \ge 2$), which we declare as a design condition alongside \eqref{eq:twosided} (\Cref{rem:p2nonvac}); without it P2 collapses to the one-cycle bound that every discrete-time policy satisfies. Second, P2 is an upper bound on the switching rate only --- a policy that never switches satisfies it --- so temporal consistency in the sense this paper intends is P2 \emph{together with} the conditional response-time bound of \Cref{prop:p2live}. That deadline applies only while the same challenger remains selected and eligible, receives uninterrupted updates without reset or HOLD, maintains the stated advantage lower bound, and has sufficient clip and leak-equilibrium headroom. P1's exponential form (part (ii)) is a sharper statement --- it upgrades ``switching is infrequent'' to ``switching is exponentially rare'' --- but it is \emph{conditional on an independence hypothesis} on $\{D_k\}$ that stationarity alone does not supply, as \Cref{rem:dep} shows by counterexample. We therefore state P1(ii) as a conditional refinement and rest the paper's temporal-consistency claim on P2.
+
+\noindent\textbf{The single-challenger accumulator and notation (a premise for P4/\cref{subsec:leak} consistency).} The switching dynamics of this paper close over the \textbf{single} leaky-evidence accumulator of \cref{subsec:switch}/\cref{subsec:algo}. Since this accumulator, by definition, always integrates the advantage evidence of the challenger $c'$ seeking to overturn the current commitment $c^*$, we denote it in the property analysis below as the \textbf{challenger accumulator} $\Erev$ --- it is \textbf{exactly the same single variable} as the accumulation equation of \cref{subsec:switch} and the state variable $e$ of the \cref{subsec:algo} algorithm; the superscript rev merely denotes the role ``evidence for a challenge that would reverse the current commitment'' and is not a separate accumulator. We write the maximum value $\Erev$ can reach as $\Eremax$ (the smaller of the leak equilibrium bound and the clip bound $e_{\max}$ when $\lambda < 1$; derived in P4).
+
+The soundness of the switching dynamics is summarized by a single \textbf{two-sided condition} on the reachable upper bound of this single accumulator.
+\begin{equation}
+E_0 < \Eremax < E_0(1 + k_\rho)
+\label{eq:twosided}
+\end{equation}
+The lower bound ($\Eremax > E_0$) is an algebraic \textbf{reachability headroom} condition under the declared input bound at $\rho = 0$ (\cref{subsec:leak}); actual finite response also requires the persistent-selection and advantage hypotheses below. The upper bound ($\Eremax < E_0(1+k_\rho)$) is the \textbf{P4 containment} condition that once the maneuver is sufficiently progressed ($\rho > \bar\rho$; the boundary point itself belongs to the switching window, see \Cref{rem:lockboundary}), challenge accumulation is trapped below the threshold and reversal is blocked. Since both requirements are a lower and upper bound on the same variable $\Eremax$, they can be satisfied simultaneously without contradiction. A third declared condition, $E_0 > (D_{\max}-\Dfloor)\,dt$ (P2 non-vacuity, \Cref{rem:p2nonvac}), is independent of \eqref{eq:twosided}: it bounds the threshold from below by the largest single-cycle innovation rather than from above by the reachable bound. The self-contradiction of the previous formulation arose from imposing a separate ``above-threshold headroom'' requirement ($e_{\max} > E_0(1+k_\rho)$) on the same upper bound, which collides head-on with this containment upper bound; as discussed in \cref{subsec:leak}, we clarify that this headroom requirement was never itself a soundness condition and withdraw it.
+
+\begin{proposition}[Anti-oscillation --- probabilistic form] \label{prop:p1}
+Suppose the challenger advantage $D_k$ is a stationary stochastic process with mean 0, bounded variance $\mathrm{Var}[D_k] \le \sigma_D^2$, and \textbf{bounded range} $|D_k| \le D_{\max}$ almost surely, and let $0 < \Dfloor < D_{\max}$. Write $X_k := (D_k - \Dfloor)\,dt$ for the \textbf{driving innovation} of the accumulation recursion of \cref{subsec:switch}. Then (i) the innovation has strictly negative mean,
+\begin{equation}
+\mathbb{E}[X_k] = (\mathbb{E}[D_k] - \Dfloor)\,dt = -\Dfloor\, dt < 0,
+\label{eq:innovdrift}
+\end{equation}
+so in ambiguous configurations (mean advantage 0) a discretionary switch requires the fluctuations of $D_k$ to overcome a persistent negative bias in the input. We emphasize that \eqref{eq:innovdrift} is a statement about the \emph{raw input} to the recursion, \textbf{not} about the one-cycle increment of the reflected state $\Erev_k$: the lower clip at $0$ truncates negative innovations, so the expected state increment $\mathbb{E}[\Erev_{k+1} - \Erev_k]$ can be strictly positive at the boundary even though $\mathbb{E}[X_k] < 0$ (\Cref{rem:boundarydrift}). Rarity is therefore quantified below as a crossing-probability bound, not as a drift argument on the state.
+
+Suppose further that $\{D_k\}$ is \textbf{i.i.d.}\ (the \textbf{independence hypothesis} of this proposition). Start with zero evidence and consider consecutive evidence-update cycles (or an externally fixed observation schedule on which the stated i.i.d.\ law holds). No claim is made for a data-dependent subsequence of retained advantages. Let $q_{k-1}$ be the evidence stored after cycle $k-1$, let $r_k\in[0,q_{k-1}]$ be the value after any challenger reset, and define the pre-test evidence $x_k=\mathrm{clip}(\lambda r_k+X_k,0,e_{\max})$; a successful switch may reset the subsequently stored $q_k$ to zero in that same cycle. If $\mathbb{P}(X_1 > 0) = 0$, the accumulator never leaves $0$ and the discretionary switching probability is exactly $0$. Otherwise, boundedness of $X_1$ together with $\mathbb{E}[X_1] < 0$ implies that the \textbf{Lundberg equation} $\mathbb{E}[e^{\theta X_1}] = 1$ has a unique positive root $\theta^* > 0$ (the adjustment coefficient), and (ii) the pre-test crossing probability, and hence the per-cycle switching probability, admits the uniform bound
+\begin{equation}
+\mathbb{P}\big(x_k \ge E_0\big) \;\le\; e^{-\theta^* E_0} \qquad \text{for every cycle } k,
+\label{eq:pswitch}
+\end{equation}
+whence the expected number of discretionary switches in any window of $N$ cycles is at most $N e^{-\theta^* E_0}$, and the expected switching rate per unit time is at most $(1/dt)\, e^{-\theta^* E_0}$ --- both exponentially small in $E_0$, with an exponent $\theta^*$ that is increasing in the margin $\Dfloor$. The bound \eqref{eq:pswitch} is a \emph{marginal, per-cycle} bound: over an unbounded horizon of persistent ambiguity an eventual crossing is not excluded (nor should it be --- the liveness condition of \cref{subsec:leak} requires the threshold to be reachable); what is guaranteed is that crossings are exponentially rare per cycle.
+
+Part (ii) is \emph{conditional on the independence hypothesis and is not established under stationarity alone}; see \Cref{rem:dep} for a counterexample. Accordingly the guarantee this paper carries in its headline claims is the \emph{deterministic} switching-rate bound P2 (\cref{prop:p2}), which requires no distributional hypothesis on $D_k$ beyond the range bound; P1(ii) is a refinement that sharpens rarity from ``bounded frequency'' to ``exponentially rare'' when the independence hypothesis holds. Extension to dependent inputs is discussed --- and deliberately \emph{not} claimed as a theorem --- in \Cref{rem:iid}.
+\end{proposition}
+
+\begin{remark}[Sign of the state increment at the reflecting boundary] \label{rem:boundarydrift}
+The distinction drawn in part (i) is not pedantic; an earlier formulation of this proposition called \eqref{eq:innovdrift} ``the one-cycle expected increment of the challenger accumulator,'' and that reading is false under the proposition's own hypotheses. Take $D_k$ i.i.d.\ uniform on $\{-a, +a\}$ with $\Dfloor < a \le D_{\max}$, and start at the boundary $\Erev_0 = 0$. Then $\Erev_1 = \mathrm{clip}(X_1, 0, e_{\max})$, so (for $(a-\Dfloor)dt \le e_{\max}$)
+\begin{equation}
+\mathbb{E}[\Erev_1 - \Erev_0] = \tfrac{1}{2}(a - \Dfloor)\,dt \;>\; 0,
+\end{equation}
+even though $\mathbb{E}[X_1] = -\Dfloor\,dt < 0$: reflection truncates the negative half of the innovation and keeps the positive half. A negative-mean input therefore does \emph{not} make the reflected state a supermartingale, and no drift argument on the state can carry part (ii). This is the standard situation of queueing theory --- a stable queue has negative-mean net input yet strictly positive expected growth from empty --- and it is why the proof below routes through a pathwise domination by an unreflected random walk and a maximal inequality, rather than through the state's expected increment.
+\end{remark}
+
+\begin{remark}[On the boundedness hypothesis]
+The range hypothesis $|D_k| \le D_{\max}$ is not an additional restriction on the system: by the $[0,1]$ normalization of \cref{subsec:cost} the cost $J = \sum_X w_X \hat J_X$ is bounded, so the advantage $D_k = J_k(c^*_{k-1}) - J_k(c'_k)$ of \cref{subsec:switch} is bounded by construction, and $D_k \le D_{\max}$ is the same hypothesis already carried by P2 (\cref{prop:p2}), P4 (\cref{prop:p4}), and the reachable bound $\Eremax$ \eqref{eq:eremax}. It is nevertheless stated \emph{explicitly} here, because part (ii) is an exponential bound and an exponential bound requires a finite exponential moment, which stationarity, zero mean, and finite variance do not supply on their own. A centred Student-$t_3$ advantage, for instance, satisfies every one of those three conditions yet has a polynomially decaying tail and no finite moment generating function, so no adjustment coefficient exists for it and a bound of the form \eqref{eq:pswitch} cannot hold. Under $|D_k| \le D_{\max}$ this failure mode is excluded, and the normalization of \cref{subsec:cost} guarantees the hypothesis holds for the object this paper actually constructs.
+\end{remark}
+
+\begin{remark}[Why stationarity alone is not enough] \label{rem:dep}
+Stationarity, zero mean, bounded variance and bounded range together are still not enough for part (ii), and it is worth being explicit about why, because the gap is not a technicality of the proof method but a genuine failure of the conclusion.
+
+Draw $Z\in\{-a,+a\}$ once with equal probabilities, with $\Dfloor<a\le D_{\max}$, and set $D_k=Z$ for every $k$. This is a stationary, mean-zero, bounded process. Choose $\lambda=1$, constant $\rho=0$, $E_0=n(a-\Dfloor)dt$, and $e_{\max}\ge E_0$, with uninterrupted updates from zero. On the positive branch the first threshold crossing is exactly at cycle $n$; on the negative branch it never occurs. Hence $\mathbb{P}(x_n\ge E_0)=1/2$, even with reset-on-switch semantics, since this is the first crossing. The positive Lundberg root of the one-step marginal law is independent of $n$, so $e^{-\theta^*E_0}$ can be arbitrarily smaller than $1/2$ as $n$ grows. This disproves the stationarity-only extension. For $\lambda<1$ the constant-positive branch instead uses the geometric hitting formula in \Cref{prop:p2live}, when its equilibrium and clip permit crossing; the linear ceiling is not applicable. No claim that the reset-on-switch process has a fixed-cycle marginal converging to $1/2$ is needed.
+
+The mechanism is that a single draw persisting forever is perfectly admissible under stationarity, and no amount of bounded support repairs it: the process never forgets its regime, so no argument that needs fresh randomness --- independent increments, or independent blocks --- has anything to work with. This is precisely the failure mode the i.i.d.\ hypothesis of part (ii) excludes, and any relaxation of that hypothesis would have to exclude it too (\Cref{rem:iid}). Note also that this counterexample says nothing about P2 (\cref{prop:p2}), whose inter-switch interval bound is deterministic and holds on every sample path, including the adversarial one just constructed --- which is why P2, not P1(ii), carries the headline guarantee.
+\end{remark}
+
+\begin{proof}
+Throughout, $\{D_k\}$ is i.i.d.\ with the moment and range hypotheses of the statement, and $X_k = (D_k - \Dfloor)\,dt$. Part (i) is the one-line computation \eqref{eq:innovdrift}; \Cref{rem:boundarydrift} explains why it must be read as a statement about the input, not about the state. Note first that the lower clip is a \textbf{reflecting (saturating)} boundary, not an absorbing one: $\Erev$ is held at $0$ only while the update would go non-positive, and leaves $0$ on the first sufficiently positive innovation, so negative input drift does not trap the process at $0$ --- which is exactly why the earlier ``expected hitting time'' framings were uninformative, and why part (ii) is stated as a per-cycle probability bound whose \emph{scaling} in $E_0$ is the design-relevant quantity. We prove part (ii) in three steps; the trivial case $\mathbb{P}(X_1 > 0) = 0$ was dispatched in the statement.
+
+\emph{Step 1 (pathwise domination).} Let $q_{k-1}$ be the evidence stored after all tests and resets of cycle $k-1$, and let $r_k\in[0,q_{k-1}]$ be the value after any challenger reset but before cycle $k$'s update. Denote the evidence presented to the threshold test by
+\[
+x_k=\mathrm{clip}(\lambda r_k+X_k,0,e_{\max}).
+\]
+If a switch fires, the stored value is then reset to $q_k=0$; otherwise $q_k=x_k$ (or a later operation can only reduce it). Define the \textbf{Lindley recursion} \citep{lindley1952queue} driven by the same innovations, $W_0 = 0$, $W_k = \max(W_{k-1} + X_k,\, 0)$: the leak-free ($\lambda = 1$), unclipped-above, never-reset companion of the recursion of \cref{subsec:switch}. We claim $q_k \le W_k$ and $x_k\le W_k$ for every $k$. Induction starts from $q_0=W_0=0$. If $q_{k-1}\le W_{k-1}$, then $r_k\le q_{k-1}$ and
+\[
+ x_k \le \max(q_{k-1}+X_k,0)\le W_k.
+\]
+The post-test stored value satisfies $q_k\le x_k\le W_k$. Thus the pre-test quantity that can trigger a switch, as well as the stored post-reset state, is dominated pathwise by the Lindley walk.
+
+\emph{Step 2 (adjustment coefficient and maximal inequality).} Unfolding the Lindley recursion gives the suffix-sum representation $W_k = \max_{0 \le j \le k} (X_k + X_{k-1} + \cdots + X_{k-j+1})$ (empty sum $= 0$), and since the $X_i$ are i.i.d., reversing the order of the increments shows that $W_k$ has, for each fixed $k$, the same distribution as $\max_{0 \le j \le k} S_j$ with $S_j = X_1 + \cdots + X_j$. Let $\psi(\theta) = \log \mathbb{E}[e^{\theta X_1}]$: it is finite for all $\theta$ (bounded range), convex, with $\psi(0) = 0$ and $\psi'(0) = \mathbb{E}[X_1] = -\Dfloor\,dt < 0$; and since $\mathbb{P}(X_1 > 0) > 0$, $\psi(\theta) \to \infty$ as $\theta \to \infty$. Hence $\psi$ has a unique positive root $\theta^*$, i.e., $\mathbb{E}[e^{\theta^* X_1}] = 1$. Then $M_j = e^{\theta^* S_j}$ is a nonnegative martingale with $M_0 = 1$, and the maximal inequality for nonnegative supermartingales (Ville's inequality) gives
+\[
+\mathbb{P}\Big(\sup_{j \ge 0} S_j \ge E_0\Big) = \mathbb{P}\Big(\sup_{j \ge 0} M_j \ge e^{\theta^* E_0}\Big) \le e^{-\theta^* E_0}.
+\]
+This is Kingman's bound on the waiting time of a single-server queue \citep{kingman1970queues}, specialized to our increments; it enters as a theorem, not an analogy. (Under zero mean and finite variance alone no root $\theta^*$ need exist; see the remark on the boundedness hypothesis above. The i.i.d.\ hypothesis is consumed twice in this step --- once for the reversal identity, once for the martingale property --- and neither survives bare stationarity, per \Cref{rem:dep}.)
+
+\emph{Step 3 (from crossing to switching).} A discretionary switch at cycle $k$ requires the pre-test value $x_k \ge \Eth(\rho_k) \ge E_0$ (progress hardening only raises the threshold); the stored post-reset value may already be zero in that same cycle. By Steps 1--2, for every $k$,
+\[
+\mathbb{P}(\text{switch at cycle } k) \le \mathbb{P}(x_k \ge E_0) \le \mathbb{P}(W_k \ge E_0) = \mathbb{P}\Big(\max_{0 \le j \le k} S_j \ge E_0\Big) \le e^{-\theta^* E_0},
+\]
+which is \eqref{eq:pswitch}. Linearity of expectation then bounds the expected number of discretionary switches in any $N$-cycle window by $N e^{-\theta^* E_0}$, i.e., the expected switching rate per unit time by $(1/dt)\, e^{-\theta^* E_0}$. Monotonicity of $\theta^*$ in the margin follows from $\psi$ decreasing pointwise (for $\theta > 0$) as $\Dfloor$ grows. Finally, since the leak and the resets were absorbed in Step 1, the bound holds verbatim for every $\lambda \le 1$; a smaller $\lambda$ only widens the gap between the implemented process and the dominating walk, so in practice the true switching probability is further below the bound.
+
+Thus the extreme-cycle oscillation that memoryless argmin exhibits near a symmetric point is \textbf{probabilistically} suppressed: in ambiguous configurations a discretionary switch occurs in any given cycle only with exponentially small probability, when the fluctuations of $D_k$ have accumulated enough to push the evidence over the threshold.
+\end{proof}
+
+\begin{remark}[Tuning guidance: a closed-form approximation of $\theta^*$] \label{rem:tuning}
+The exact adjustment coefficient $\theta^*$ of \Cref{prop:p1} depends on the full law of $D_1$ through the Lundberg equation $\mathbb{E}[e^{\theta (D_1-\Dfloor)dt}] = 1$; boundedness and variance alone do not determine it. For parameter tuning it is nevertheless useful to have a closed form. Expanding the log-moment-generating function to second order, $\psi(\theta) \approx -\theta\,\Dfloor\,dt + \tfrac{1}{2}\theta^2 \sigma_D^2\, dt^2$, and solving $\psi(\theta) = 0$ gives the \textbf{small-drift, quasi-Gaussian approximation}
+\begin{equation}
+\theta^* \approx \frac{2\Dfloor}{\sigma_D^2\, dt},
+\qquad\text{whence}\qquad
+r_{\text{switch}} \lesssim \frac{1}{dt} \exp\!\left(-\frac{2\Dfloor E_0}{\sigma_D^2\, dt}\right).
+\label{eq:thetaapprox}
+\end{equation}
+We use \eqref{eq:thetaapprox} \emph{only} as design guidance --- it indicates how rarity scales as the margin $\Dfloor$ or the threshold $E_0$ grows, the variance $\sigma_D^2$ shrinks, or the cycle time $dt$ shortens --- and it is \textbf{not} the coefficient the guarantee is stated with: the guarantee \eqref{eq:pswitch} carries the exact root $\theta^*$. The variance scale in \eqref{eq:thetaapprox} is matched to the \textbf{per-cycle increment variance $\sigma_D^2\,dt^2$} (equivalently, the per-unit-time variance $\sigma_D^2\,dt$), which restores the $1/dt$ factor in $\theta^*$ and in the switching-rate bound that an unnormalized reading would drop.
+\end{remark}
+
+\begin{remark}[Deterministic special case]
+If $|D_k| \le \Dfloor$ for all $k$, the increment is always $\le 0$, so $\Erev_k \equiv 0$ and the switching probability is exactly 0 --- this is the trivial case $\mathbb{P}(X_1 > 0) = 0$ of \Cref{prop:p1}(ii), and the statement of the initial deterministic formulation. This probabilistic form relaxes that strong assumption --- from ``every realization is inside the margin'' to ``mean 0, bounded variance, and range bounded by $D_{\max}$'' --- and as $\sigma_D^2 \to 0$ in the tuning approximation \eqref{eq:thetaapprox} the bound tends to 0, continuously recovering the deterministic case. Note that only the pointwise margin condition $|D_k| \le \Dfloor$ is relaxed; the range bound $|D_k| \le D_{\max}$, being a structural consequence of the cost normalization rather than an assumption about the environment, is retained.
+\end{remark}
+
+\begin{remark}[IID hypothesis and autocorrelation] \label{rem:iid}
+\Cref{prop:p1}(ii) is stated and proved for i.i.d.\ $D_k$. The $D_k$ of this paper, however, is a stationary process that allows autocorrelation due to the temporal correlation of human motion and prediction, and we are explicit about what is and is not claimed across that gap. A natural route to a dependent version exists --- under geometric $\alpha$-mixing one would decompose the trajectory into regenerative blocks, whose finite exponential moments the range hypothesis $|D_k| \le D_{\max}$ supplies, and re-run the Step-2 argument on block sums --- but turning that route into a theorem requires quantified hypotheses (an explicit regeneration structure, a mixing rate, and a dependence-adjusted adjustment coefficient) that this paper does not formalize, so \textbf{no exponential bound is claimed here for dependent inputs}. Earlier versions offered a fallback in which $\theta^*$, or the effective variance replacing $\sigma_D^2$, was read as ``absorbing the autocorrelation structure'' --- with the long-run variance $\sum_k \mathrm{Cov}(D_0, D_k)$ substituted for the marginal variance --- while claiming only the qualitative form ``exponential decay in $\Dfloor \cdot E_0$.'' That fallback is withdrawn: a long-run variance does not determine a large-deviation rate, no theorem connects it to the first-passage behaviour of this reflected recursion, and \Cref{rem:dep} exhibits a stationary process for which the qualitative form itself is false. Where independence cannot be asserted, the guarantee available is P2 (\cref{prop:p2}), which is deterministic, pathwise, and indifferent to the dependence structure. Whether approximate independence is defensible for a given deployment is an empirical question, and estimating the autocorrelation structure of $D_k$ from logged encounters is a measurement target of \cref{app:sensitivity} and the planned evaluation (\cref{app:planned}). Finally, the leak requires no separate treatment: Step 1 of the proof absorbs every $\lambda \le 1$, so introducing $\lambda < 1$ leaves the bound \eqref{eq:pswitch} valid verbatim --- it only widens the gap between the implemented process and the dominating walk.
+\end{remark}
+
+\begin{remark}[$\lambda \cdot \Eth$ interaction]
+The interaction of $\lambda$ and $\Eth$ (the leak makes reaching the threshold depend not on the simple integral of $D$ but on its temporal \textbf{shape} --- a short, strong advantage pulse accumulates before leaking away and easily crosses the threshold, whereas a long, weak advantage is offset by leaking and falls short of the threshold) is further analyzed in \cref{subsec:leak}.
+\end{remark}
+
+\begin{proposition}[Discretionary inter-switch separation] \label{prop:p2}
+Let $h_k>0$ be the interval at cycle $k$, let $0<\lambda_k\le1$, and suppose $D_k\le D_{\max}$ with $b=D_{\max}-\Dfloor>0$. Every discretionary switch resets the stored evidence to zero; all other resets only decrease it, and no external operation adds evidence. Let $s<t$ be consecutive discretionary-switch cycles and let $E_t=\Eth(\rho_t)\ge E_0>0$ denote the threshold used immediately before the switch at $t$. Then
+\begin{equation}
+\sum_{k=s+1}^{t} h_k \ge \frac{E_t}{b}.
+\label{eq:p2variable}
+\end{equation}
+For fixed $h_k=dt$, this implies
+\begin{equation}
+t-s\ge N_{\min}(\rho_t):=\left\lceil\frac{\Eth(\rho_t)}{(D_{\max}-\Dfloor)dt}\right\rceil
+\ge N_0:=\left\lceil\frac{E_0}{(D_{\max}-\Dfloor)dt}\right\rceil.
+\label{eq:nmin}
+\end{equation}
+The declared non-vacuity condition is
+\begin{equation}
+E_0>(D_{\max}-\Dfloor)dt,\qquad N_0\ge2.
+\label{eq:p2nonvac}
+\end{equation}
+For variable intervals with a verified upper bound $h_k\le h_{\max}$, replace $dt$ by $h_{\max}$ in the cycle-count bound and non-vacuity condition. Without such a bound, only the accumulated-time inequality is claimed. These guarantees concern discretionary switches, not safety-triggered changes, class-lifecycle changes, physical oscillation, or human-perceived legibility.
+\end{proposition}
+
+\begin{proof}
+Write $q_{k-1}$ for the stored post-reset evidence and $r_k\in[0,q_{k-1}]$ for the evidence after any pre-update reset. The pre-test evidence is
+\[
+x_k=\min(e_{\max},\max(0,\lambda_k r_k+(D_k-\Dfloor)h_k)).
+\]
+Since $q_{k-1}\ge0$, $b>0$ and $\lambda_k\le1$,
+\[
+x_k\le\max(0,q_{k-1}+bh_k)=q_{k-1}+bh_k.
+\]
+The upper clip and subsequent resets only decrease this bound, and a cycle with no evidence update cannot increase the stored state. Starting from $q_s=0$, induction gives $x_t\le b\sum_{k=s+1}^t h_k$. The switch requires $x_t\ge E_t$, proving the accumulated-time inequality. Fixed or upper-bounded intervals give the ceiling bounds. This proof explicitly accounts for the lower reflecting clip, which can increase a negative update argument to zero.
+\end{proof}
+
+\begin{remark}[Finite observation windows and implementation timing]
+In any $N$ consecutive fixed-period cycles, there are at most $1+\lfloor(N-1)/N_0\rfloor$ discretionary switches. The asymptotic rate is at most $1/(N_0dt)$; a finite-window rate needs the boundary term. The Nav2 adapter uses measured inter-call intervals, so configuring 20 Hz alone does not establish the fixed-$dt$ cycle bound. For example, the admissible input $D=2.8$ over a single $h=0.12$ s update yields $x=0.33\ge E_0=0.30$ from zero. This is consistent with \eqref{eq:p2variable}. Progress in \eqref{eq:nmin} is the value before switching, not the value after the commit reset.
+\end{remark}
+
+\begin{remark}[Non-vacuity of P2 and the default knobs] \label{rem:p2nonvac}
+Condition \eqref{eq:p2nonvac} is not implied by the two-sided condition \eqref{eq:twosided}, and the boundary instance of \Cref{rem:lockboundary} shows the difference: with $dt = 0.05$, $\Dfloor = 0.05$, $D_{\max} = 0.95$ and $E_0 = 0.03$, \eqref{eq:twosided} holds but $(D_{\max}-\Dfloor)\,dt = 0.045 > E_0$, so $N_{\min}(0) = 1$ and P2 is vacuous there: an advantage sequence that takes the value $D_{\max}$ against whichever \Class\ is currently committed drives $\Erev$ from $0$ to $0.045 \ge E_0$ in one cycle after every reset and flips the class every cycle while satisfying the bound exactly. That instance is retained only to exhibit the boundary of the lock region; it is not an admissible operating point once \eqref{eq:p2nonvac} is imposed. For the default knobs of \Cref{tab:params} the condition holds with margin. By the $[0,1]$ normalization of \cref{subsec:cost}, $D_k = J_k(c^*_{k-1}) - J_k(c'_k)$ satisfies $|D_k| \le \sum_X w_X = 2.8$ for the default weights, so in the worst case $(D_{\max}-\Dfloor)\,dt = 0.1375 < E_0 = 0.30$ and $N_{\min}(0) = 3$ cycles ($0.15$ s); if the realized advantage is bounded by a single normalized term, $D_{\max} \le 1$, then $N_{\min}(0) = 7$ cycles ($0.35$ s), and for $D_{\max} \le 0.5$, $N_{\min}(0) = 14$ cycles ($0.70$ s). Progress hardening multiplies the threshold inside the ceiling by $(1 + k_\rho \rho^p)$, not the rounded cycle count. The worst-case figure is reported deliberately: P2 is a weak guarantee when the advantage can saturate every cost term at once, and the practical content of temporal consistency at the default knobs rests on the response-time bound below and, for i.i.d.\ inputs, on P1(ii).
+\end{remark}
+
+\begin{proposition}[Conditional response time to a persistent selected challenger] \label{prop:p2live}
+Fix a cycle $k_0$ with stored evidence $q_{k_0}\ge0$. Until the first discretionary switch, or through the next $N_{\rm resp}$ cycles, suppose (i) the same selected challenger remains eligible; (ii) no safety intervention, HOLD, retarget, lifecycle reset, or external reset interrupts accumulation; (iii) an update and threshold test run each cycle; (iv) $D_k\ge D_{\rm sus}>\Dfloor$; and (v) $0<\Eth(\rho_k)\le\bar E\le e_{\max}$. Let $dt$ and $\lambda\in(0,1]$ be fixed and $a=(D_{\rm sus}-\Dfloor)dt$. If $\lambda=1$, or $\lambda<1$ and $a/(1-\lambda)>\bar E$, the first switch occurs within
+\begin{equation}
+N_{\rm resp}=\begin{cases}
+\left\lceil\dfrac{\ln(1-\bar E(1-\lambda)/a)}{\ln\lambda}\right\rceil,&0<\lambda<1,\\
+\lceil\bar E/a\rceil,&\lambda=1.
+\end{cases}
+\label{eq:nresp}
+\end{equation}
+Conversely, let $L>0$, $q_{k_0}<L$, $0<\lambda<1$, $D_k\le\bar D$, and $\Eth(\rho_k)\ge L$ throughout a window. If $(\bar D-\Dfloor)dt\le(1-\lambda)L$ and no external operation increases evidence, no discretionary switch occurs in that window. Independently, $\Eth(\rho_k)>e_{\max}$ blocks switching in that cycle regardless of the advantage.
+\end{proposition}
+
+\begin{proof}
+Let $z_0=0$, $z_n=\lambda z_{n-1}+a$. Thus $z_n=a(1-\lambda^n)/(1-\lambda)$ for $\lambda<1$, and $z_n=na$ for $\lambda=1$. The stated condition ensures a finite first $n^*=N_{\rm resp}$ with $z_{n^*}\ge\bar E$. For $n<n^*$, $z_n<\bar E\le e_{\max}$, and monotonicity gives implemented pre-test evidence at least $z_n$, inductively until the first switch. At $n^*$ it is at least $\min(e_{\max},z_{n^*})\ge\bar E\ge\Eth(\rho_{k_0+n^*})$, so the threshold test switches by that cycle.
+For the converse, if stored evidence $q<L$, then
+\[
+\lambda q+(\bar D-\Dfloor)dt<\lambda L+(1-\lambda)L=L.
+\]
+Lower clipping preserves strict inequality because $0<L$; upper clipping and resets only decrease the result. Induction keeps pre-test evidence below $L$, so no switch fires. This argument remains valid for a negative input upper bound. Finally, the clip obstruction follows from $x_k\le e_{\max}$.
+\end{proof}
+
+\begin{remark}[Response time, clip lockout, and scope] \label{rem:resptime}
+For $dt=0.05$, $\Dfloor=0.05$, $E_0=0.30$, $\lambda=0.97$, and constant $\rho=0$, a constant advantage from zero crosses the baseline threshold only when $D>0.23$. Equation~\eqref{eq:nresp} gives 76, 24, 17, and 7 cycles (3.80, 1.20, 0.85, and 0.35 s) for $D=0.25,0.40,0.50,1.0$, respectively. These are derived fixed-threshold results, not measured response delays. Their equality with the P2 lower bound in the last case is a numerical coincidence, not a general requirement.
+The default $e_{\max}=0.50$ is below $\Eth(1)=0.60$. For $k_\rho=1,p=2$, every cycle with $\rho>\sqrt{2/3}\approx0.8165$ is therefore locked against discretionary switching regardless of advantage. The value $0.41$ is only the leak-equilibrium threshold for $\bar E=0.60$ in a hypothetical configuration with enough clip headroom; it does not restore response at $\rho=1$ under the defaults. Clip equality $e_{\max}=\bar E$ is permitted by the response theorem, whereas an equilibrium equal to a threshold is approached from below and not reached in finite cycles from a below-threshold start in the exact-real model.
+This proposition is conditional on persistent selection and continued updates. It is not an unconditional recall or deadline guarantee for all warranted alternatives; hypothesis coverage and missed opportunities must be measured separately.
+\end{remark}
+
+\begin{proposition}[Safety dominance] \label{prop:p3}
+In an active decision cycle outside an already absorbing HOLD, if $c^*\notin\mathcal{S}$, the safety ladder fires regardless of accumulator state or progress. In HOLD, the zero-command contract takes precedence.
+\end{proposition}
+
+\begin{proof}[Argument]
+Because stage 2 (safety) of the algorithm is evaluated before stage 3 (discretionary) with lexicographic priority, commitment inertia can never delay the safety response in any case when a safety violation occurs. The safety-branch hysteresis of \cref{subsec:safety} changes the form of response while its dwell/window conditions are active; it is not a proof of globally monotone mode descent or physical collision freedom.
+\end{proof}
+
+\begin{proposition}[Maneuver completion --- $\rho$ dynamics and containment of the challenger accumulator] \label{prop:p4}
+Suppose there is no safety intervention, the challenger advantage is bounded ($D_k \le D_{\max}$), the trajectory layer realizes the commanded cross-track progress rate at at least $v_{\text{lat,min}} > 0$ as in \cref{asm:scope}(d), and the cumulative disturbance retreat is bounded, $\sum_k b_k \le B < L_{\text{plan}}$ (the quantity used in the proof below). Then containment is \emph{pointwise}: in every cycle whose progress $\rho$ \textbf{strictly exceeds} the containment threshold $\bar\rho$ (derived below), reversal to the opposite \Class\ is blocked. If, moreover, $\rho$ never returns to or below $\bar\rho$ after first exceeding it (forward invariance; \Cref{rem:nonmono}), the maneuver completes without reversal within at most $\lceil(L_{\text{plan}}+B)/(v_{\text{lat,min}}\, dt)\rceil$ cycles of an uninterrupted commitment starting with zero progress. In the pre-lock region ($\rho \le \bar\rho$), a sustained challenger advantage can still cross $\Eth(\rho)$ and trigger a discretionary switch --- this is not a defect but a legitimate switching window intentionally left open by the liveness lower bound $\Eremax > E_0$ (e.g., the one legitimate switch per encounter measured in \code{clean\_commit} in \cref{subsec:main}), in which case the algorithm restarts with $\Erev \leftarrow 0 \cdot \rho \leftarrow 0$, and this guarantee applies identically to the new commitment. That is, what P4 excludes is reversal in the locked region ($\rho > \bar\rho$; the completion clause additionally requires the forward invariance stated above).
+\end{proposition}
+
+\begin{proof}
+First we define the dynamics of $\rho$. Let progress be $\rho_k = \mathrm{clip}(L_{\text{real},k}/L_{\text{plan}}, 0, 1)$, where $L_{\text{real},k}$ is the cumulative realized cross-track progress and $L_{\text{plan}} = |\text{planned lateral offset of } c^*|$. The one-cycle realized progress is $\Delta L_k = v_{\text{lat},k} \cdot dt$, and by assumption $v_{\text{lat},k} \ge v_{\text{lat,min}}$ (per \cref{asm:scope}(d), $v_{\text{lat},k}$ is not the vehicle's lateral body-frame velocity but the progress rate along the cross-track coordinate, realized in non-holonomic drives as the product of forward speed and steering). However, since $\rho$ can stagnate or decrease if the robot is pushed by environmental change or the corridor narrows, we \textbf{do not assume monotone increase} and instead use a lower bound on the non-negative net increment. Letting $b_k \ge 0$ denote retreat due to disturbance ($b_k$ covers the \textbf{non-negative decrement of net progress} due to disturbance --- it collects all unplanned retreats that erode cross-track progress, such as being pushed, corridor narrowing, or momentary reversal, into a single non-negative term), $L_{\text{real},k} = L_{\text{real},k-1} + v_{\text{lat},k} dt - b_k$. Under the condition that the disturbance is bounded ($\sum_k b_k \le B < L_{\text{plan}}$, i.e., cumulative retreat does not consume the entire planned displacement), the lower bound on net progress is
+\begin{equation}
+L_{\text{real},K} \ge K \cdot v_{\text{lat,min}} \cdot dt - B,
+\end{equation}
+so after $K \ge (L_{\text{plan}} + B)/(v_{\text{lat,min}} \cdot dt)$ cycles, $L_{\text{real},K} \ge L_{\text{plan}}$, i.e., $\rho \to 1$ is reached.
+
+Meanwhile, for locking (blocking reversal to the opposite \Class) to hold, the progress-hardening threshold $\Eth(\rho) = E_0(1+k_\rho \rho^p)$ must exceed the \textbf{maximum value reachable by the challenger accumulator $\Erev$}. The challenger accumulator increases by at most $(D_{\max}-\Dfloor)dt$ per cycle, decreases via the leak $\lambda$, and is clipped at $e_{\max}$. Hence, under $\lambda < 1$ (leak present), the reachable maximum of the challenger accumulator is the smaller of the leak-integral equilibrium bound and the clip bound, namely
+\begin{equation}
+\Eremax = \min\!\left(e_{\max},\ \frac{(D_{\max}-\Dfloor)\, dt}{1-\lambda}\right)
+\label{eq:eremax}
+\end{equation}
+(the geometric series $\sum_{j\ge0} \lambda^j (D_{\max}-\Dfloor)dt = (D_{\max}-\Dfloor)dt/(1-\lambda)$ is the leak equilibrium bound, and the clip further caps it at $e_{\max}$). Only under the pure-integrator assumption $\lambda = 1$ does the leak-equilibrium term diverge to infinity, so that the reachable bound simplifies to the clip bound $e_{\max}$. Below, for generality, we write $\Eremax$ as the reachable bound. The \textbf{containment condition} is thus
+\begin{equation}
+\Eth(\rho) = E_0(1+k_\rho \rho^p) > \Eremax \qquad \text{(P4 containment condition at progress $\rho$)}
+\end{equation}
+and the boundary value at which the corresponding \emph{equality} $\Eth(\bar\rho) = \Eremax$ holds is
+\begin{equation}
+\bar\rho = \left(\frac{\Eremax/E_0 - 1}{k_\rho}\right)^{1/p}
+\end{equation}
+Since $\Eth$ is strictly increasing in $\rho$ (for $k_\rho > 0$, $p \ge 1$), the containment condition holds \textbf{exactly on the open region $\rho > \bar\rho$}; the boundary point $\rho = \bar\rho$ belongs to the switching window whenever $\Eremax$ is attained (\Cref{rem:lockboundary}). The \textbf{existence condition} for a nonempty lock region $(\bar\rho, 1]$ is $\bar\rho < 1$ with $\bar\rho > 0$, i.e., $E_0 < \Eremax < E_0(1+k_\rho)$.
+
+\emph{Non-vacuity of containment.} Note that the lower bound $\Eremax > E_0$ in the above existence condition is \textbf{a sufficient headroom design condition, not an unconditional liveness theorem.} If the reachable bound $\Eremax$ of the challenger accumulator is below $E_0$, then $\Erev$ cannot even reach the threshold $\Eth(0) = E_0$ at $\rho=0$, so \textbf{no discretionary switch can ever occur}, and consequently the entire switching dynamics addressed by P1 and P2 becomes inert. That is, even though containment holds (since nothing ever switches), it is not ``the maneuver was locked'' but rather a degeneracy of ``there was never any switching capability to begin with,'' and the guarantee loses its meaning. At equality, a binding clip can be attained while a leak equilibrium from below is only approached; the two-sided open condition deliberately avoids that distinction. The designer can preserve a region of $(\lambda, \Eremax)$ that \textbf{simultaneously} satisfies containment (upper bound $\Eremax < E_0(1+k_\rho)$) and switchability (lower bound $\Eremax > E_0$); concrete guidance for this is given in the knob tuning of \cref{app:sensitivity}.
+
+Combined with the non-vacuity lower bound above, this containment condition organizes into the two-sided condition $E_0 < \Eremax < E_0(1+k_\rho)$ stated at the start of \cref{subsec:props} --- the lower bound is switching liveness at $\rho = 0$, and the upper bound is the existence of a nonempty lock region ($\bar\rho < 1$). Since both are a lower and upper bound on the same variable $\Eremax$, they can be satisfied simultaneously; the separate ``above-threshold headroom'' requirement ($e_{\max} > E_0(1+k_\rho)$) that produced the self-contradiction in the previous formulation is withdrawn and re-derived in \cref{subsec:leak}. Design is done by adjusting the leak-equilibrium term (via $\lambda$) and the clip bound $e_{\max}$ so as to place $\Eremax$ in the open interval $(E_0, E_0(1+k_\rho))$, ensuring that a nonempty lock region $(\bar\rho, 1]$ exists (design guidance is given in the knob tuning of \cref{app:sensitivity}).
+
+Once $\rho$ lies in the lock region ($\bar\rho < \rho \le 1$), switching to the opposite \Class\ is blocked; provided $\rho$ does not retreat to or below $\bar\rho$ thereafter (\Cref{rem:nonmono}), $\rho$ reaches 1 along the lower bound above, and the maneuver completes; the number of cycles to completion is finitely bounded by $K \le \lceil(L_{\text{plan}}+B)/(v_{\text{lat,min}} \cdot dt)\rceil$ for an uninterrupted commitment.
+\end{proof}
+
+\begin{remark}[Boundary of the lock region] \label{rem:lockboundary}
+The lock region is open at $\bar\rho$ by necessity, not by convention. When the clip binds strictly ($e_{\max} < (D_{\max}-\Dfloor)dt/(1-\lambda)$, so that $\Eremax = e_{\max}$ is \emph{attained}), the boundary case is realizable: take $dt = 0.05$, $\Dfloor = 0.05$, $D_{\max} = 0.95$, $\lambda = 0.5$, $E_0 = 0.03$, $k_\rho = 1$, $p = 1$, $e_{\max} = 0.045$. These values satisfy the two-sided condition~\eqref{eq:twosided} --- though not the P2 non-vacuity condition \eqref{eq:p2nonvac}, since $(D_{\max}-\Dfloor)\,dt = 0.045 > E_0$; the instance is used here only to exhibit the boundary of the lock region and is not an admissible operating point (\Cref{rem:p2nonvac}) --- and give $\bar\rho = 0.5$; a single cycle at $D_k = D_{\max}$ from $e_{k-1} = 0$ drives $e_k$ to exactly $e_{\max} = 0.045 = \Eth(0.5)$, and the switching rule of \cref{subsec:switch} ($e_k \ge \Eth(\rho_k)$) fires at $\rho = \bar\rho$ exactly. The boundary point therefore belongs to the switching window, and any statement that locking begins ``at'' $\bar\rho$ would be false on this instance. When instead the leak equilibrium is no larger than the clip bound ($(D_{\max}-\Dfloor)dt/(1-\lambda) \le e_{\max}$), including equality, $\Erev$ approaches $\Eremax$ from below without attaining it from a below-equilibrium start in finite exact-real updates, and containment in fact holds on the closed region $\rho \ge \bar\rho$; we do not use this sharpening, and state P4 uniformly on the open region.
+\end{remark}
+
+\begin{remark}[Non-monotonicity within the locked region] \label{rem:nonmono}
+The above containment does not release once locked, as long as the progress $\rho$ increases monotonically; however, if the disturbance retreat $b_k$ exceeds $v_{\text{lat,min}} \cdot dt$ in a given cycle enough to make $\rho$ behave non-monotonically ($\rho$ rises above $\bar\rho$ and then retreats back below $\bar\rho$), containment can be temporarily released along that path. Precisely, then, \textbf{containment is valid only within the interval where $\rho > \bar\rho$ holds, and it is released if $\rho$ retreats to or below $\bar\rho$.} For locking to be permanent, in addition to the cumulative-retreat boundedness condition ($\sum_k b_k \le B < L_{\text{plan}}$, now part of the proposition's hypotheses), it is also necessary that, once $\rho$ exceeds $\bar\rho$, it is realized as never retreating to or below it again (the forward-invariance hypothesis of the completion clause); disturbance paths that fail to satisfy this are handed off to P3/P5 (the safety/availability layer).
+\end{remark}
+
+\begin{remark}
+If the disturbance is unbounded, so that $\sum_k b_k$ exceeds $L_{\text{plan}}$ (the corridor is permanently blocked), this is no longer a ``maneuver completion'' situation but a loss of safety/availability, and P3/P5 (the safety ladder, HOLD) take over. That is, P4 is a completion guarantee that holds as long as availability is maintained, and responsibility for loss of availability rests with the safety layer.
+\end{remark}
+
+\begin{proposition}[Conditional finite-window escalation to HOLD] \label{prop:p5}
+Let qualifying safety interventions occur at decision times $\tau_i$, at most once per cycle, and define $C_W(t)=\#\{i:t-W<\tau_i\le t\}$. Suppose the guard records the current event before evaluating $C_W$, enters HOLD whenever $C_W\ge N_{\rm thrash}$, and retains HOLD until explicit external release. If an active episode contains $N_{\rm thrash}$ interventions in one such window, HOLD is entered no later than the cycle recording its $N_{\rm thrash}$-th intervention. If the output adapter enforces HOLD, subsequent cycles command zero motion until release.
+\end{proposition}
+
+\begin{proof}
+At the threshold event all $N_{\rm thrash}$ timestamps lie in the counted window. The guard therefore enters HOLD in that cycle. The absorbing-mode rule retains HOLD until release, and the assumed output contract supplies zero commands during those cycles.
+\end{proof}
+
+\begin{remark}[No unconditional termination or collision guarantee]
+This is a conditional guard contract. Events at $t=0,4,8,\ldots$ with $W=3$ s never exceed one event per window and can continue indefinitely. A rolling-window guard alone therefore does not exclude infinite sparse oscillation or guarantee episode termination. A global event budget or deadline would be an additional design. Zero commanded motion neither implies instantaneous physical stopping nor proves collision freedom in a moving environment. P3 specifies branch priority; P5 specifies conditional escalation, not deadlock recovery or physical safety.
+The reference implementation records at most one safety intervention per decision time, prunes the open-left window $(t-W,t]$, and synchronizes \code{n\_thrash} to that window count before testing the threshold. HOLD returns a zero target command and is retained by the decision core until an explicit \code{release\_hold()} call clears the episode state. These software checks establish the guard contract only; they do not establish physical stopping or collision freedom.
+\end{remark}
+
+
+\subsection{Observing Legibility: A Bayesian Time-to-Legible Proxy}\label{subsec:observer}
+
+To make the legibility claim measurable, we must define ``when does an observer become confident of the passing side.'' This paper operationalizes time-to-legible using a \textbf{Bayesian observer model}.
+
+Let the hypothesis space be the passing side $H \in \{L, R\}$; the observer performs a Bayesian update of the posterior $P(H \mid o_{0:t})$ from the robot's observable motion cues (lateral offset, heading, curvature, the trajectory $o_{0:t}$ up to time $t$).
+\begin{equation}\label{eq:posterior}
+P(H \mid o_{0:t}) \propto P(o_{0:t} \mid H) \cdot P(H),
+\end{equation}
+where the likelihood $P(o_{0:t} \mid H)$ is given by an expected motion model under each hypothesis (e.g., the standard trajectory distribution for yielding to that side). \textbf{This likelihood motion model is treated as an observer-side prior, independent of this paper's decision policy.} That is, the observer model does not see the robot's internal cost $J$ or accumulator state, and assigns the likelihood for each hypothesis solely from the externally observable kinematic trajectory. This is to prevent the evaluation metric from circularly favoring the very policy under evaluation by copying it; the likelihood model is fixed (following the observer-inference perspective of the legible-motion literature \citep{dragan2013legibility}) as a generic ``lateral avoidance trajectory distribution.'' \textbf{This likelihood model is applied identically to the proposed method and all baselines, providing a common scoring convention rather than evidence of construct validity or unbiased human perception. All policies' decision streams are scored under the same observer prior, but this decision-stream proxy does not by itself validate motion legibility.} \textbf{time-to-legible} is defined as the earliest time at which the posterior exceeds a threshold $p^*$ (e.g., 0.9) and remains so thereafter.
+\begin{equation}\label{eq:tlegible}
+t_{\text{legible}} = \min\{t : P(H^* \mid o_{0:\tau}) \ge p^* \ \ \forall \tau \in [t, t+\Delta_{\text{hold}}]\},
+\end{equation}
+where $H^*$ is the actually realized passing side and $\Delta_{\text{hold}}$ is a hold window excluding transient overshoots. This definition applies identically to both (i) an automatically computable \textbf{proxy metric} (obtained by running the observer model over simulation logs) and (ii) a \textbf{user study} asking human perception (protocol in \cref{app:planned}). A policy that oscillates fails to stabilize its posterior above the threshold, making $t_{\text{legible}}$ late or undefined, whereas a policy that commits fixes the posterior early, advancing $t_{\text{legible}}$ --- this is the measurable core of this paper's legibility claim, and the measured values of the proxy metric are reported in \cref{subsec:main}. Observer-model parameters (the likelihood motion model, $p^*$, $\Delta_{\text{hold}}$) are configuration values, and their sensitivity (\cref{app:sensitivity}) and correlation with human judgment are left to the user-study protocol of the planned evaluation (\cref{app:planned}).
+
+\noindent\textbf{Limitation of the population-independence assumption of the likelihood model.} This model fixes the likelihood motion model as a single generic ``lateral avoidance trajectory distribution,'' but since intent attribution in fact depends on an observer's culture, age, and familiarity with robots, and legibility is itself a social construct, this assumption of assigning the same likelihood to all observer populations is only an approximation and has the limitation that it cannot capture population-specific variation in legibility (quantifying this limitation is possible only with human data from the \cref{app:planned} user study).
+
+
+\subsection{Extending Classes to Groups: F-Formations and Vulnerable Pedestrians}\label{subsec:groups}
+
+\noindent\textbf{Interaction-based groups (F-formation).} If the merge rule of \cref{subsec:enum} is based on spatial proximity alone, a group of people conversing can be seen as ``just two nearby people,'' opening a corridor between them and splitting the group. To prevent this, we extend merge/group judgment with \textbf{interaction cues}. If two people $i,j$ satisfy (i) sustained mutual proximity over some duration, (ii) mutual orientation (headings pointed toward a common o-space center, per Kendon's F-formation), and (iii) low relative velocity (walking together or standing in conversation), we bind them as a \textbf{social group}, and the handling of the \Class\ that splits between them (passing between the two) follows one of two approaches, chosen by the following criterion. In situations with a strong social norm under which passing between a group should never be geometrically permitted (e.g., a clearly identified stationary conversation group, or a group including a vulnerable pedestrian), the \Class\ in question is \textbf{excluded from availability} ($J = \infty$); in situations where the norm is weaker or group-detection confidence is low enough that excluding availability would be excessively conservative, it is instead suppressed with a \textbf{large soft penalty} $P_{\text{grp}}$, leaving room as a fallback if all other corridors are blocked:
+\begin{equation}
+J(c) \leftarrow \begin{cases} \infty, & \text{strong never-split norm},\\ J(c)+P_{\text{grp}}, & \text{weaker norm or low group-detection confidence}, \end{cases}
+\label{eq:group}
+\end{equation}
+for every class $c$ that passes between the members of a social group.
+ That is, exclusion from availability expresses ``never split,'' while the soft penalty expresses ``avoid splitting where possible, but allow it as a last resort.''
+
+\noindent\textbf{F-formation detection is assumed to be an external module.} This paper does not claim F-formation detection itself as a contribution, and assumes that group composition and o-space estimates are provided by an external perception module. Primary literature on automatic F-formation detection includes the graph-cut-based GCFF \citep{setti2015gcff} and subsequent cluster-based detectors, and this decision layer takes their output as input --- group membership and an o-space center; where a detector (e.g., GCFF) does not output an o-space radius explicitly, the radius is derived from member positions. The o-space concept follows \citep{kendon1990conducting}, as surveyed in \citep{riosmartinez2015survey}. This incorporates the social norm ``do not split an interacting group'' into the decision layer. Simple clusters (accidental proximity without interaction) are handled as coarse \Class{es} under the existing merge rule as before. However, when a route is chosen that goes \textbf{around} a group without splitting it, the social cost asymmetry depending on which side is taken (the side that blocks the conversational sightline of the F-formation's o-space versus the side that does not) is outside the scope of this paper and is noted as future work (\cref{sec:disc}).
+
+\noindent\textbf{Accommodation of vulnerable pedestrians.} When vulnerable pedestrians --- children, the elderly, wheelchair users, etc. --- are identified (assuming an external perception module provides attribute tags), for that person we (i) widen the proxemics width $\sigma$ to secure a larger social distance, (ii) raise the passing-side commitment threshold $E_0$ and dwell to pass more conservatively (less hastily), and (iii) raise the safety distance $d_{\text{safe}}$ and $\text{TTC}_{\min}$. Additionally, near vulnerable pedestrians we further raise the cost of rear/blind-spot passing (raising $\sigma_{\text{rear}}$) to reduce surprise.
+
+\noindent\textbf{Bounding the freezing side-effect of conservative defaults.} However, if the above conservative knobs (especially raising $E_0$/dwell) are increased without limit, the robot may delay passing excessively, causing a freezing side-effect. Accordingly, this policy applies vulnerable-pedestrian conservatism \textbf{only within a finite bound}, and if the resulting inability to commit to any corridor persists for a certain duration, this is treated as a deadlock and \textbf{handed off to P5's HOLD (stop-and-wait)}. That is, the conservative default is responsible only for ``more cautious passing,'' but a time-based freezing detector is an additional implementation requirement: the finite-window safety-event guard in P5 alone does not detect a persistent lack of discretionary switching.
+
+\noindent\textbf{Policy under misclassification and ethical limitations.} Because the estimation of vulnerable-pedestrian attributes may be uncertain or misclassified, this decision layer adopts a \textbf{conservative default under uncertainty}. That is, if attribute confidence is below a threshold, the person is provisionally treated as a vulnerable pedestrian and the above conservative knobs ($\sigma$, $E_0$, dwell, $d_{\text{safe}}$, $\text{TTC}_{\min}$ raised) are applied --- the principle being that ``losses in safety and comfort due to misclassification should be biased toward the conservative side.'' However, since attribute classification itself may carry bias, privacy, and stigmatization concerns, this paper does not claim classifier design or fairness as a contribution and explicitly states this as an ethical limitation (\cref{sec:disc}). Determination of concrete margin values and their effects is left to user/field evaluation, i.e., the planned evaluation (\cref{app:planned}).
+
+
+\subsection{Comparing Leak and Dwell: Shape Dependence and \texorpdfstring{$e_{\max}$}{e-max} Saturation}\label{subsec:leak}
+
+\noindent\textbf{$\lambda$ (leaky accumulation) vs. simple dwell timer.} A simple dwell timer is a rule that ``switches if the challenger has held the advantage continuously for $T_{\text{dwell}}$,'' looking only at the \textbf{continuous persistence} of the advantage. In contrast, the leaky accumulation $e_k = \mathrm{clip}(\lambda e_{k-1} + (D_k - \Dfloor)dt, 0, e_{\max})$ looks at the \textbf{time integral of the advantage together with a leak}. The analytical differences between the two rules are as follows.
+
+\begin{itemize}
+\item \textbf{Handling of intermittent advantage.} A simple dwell timer resets the moment the advantage is interrupted even once, which can permanently block a legitimate switch in an ambiguous configuration where the advantage holds ``almost always but occasionally breaks.'' Leaky accumulation treats an interruption only as a leak (not a reset), so if the advantage is sufficient on average, the accumulation crosses the threshold and switching occurs. That is, leaky accumulation replaces the simple dwell's \textbf{brittle reset} with smooth decay.
+\item \textbf{Shape dependence.} As the core of this comparison, threshold attainment under leaky accumulation depends not on the simple integral of the advantage but on its \textbf{temporal shape}. A strong advantage arriving as a pulse shorter than the time constant $\tau_{\text{leak}} = -dt/\ln\lambda$ ($\lambda<1$) accumulates before it can leak away and triggers a switch, while a weak advantage spread over a duration longer than $\tau_{\text{leak}}$ is offset by leaking and falls short of triggering a switch. The simple dwell timer has no such notion of a time constant, only a single axis of ``continuous duration.''
+\item \textbf{Coincidence in the special case.} If $\lambda = 1$ (no leak) and the advantage is a constant $\bar D$, leaky accumulation becomes a \textbf{linear integrator} that switches at $t = \Eth/(\bar D - \Dfloor)$, which, expressed in terms of time-to-threshold, is equivalent to a dwell timer. That is, a simple dwell timer is the special case of leaky accumulation in the $\lambda \to 1$, constant-advantage limit. The reason for introducing $\lambda < 1$ is precisely to obtain the shape-dependence above (the ability to forget old, weak evidence).
+\end{itemize}
+
+This quantitative comparison (switch count and legibility for $\lambda$ leaky accumulation vs. a simple dwell) is \textbf{measured} in the ablation of \cref{subsec:setup} as a ``simple dwell'' variant (separate from the immediate argmin without the accumulator term) (\cref{tab:main,tab:scenario}). In particular, the above first-item prediction --- that the simple dwell's reset brittleness under intermittent advantage blocks legitimate switching --- is indeed observed (0 switches for the simple dwell versus 1 switch for the proposed method in \code{intermittent}; detailed interpretation in \cref{subsec:main}).
+
+\noindent\textbf{The role of $e_{\max}$ saturation.} The upper clip $e_{\max}$ serves two roles. (i) \textbf{Prevention of windup.} If a strong advantage persists for a long time, $e$ can grow unboundedly, causing integrator windup in which $e$ stays above the threshold for a long time even after the advantage disappears. $e_{\max}$ bounds the accumulation, so when the advantage disappears, the leak acts quickly starting from $e_{\max}$, restoring responsiveness. (ii) \textbf{Post-switch symmetry.} Combined with the $e \leftarrow 0$ reset immediately after switching, $e_{\max}$ prevents an ``already sufficiently decided'' advantage from accumulating further and prematurely advancing the next switch.
+
+\noindent\textbf{Withdrawal of the headroom condition and its re-derivation as a liveness condition.} The previous formulation required that ``if $e_{\max}$ is too small, it saturates before reaching $\Eth$ in P2's switching argument and blocks switching, so $e_{\max} > \max_\rho \Eth(\rho) = E_0(1+k_\rho)$ (above-threshold headroom) is a soundness condition,'' but this revision \textbf{withdraws this headroom condition}. That requirement was wrong on two counts. (i) What P2 guarantees is a \textbf{lower bound} on the switching interval (an upper bound on switching rate), and this lower bound holds regardless of the clip --- saturation can only delay or block threshold attainment, never advance it, so the switching-rate bound does not break even if $e_{\max}$ becomes smaller (the P2 argument). (ii) Requiring $\Eremax > E_0(1+k_\rho)$ would make $\Eremax > \Eth(\rho)$ hold for all $\rho \in [0,1]$, so that no containment threshold $\bar\rho < 1$ could exist, colliding head-on with P4's containment --- this is the actual substance of the earlier self-contradiction.
+
+What saturation actually threatens is not the switching-rate bound but \textbf{switchability itself}. If the reachable bound is strictly below the baseline threshold ($\Eremax<E_0$), no discretionary switch can occur from the zero-evidence initial state. Equality must be distinguished: a binding clip $e_{\max}=E_0$ can be reached in finite updates when the sustained-input leak equilibrium exceeds $E_0$, whereas an equilibrium equal to $E_0$ is only approached from below in finite exact-real updates. Thus $\Eremax\le E_0$ is not a blanket no-switch condition. The open design condition below provides algebraic reachability headroom; actual response still requires the selected-challenger hypotheses of \Cref{prop:p2live}:
+\begin{equation}\label{eq:headroom}
+\Eremax > E_0 \qquad \text{(algebraic headroom at } \rho=0\text{, not unconditional liveness)}
+\end{equation}
+which, combined with the P4 containment upper bound, becomes the single two-sided condition $E_0 < \Eremax < E_0(1+k_\rho)$ (\cref{subsec:props}). That is, the precise formalization of the design intent is that initial switching headroom exists at $\rho = 0$ (lower bound, subject to the response theorem's input/selection conditions) and reversal is blocked once the maneuver has sufficiently progressed ($\rho > \bar\rho$) (upper bound); since both requirements are a lower and upper bound on the same reachable bound $\Eremax = \min(e_{\max}, (D_{\max}-\Dfloor)dt/(1-\lambda))$, they can be satisfied simultaneously without conflict. The sensitivity analysis sweeping $e_{\max}\cdot\lambda\cdot k_\rho$ around this condition is designed in \cref{app:sensitivity}; the measurement of the progress-hardening-related axis ($\rho$-driven rate) is given in \cref{subsec:main}, and measurement of the remaining axes is left to the planned evaluation (\cref{app:planned}).
+

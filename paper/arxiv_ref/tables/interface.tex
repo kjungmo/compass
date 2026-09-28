@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{System interface} of the decision layer and implementation contracts. Frame rejection applies in every controller mode, not only the research options.}
+\label{tab:interface}
+\small
+\begin{tabular}{@{}p{0.17\linewidth}p{0.77\linewidth}@{}}
+\toprule
+Interface & Contract details \\
+\midrule
+\code{/people} & \code{compass\_msgs/People}, received asynchronously and consumed as the latest value at cycle start. Message-frame tracks are transformed to the costmap global frame via \code{tf2}; transform failure drops all tracks from that message. \code{SensorDataQoS}: best-effort, volatile, keep-last depth 5. Last-value retention has no age cutoff; absent input yields zero people, not a freshness or safety guarantee. \\
+\addlinespace
+Costmap & \code{Costmap2DROS}, shared with \code{controller\_server}, in its global frame. Queried synchronously within the controller cycle; freshness depends on the costmap's own update rate. \\
+\addlinespace
+Pose and plan & The current pose header and nonempty \code{nav\_msgs/Path} header must match the costmap global frame in all modes. A mismatch returns a zero command; there is no silent pose/plan frame conversion. \code{setPlan} replaces the plan, which is then retained until another update. \\
+\addlinespace
+Decision cycle & One \code{computeVelocityCommands} call. Configured \code{controller\_frequency}: 20.0 Hz. The actual $dt$ is the measured inter-call interval, with a 0.1 s fallback on the first cycle or a non-advancing clock; the configuration alone does not verify a fixed interval. \\
+\addlinespace
+Output & One \code{geometry\_msgs/TwistStamped} per call, with the input pose frame in its header. The adapter enforces STOP/HOLD as zero motion and applies the declared safety speed bound; these are command contracts, not physical stopping guarantees. \\
+\bottomrule
+\end{tabular}
+\end{table}
