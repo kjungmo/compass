@@ -72,7 +72,7 @@ measured values.
 | H7 | `with a 0.1 s fallback on the first cycle` | Table 1 | `src/compass_nav2/src/compass_controller.cpp` | dt fallback | `lit:src/compass_nav2/src/compass_controller.cpp::(now - last_now_) : 0.1;` |
 | H8 | `\code{progress\_max\_gap=0.25} s` | App. A | `compass_controller.cpp` | getParam default | `lit:src/compass_nav2/src/compass_controller.cpp::"progress_max_gap", progress_max_gap_, 0.25` |
 | H9 | `\code{progress\_max\_speed=2.0} m/s` | App. A | `compass_controller.cpp` | getParam default | `lit:src/compass_nav2/src/compass_controller.cpp::"progress_max_speed", progress_max_speed_, 2.0` |
-| H10 | `($0.133$~m at the default gains)` | Sec. 3.6 | `compass_params.yaml`, `measured_progress.hpp` | k_side/k_e tracker equilibrium used by planned_offset | `calc:0.4/3.0=0.133` |
+| H10 | `($0.133$~m at the default gains for a single-side class` | Sec. 3.6 | `compass_params.yaml`, `measured_progress.hpp`, `topo_class.cpp` | k_side*abs(side_bias)/k_e tracker equilibrium used by planned_offset (side_bias = 1 for a single-side class) | `calc:0.4*1/3.0=0.133` |
 | H11 | `The separate research profile sets $k_\rho=0.5$` | Sec. 3.6 | `src/compass_core/include/compass_core/response_profile.hpp` | responsive_profile | `lit:src/compass_core/include/compass_core/response_profile.hpp::k.k_rho = 0.5` |
 | H12 | `that is at most eight labels` | Sec. 4.4 | derived from K_cap=3 | 2^3 | `calc:2**3=8` |
 | H13 | `harness.hpp:170-239` | Sec. 4.1 | `harness.hpp` | observer implementation span (enum ObserverRule .. end of compute) | `lit:src/compass_eval/include/compass_eval/harness.hpp::enum class ObserverRule { ProbabilitySpace9fe495a, LogOddsSuffix5343d45, EndpointSuffixFollowup030 };` |
