@@ -112,7 +112,6 @@ protected:
   bool use_candidate_trajectories_{false};
   double progress_max_gap_{0.25};
   double progress_max_speed_{2.0};
-  double progress_length_{1.0};
 
   // 속도 한계 (setSpeedLimit).
   double speed_limit_{0.0};        // m/s; 0 == 무제한

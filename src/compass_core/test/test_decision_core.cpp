@@ -246,3 +246,16 @@ TEST(DecisionCore, HoldReturnsZeroUntilExplicitRelease) {
   EXPECT_EQ(released.mode, Mode::NORMAL);
   EXPECT_GT(released.v_target, 0.0);
 }
+
+// Issue #8: a zero planned lateral offset means no lateral maneuver: rho stays 0
+// and no stale progress hardening survives from an earlier maneuver.
+TEST(DecisionCore, ZeroPlannedOffsetKeepsRhoZero) {
+  Knobs k;
+  DecisionCore core(k);
+  DecisionState s; s.c_star.set(7, Side::R); s.L_plan = 0.0; s.L_real = 0.7; s.rho = 0.7;
+  ClassEval r; r.cls.set(7, Side::R); r.J = 0.5; r.available = r.safe = true;
+  ClassEval l; l.cls.set(7, Side::L); l.J = 0.5; l.available = l.safe = true;
+  core.step_evals({r, l}, s, 5.0, 0.5, 0.0, 0.05);
+  EXPECT_DOUBLE_EQ(s.rho, 0.0);
+  EXPECT_TRUE(std::isfinite(s.L_real));
+}

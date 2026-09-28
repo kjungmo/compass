@@ -182,7 +182,7 @@ J·D·Δ_floor는 무차원이나 갱신에서 초 단위 dt를 곱하므로 e·
 
 **현재 구현과 증거 범위.** 코어는 입력 순서의 첫 K_cap명으로 라벨을 열거합니다. 라벨 연산의 존재가 TTL·merge/split·winding-sign·그룹 생애주기의 통합 구현을 뜻하지 않으며, 고정 두 라벨 하니스는 이 생애주기를 검증하지 않습니다. §4.1의 생애주기와 G2 생성기 계약은 설계이며 현재 명령 어댑터의 검증 사실과 구별합니다.
 
-기본값 false인 `use_measured_progress`는 고정 경로 법선에 투영한 부호 있는 pose 변위를 사용합니다. 잘못된 간격은 명시적으로 실패하고 커밋 변경 시 이전 기동의 변위를 버리며 경로 형상 변경 시 재앵커합니다. 일반적인 다중 보행자 진행 추정기는 아닙니다. `use_candidate_trajectories`도 기본 false이며 1초 unicycle rollout을 평가하고 같은 rollout의 첫 명령을 실행합니다. 원형 costmap 프록시와 등속 사람 예측을 사용하고 속도가 제동으로 변하면 다시 생성·검증합니다. 잘못된 경로·혼합 측 class·미지/지도 밖 후보는 거부합니다. 이는 라벨별 homotopy 실현이나 물리 안전의 증명이 아닙니다. 안전 속도 상한은 가속도 단위 `a_brake`에 간격을 곱한 만큼 감소시키며 STOP/HOLD는 어댑터에서 0 명령으로 집행합니다.
+기본값 false인 `use_measured_progress`는 고정 경로 법선에 투영한 부호 있는 pose 변위를 사용합니다. 잘못된 간격은 명시적으로 실패하고 커밋 변경 시 이전 기동의 변위를 버리며 경로 형상 변경 시 재앵커합니다. 이 선택 모드에서 `L_plan`은 커밋 class의 계획 횡 오프셋으로, 진행 구간 기준점에서 정합니다: 경로 추종기의 평형 오프셋 `k_side/k_e`(기본 이득에서 0.133 m)에서 기준점의 부호 있는 오프셋을 빼고, 같은 커밋에서 이미 인정된 진행을 더합니다. 0 이하이면 횡 기동이 없는 것으로 보고 ρ를 0으로 둡니다. 일반적인 다중 보행자 진행 추정기는 아니며, 계획 오프셋 모델과 그 폐루프 효과는 검증되지 않았습니다. 기본값은 여전히 전진 속도 대리값(`L_real += |v_cmd|·dt`, `L_plan=1.0 m`)이고, 보고한 R1/R5·짝지은 응답성 스윕·스크립트 unicycle 진단은 모두 이 고정 정규화의 역사적 진행 입력을 씁니다. 따라서 이들은 대리값의 민감도이지 측정 추정기의 평가가 아닙니다. 측정 진행을 기본값으로 바꾸고 폐루프에서 평가하는 일은 남아 있습니다. 보고 실험의 ρ=1 대리값은 실제 횡 기동 완료의 증거가 아닙니다. `use_candidate_trajectories`도 기본 false이며 1초 unicycle rollout을 평가하고 같은 rollout의 첫 명령을 실행합니다. 원형 costmap 프록시와 등속 사람 예측을 사용하고 속도가 제동으로 변하면 다시 생성·검증합니다. 잘못된 경로·혼합 측 class·미지/지도 밖 후보는 거부합니다. 이는 라벨별 homotopy 실현이나 물리 안전의 증명이 아닙니다. 안전 속도 상한은 가속도 단위 `a_brake`에 간격을 곱한 만큼 감소시키며 STOP/HOLD는 어댑터에서 0 명령으로 집행합니다.
 
 별도 연구 프로파일은 k_ρ=0.5로 최대 문턱을 .45로 낮춥니다. D≥.40인 같은 가용 도전자를 dt=.05, λ=.97로 중단 없이 갱신할 때 응답 상한은 49주기(소프트웨어 보수적 상한 50)입니다. 그 우위 범위에는 기본 프로파일의 내부 영구 잠금 영역이 없습니다. 3,750회 짝지은 스크립트 sweep과 결정론적 scripted-cost unicycle 진단은 별도 소프트웨어 증거로, Gazebo·로봇·새 후보 경로의 종단간 증거가 아닙니다. R1/R5는 기존 스크립트 비용·기본 노브·속도 진행 프록시이며 R3는 역사적 코어 latency입니다.
 
@@ -432,7 +432,7 @@ proxemics·관습 파라미터의 민감도를 다음과 같이 설계합니다.
     # Canonical manuscript build without replacing tracked artifacts
     bash scripts/build_paper.sh --check
 
-**선택된 legacy/shared 기본값.** 아래 표는 `src/compass_nav2/config/compass_params.yaml`의 논문 기본 노브와 공통 컨트롤러 설정을 요약합니다. 전체 파라미터 목록, `compass::Knobs`와 1:1 대응표, 배포 검증 주장이 아닙니다. 재량 전환을 결정하지 않는 호환 노브 `e_max_fwd`는 생략했습니다. 현행 configure-time 파라미터의 기준은 `src/compass_nav2/src/compass_controller.cpp`이며 예제 연결은 `sim/config/nav2_compass.yaml`을 따릅니다. 별도로 `use_measured_progress=false`, `use_candidate_trajectories=false`, `progress_max_gap=0.25`초, `progress_max_speed=2.0`m/s, `progress_length=1.0`m가 선언됩니다. `src/compass_core/include/compass_core/response_profile.hpp`의 연구 프로파일은 k_ρ=.5를 설정할 뿐 두 어댑터 플래그를 자동으로 켜지 않습니다. 독립된 계약은 `src/compass_eval/RESPONSIVENESS.md`와 `docs/CANDIDATE_TRAJECTORIES.md`에 있습니다.
+**선택된 legacy/shared 기본값.** 아래 표는 `src/compass_nav2/config/compass_params.yaml`의 논문 기본 노브와 공통 컨트롤러 설정을 요약합니다. 전체 파라미터 목록, `compass::Knobs`와 1:1 대응표, 배포 검증 주장이 아닙니다. 재량 전환을 결정하지 않는 호환 노브 `e_max_fwd`는 생략했습니다. 현행 configure-time 파라미터의 기준은 `src/compass_nav2/src/compass_controller.cpp`이며 예제 연결은 `sim/config/nav2_compass.yaml`을 따릅니다. 별도로 `use_measured_progress=false`, `use_candidate_trajectories=false`, `progress_max_gap=0.25`초, `progress_max_speed=2.0`m/s가 선언됩니다. 측정 모드의 `L_plan`은 기준점에서 정한 계획 오프셋이며(설정 노브 없음), legacy 모드는 `L_plan=1.0`m를 유지합니다. `src/compass_core/include/compass_core/response_profile.hpp`의 연구 프로파일은 k_ρ=.5를 설정할 뿐 두 어댑터 플래그를 자동으로 켜지 않습니다. 독립된 계약은 `src/compass_eval/RESPONSIVENESS.md`와 `docs/CANDIDATE_TRAJECTORIES.md`에 있습니다.
 
 | 노브 | 값 | 의미 |
 | :- | :- | :- |

@@ -229,6 +229,10 @@ are software opt-ins; they are not validated physical results. Remaining work:
 - [ ] External baselines (R2) under an independent, symmetric tuning protocol
 - [ ] Calibrate and physically validate the implemented measured-progress and
       candidate-rollout opt-ins, including mixed-side/multi-person limitations
+- [ ] Make realized cross-track progress the default `rho` input and evaluate it
+      in closed loop (issue #8); every archived result uses the forward-speed
+      proxy with a fixed `L_plan=1.0 m`, and the measured mode's planned-offset
+      model is unvalidated
 - [ ] User study (R4) and a real-robot demo with AR trajectory overlay
 
 ## 🙏 Acknowledgements

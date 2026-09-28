@@ -17,7 +17,7 @@ struct DecisionState {
   double t_safe_dwell = 0;             // 안전 드웰 보호 종료 시각
   Mode mode = Mode::NORMAL;
   double L_real = 0;                   // 누적 실현 cross-track 진행량
-  double L_plan = 1.0;                 // c*의 계획 횡 오프셋 (ρ 분모)
+  double L_plan = 1.0;                 // c*의 계획 횡 오프셋 (ρ 분모); <=0 이면 횡 기동 없음(ρ=0)
 
   void reset_on_commit();
   void reset_on_safe_switch(double now, double T);

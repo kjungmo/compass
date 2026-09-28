@@ -117,10 +117,8 @@ void CompassController::loadKnobs(
   getParam(node, name, "use_candidate_trajectories", use_candidate_trajectories_, false);
   getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
   getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
-  getParam(node, name, "progress_length", progress_length_, 1.0);
   if (!std::isfinite(progress_max_gap_) || progress_max_gap_ <= 0 ||
-      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0 ||
-      !std::isfinite(progress_length_) || progress_length_ <= 0)
+      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0)
     throw std::invalid_argument("invalid measured progress parameters");
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
   // 궤적 계층 ② 노브 (경로 추종 cruise).
@@ -315,7 +313,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
       return cmd;
     }
     in.lateral_progress_delta_m = progress.delta_m;
-    state_.L_plan = progress_length_;
+    if (progress.anchor) {
+      // Issue #8: L_plan is the planned lateral offset of the committed class,
+      // fixed when its epoch is anchored: progress already credited to this
+      // commitment plus the tracker's remaining planned offset (0 => no
+      // lateral maneuver, rho stays 0). Not a calibrated or validated model.
+      state_.L_plan = state_.L_real + measured_progress_.planned_offset(k_side_, k_e_);
+    }
   }
 
   // Compute the exact nominal speed used for opt-in candidate evaluation.

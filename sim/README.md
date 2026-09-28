@@ -75,8 +75,10 @@ ros2 launch compass_sim sim_bringup.launch.py headless:=true
 선택 경로를 모두 꺼도 legacy TTC 부호·미관측 costmap·L/R 방향·`a_brake*dt`
 제동 수정은 적용됩니다. 기본 노브 유지가 이전 안전 결함의 유지를 뜻하지 않습니다.
 
-측정 진행도 한계 `progress_max_gap=0.25 s`, `progress_max_speed=2.0 m/s`,
-`progress_length=1.0 m`는 보정되지 않은 설정값입니다. 같은 XY 경로/프레임의
+측정 진행도 한계 `progress_max_gap=0.25 s`, `progress_max_speed=2.0 m/s`는
+보정되지 않은 설정값입니다. 측정 모드의 `L_plan`은 각 진행 구간의 기준점에서
+정하는 계획 횡 오프셋(경로 추종기 평형 `k_side/k_e`에서 기준점 오프셋을 뺀 값)이며,
+0 이하이면 횡 기동이 없는 것으로 보고 ρ를 0으로 둡니다. 이 모델은 검증되지 않았습니다. 같은 XY 경로/프레임의
 재발행은 진행 구간을 보존하지만 실제 경로 변경은 다시 시작합니다. 후보 궤적은
 원형 footprint와 단순 보행자 예측에 제한되며 혼합 통과-측 클래스는 지원하지
 않습니다. 계약과 물리 검증 경계는 [후보 궤적 문서](../docs/CANDIDATE_TRAJECTORIES.md)와

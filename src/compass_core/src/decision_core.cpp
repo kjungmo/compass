@@ -192,6 +192,11 @@ DecisionOutput DecisionCore::step_evals(const std::vector<ClassEval> & evals,
   }
   if (st.L_plan > 0.0) {
     st.rho = std::max(0.0, std::min(1.0, st.L_real / st.L_plan));
+  } else {
+    // Issue #8: a non-positive planned offset means no lateral maneuver. Keep
+    // rho at zero (no progress hardening) instead of dividing or retaining a
+    // stale value from an earlier maneuver.
+    st.rho = 0.0;
   }
 
   out.c_star = st.c_star;
