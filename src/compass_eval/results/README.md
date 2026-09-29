@@ -22,7 +22,11 @@ ablation은 CSV를 지정 디렉터리에 기록하고 표를 stdout에 출력�
 ROS 없이 현재 CSV를 재검증하려면 저장소 루트에서
 `bash scripts/test_compass_observability.sh`를 실행합니다. 정확한 난수 시퀀스
 회귀는 현재 g++/libstdc++ 하니스를 대상으로 하며 다른 표준 라이브러리까지
-같음을 보장하지 않습니다. 새 실행은 소스/설정/입력 해시, 컴파일러·라이브러리·
+같음을 보장하지 않습니다. 같은 소스를 LLVM libc++로 빌드하면 1,500행 중 425행이
+달라집니다. 제안 방법과 두 knob 절제의 전환수는 750행 모두 그대로이고, 전환수가
+바뀌는 것은 비교군뿐입니다. 기록과 검사 명령은
+[`stdlib_sensitivity/`](stdlib_sensitivity/README.md)와
+`scripts/check_stdlib_sensitivity.sh`에 있습니다. 새 실행은 소스/설정/입력 해시, 컴파일러·라이브러리·
 빌드 플래그, 장비와 명령을 기록해야 합니다. R3 숫자의 일치는 재현 조건이 아닙니다.
 
 ## 결과 버전과 해석

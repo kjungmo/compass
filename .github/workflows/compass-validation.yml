@@ -16,6 +16,11 @@ jobs:
       - run: bash scripts/test_compass_observability.sh
       - run: bash scripts/test_completion_gates.sh
       - run: bash scripts/test_compass_response.sh
+      - name: Standard-library sensitivity (libstdc++ canonical, LLVM libc++ record)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libc++-dev libc++abi-dev
+          REQUIRE_LIBCXX=1 bash scripts/check_stdlib_sensitivity.sh
       - run: python3 scripts/check_observer_results.py
       - run: python3 scripts/check_observer_versions.py
       - run: python3 scripts/check_switch_bounds.py

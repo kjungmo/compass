@@ -109,6 +109,17 @@ measured values.
 | K24 | `\code{lookahead\_dist} & 1.0` | Table 5 | `compass_params.yaml` | lookahead_dist | `yaml:lookahead_dist=1.0` |
 | K25 | `& 3.0/3.0/0.4 & Path-tracking` | Table 5 | `compass_params.yaml` | k_side (k_e, k_theta likewise) | `yaml:k_side=0.4` |
 
+## Standard-library sensitivity (LLVM libc++ rerun; `scripts/check_stdlib_sensitivity.sh`)
+
+| # | Printed | Where | Artifact | Field / derivation | Check |
+|---|---|---|---|---|---|
+| L1 | `changes 425 of the 1,500 rows` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/README.md` | rows differing from `ablation_raw.csv` | `lit:src/compass_eval/results/stdlib_sensitivity/README.md::425 of the 1,500 rows differ` |
+| L2 | `(full: 1.33 to 1.34 s)` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md` | full t_sfx mean | `lit:src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md::\| full (제안) \| 0.40 +/- 0.49 \| 0.040 +/- 0.049 \| 0.018 +/- 0.022 \| 1.34 +/- 1.68 \| 0/250 \|` |
+| L3 | `goes from 29.74 to 30.22 switches per encounter` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md` | argmin switches mean | `lit:src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md::\| -accumulator (즉시 argmin) \| 30.22 +/- 37.44` |
+| L4 | `goes from 37.20 to 37.24 switches` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md` | correspondence switches mean | `lit:src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md::\| -class correspondence \| 37.24 +/- 36.35` |
+| L5 | `with censoring 71/250 to 65/250` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md` | correspondence censored | `lit:src/compass_eval/results/stdlib_sensitivity/R1_ablation_libcxx.md::3.56 +/- 4.56 \| 65/250 \|` |
+| L6 | `identical in all 750 rows, and no encounter exceeds one switch` | Sec. 4.1 | `src/compass_eval/results/stdlib_sensitivity/README.md` | full/-hyst/-hard switch columns unchanged; max 1 | `lit:src/compass_eval/results/stdlib_sensitivity/README.md::\| full, max switches in one encounter \| 1 \| 1 \|` |
+
 ## Derived analytic values (closed form from the default knobs; see also `scripts/check_switch_bounds.py`)
 
 | # | Printed | Where | Artifact | Field / derivation | Check |
