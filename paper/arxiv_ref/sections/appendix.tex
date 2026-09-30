@@ -1,0 +1,132 @@
+\section{Reproducibility}\label{app:repro}
+
+\noindent\textbf{Software and evidence versions.} The integration targets ROS 2 Jazzy; planned physical simulation targets Gazebo Harmonic. ROS build/test evidence is distinct from experiment provenance: R3 is the archived AMD Ryzen 5 5500GT decision-core latency measurement, not a new integrated-controller or ROS-pipeline timing result. Current R1 observer outputs were regenerated on AMD EPYC 9V74. The canonical manuscript source is \code{paper/arxiv/main.tex}, of which this document is a re-typeset edition built from \code{paper/arxiv\_ref}; \code{scripts/build\_paper.sh} uses pdfLaTeX from TeX Live (including science/extra packages), Poppler and ripgrep. Its \code{--check} mode builds in a temporary directory, and \code{--write} deliberately regenerates the PDF and artifact-hash manifest; visual QA is still required. A rerun must record its actual compiler, standard library, TeX/package versions, hardware, flags and commands rather than infer them from the ROS distribution alone.
+
+\noindent\textbf{Build and run commands.} Run from the repository root. The full package build below requires a sourced ROS 2 Jazzy environment and the declared Nav2/simulator dependencies; an evaluator-only build can instead use \code{--base-paths src --packages-up-to compass\_eval}. These commands preserve the archived measurements.
+
+\begin{verbatim}
+# Full workspace, including the simulator package (not a simulator run)
+colcon build --base-paths src sim --cmake-args -DBUILD_TESTING=ON
+source install/setup.bash
+colcon test --packages-select compass_core compass_nav2 compass_eval
+colcon test-result --verbose
+
+# Separate rerun CSV; summaries are printed to stdout
+mkdir -p /tmp/compass_eval_results
+./build/compass_eval/compass_eval ablation /tmp/compass_eval_results
+./build/compass_eval/compass_eval latency
+./build/compass_eval/compass_eval rho_sweep
+
+# Canonical manuscript build, without replacing tracked artifacts
+bash scripts/build_paper.sh --check
+\end{verbatim}
+
+\noindent\textbf{Selected legacy/shared defaults.} \Cref{tab:params} summarizes the manuscript's default decision knobs and shared controller settings from \path{src/compass_nav2/config/compass_params.yaml}; it is not an exhaustive parameter inventory, a 1:1 list of \code{compass::Knobs}, or a deployment-validation claim. The retained compatibility knob \code{e\_max\_fwd} does not determine discretionary switching and is omitted. Current controller parameters are read at configuration time in \path{src/compass_nav2/src/compass_controller.cpp}; complete example wiring is in \path{sim/config/nav2_compass.yaml}.
+
+The configure-time research defaults are:
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\setlength{\parsep}{0pt}
+\item \code{use\_measured\_progress=false};
+\item \code{use\_candidate\_trajectories=false};
+\item \code{progress\_max\_gap=0.25} s;
+\item \code{progress\_max\_speed=2.0} m/s;
+\item in measured mode, $L_{\rm plan}$ is the anchored planned offset described in \cref{subsec:algo} (no configuration knob); legacy mode keeps $L_{\rm plan}=1.0$~m.
+\end{itemize}
+
+The research profile in \path{src/compass_core/include/compass_core/response_profile.hpp} sets $k_\rho=0.5$; it does not enable either adapter flag automatically. Their separate contracts are documented in \code{RESPONSIVENESS.md} and \path{docs/CANDIDATE_TRAJECTORIES.md}.
+
+\input{tables/params}
+
+\noindent\textbf{Scenario and seed specification.} The offline measurements of \cref{sec:exp} are run over 5 scenarios (\code{near\_tie}, \code{transient\_spike}, \code{mid\_reversal}, \code{clean\_commit}, \code{intermittent}) $\times$ 50 seeds $\times$ 6 variants, with $dt = 0.05$ s (20 Hz) and a horizon of 10 s (200 cycles). Scenario scripts, variant definitions, and the observer implementation are in \code{src/compass\_eval}.
+
+\noindent\textbf{Source and result provenance.} This manuscript accompanies the reviewed integration candidate in \url{https://github.com/kjungmo/compass}; it does not assert that the candidate is already merged into \code{main}. Record the exact checked-out commit and source/configuration/input hashes for every rerun. The original results remain recoverable at \code{9fe495a}; the intermediate log-odds-only observer is identified by PR~12 commit \code{5343d457}; current R1 adds the separately declared, post-hoc 0.30 s follow-up rule. Raw CSVs of all three versions and the per-row comparison are kept in \code{src/compass\_eval/results/observer\_versions/}; the result-version record is \code{src/compass\_eval/results/README.md}. Current behavioral values are in \code{ablation\_raw.csv} and \code{R1\_ablation.md}; \code{R3\_latency.md} and \code{R5\_rho\_sweep.md} retain their distinct archived scope. Conceptual figures are generated from their scripts, not empirical raw trajectories. The labelled-cell \code{scripts/check\_observer\_results.py} and numeric \code{scripts/check\_paper\_numbers.py} verify their declared checks, not every scientific claim. \code{src/compass\_eval/results/PROVENANCE.md} records the SHA-256, producing command and source revision of every committed result file, including the raw CSVs, and \code{scripts/check\_repo\_consistency.py} recomputes those hashes; \code{paper/arxiv/artifact\_manifest.json} records source/PDF/figure hashes for the built manuscript snapshot; any submission tag is a separate future release action.
+
+
+\noindent\textbf{Reproduction.} From a fresh ROS workspace, build the evaluator and its workspace dependencies with \code{colcon build --base-paths src --packages-up-to compass\_eval}. Run its \code{ablation} mode with output directory \code{/tmp/compass\_rerun} for a separate CSV and stdout summary; \code{latency} and \code{rho\_sweep} print their summaries. Do not overwrite archived results when reproducing. Figure sources are in \code{paper/figures/scripts}; archived latency is machine/toolchain dependent and is not expected to reproduce exactly. The repository README and result-provenance record give the maintained commands and evidence versions.
+
+\section{Notation}\label{app:notation}
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Principal symbols.} Units follow \cref{subsec:cost}: costs, advantages and margins are dimensionless; evidence quantities carry normalized-cost--second units.}
+\label{tab:notation}
+\small
+\begin{tabular}{@{}lp{0.72\linewidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$k$, $dt$, $h_k$ & Control cycle index; fixed cycle interval; measured interval at cycle $k$ \eqref{eq:hk} \\
+$\mathcal{C}_k$, $\mathcal{S}_k$ & Candidate topological \Class{es}; safe/available subset \eqref{eq:safe} \\
+$c^*_k$, $c'_k$ & Committed \Class; selected challenger \\
+$J_k(c)$, $w_X$ & Normalized weighted class cost \eqref{eq:cost}; term weights \\
+$D_k$, $D_{\max}$ & Challenger advantage $J_k(c^*_{k-1})-J_k(c'_k)$; its range bound \\
+$\Dfloor$ & Instantaneous switching margin \\
+$e_k$ ($\Erev$) & Single challenger evidence accumulator \eqref{eq:accum} \\
+$x_k$, $q_k$, $r_k$ & Pre-test evidence; stored post-reset evidence; evidence after a pre-update reset \\
+$\lambda$, $e_{\max}$ & Leak coefficient; evidence clip \\
+$E_0$, $\Eth(\rho)$ & Baseline threshold; progress-hardened threshold \eqref{eq:eth} \\
+$\rho$, $k_\rho$, $p$ & Maneuver progress; hardening coefficient and exponent \\
+$\Eremax$, $\bar\rho$ & Reachable evidence bound \eqref{eq:eremax}; containment threshold \\
+$N_{\min}$, $N_0$ & Discretionary inter-switch cycle bounds \eqref{eq:nmin} \\
+$N_{\rm resp}$, $D_{\rm sus}$ & Response-time bound \eqref{eq:nresp}; sustained advantage lower bound \\
+$X_k$, $\theta^*$ & Driving innovation $(D_k-\Dfloor)dt$; Lundberg root \\
+$W$, $N_{\rm thrash}$, $C_W$ & Thrash window; HOLD threshold; window event count \eqref{eq:window} \\
+$v_{\text{lat}}$, $v_{\text{lat,min}}$ & Cross-track progress rate; its assumed lower bound (\cref{asm:scope}) \\
+$t_{\text{legible}}$, $p^*$ & Time-to-legible \eqref{eq:tlegible}; posterior threshold \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Extended Results}\label{app:extended}
+
+\Cref{tab:legibility} gives the per-scenario decision-stream endpoint-suffix time $t_{\text{sfx}}$ and censoring counts behind the aggregate $t_{\text{sfx}}$ and censoring columns of \cref{tab:main}.
+
+\input{tables/legibility}
+
+\section{Sensitivity Analysis Design}\label{app:sensitivity}
+
+The sensitivity of the proxemics and convention parameters is designed as follows. Among these, the $\rho$-drive-rate ($v_{\text{lat}}$) axis of progress hardening has already been measured in \cref{subsec:ablation} as an offline transition-blocking interval, $v_{\text{lat}} \in (0.20, 0.35)$ m/s; measurement of physical freezing and of the remaining axes remains for the Planned Evaluation (\cref{app:planned}).
+
+\begin{itemize}
+\item \textbf{$\sigma_{\text{front}}/\sigma_{\text{rear}}/\sigma_s$ sweep.} Each parameter is grid-searched over the range $[0.5\times, 2\times]$ of its baseline value, recording the headline and standard metrics to produce sensitivity surfaces. In particular, we confirm whether increasing $\sigma_{\text{rear}}$ reduces the frequency of rear/blind-spot passing.
+\item \textbf{Traffic-side (\code{locale.keep\_side}) reversal.} We measure the performance degradation in environments where the right-preference assumption is false (left-hand traffic cultures) or set to \code{none}. A separate performance-sensitivity curve is drawn against the $w_r$ weight.
+\item \textbf{Observer-model parameters ($p^*$, $\Delta_{\text{hold}}$).} We check metric stability against changes in the threshold and hold interval of time-to-legible.
+\item \textbf{$e_{\max}\cdot\lambda\cdot k_\rho$.} We check switching-rate, windup, and lockup (as defined in \cref{app:planned}) behavior in regions that violate or satisfy the challenger accumulator's two-sided conditions (reachability headroom $\Eremax > E_0$ --- \cref{subsec:leak}; existence of a nonempty lock region $\Eremax < E_0(1+k_\rho)$, $\bar\rho < 1$ --- P4). In particular, we measure how $\lambda$ shifts the containment threshold $\bar\rho$ via the reachable upper bound $\Eremax = \min(e_{\max}, (D_{\max}-\Dfloor)dt/(1-\lambda))$. \textbf{Knob-tuning guidance (simultaneously satisfying containment vs. switchability).} As discussed in the non-vacuity argument of \cref{subsec:props}, if the leak-equilibrium upper bound $(D_{\max}-\Dfloor)dt/(1-\lambda)$ falls below $E_0$, the reachable upper bound never reaches $E_0$, so no discretionary switch is possible and the P1$\cdot$P2 switching dynamics become vacuous. For example, with $D_{\max}=0.5, \Dfloor=0.05, dt=0.05, \lambda=0.7$, the leak-equilibrium upper bound is $(0.5-0.05)\cdot0.05/(1-0.7) \approx 0.075$, which is smaller than $E_0=0.3$ --- so in the region of short $dt$, small $\Dfloor$, and $\lambda<1$, switching capability can unintentionally vanish. Accordingly, this sweep explicitly marks the $\lambda$, $e_{\max}$ combinations whose reachable upper bound falls within the open interval $(E_0, E_0(1+k_\rho))$, so that a designer can identify the $(\lambda, e_{\max})$ region that simultaneously satisfies containment ($\Eremax < E_0(1+k_\rho)$) and switchability ($\Eremax > E_0$).
+\item \textbf{Source of normalization constants.} We compare a pre-calibrated constant (recommended, time-invariant map) against a per-cycle min-max statistic (affine-invariant, unit-covariant, but subject to margin drift), measuring how the effective margin drift of $\Dfloor$ upon changes in the candidate set affects the switching rate and anti-oscillation metrics when the candidate set changes (verification of the drift analysis in \cref{subsec:cost}).
+\end{itemize}
+
+Reporting is mandatory for nonparametric tests (e.g., Mann-Whitney U), effect sizes, stated seed/trial counts, and per-seed variance and confidence intervals.
+
+\section{Planned Evaluation}\label{app:planned}
+
+This section specifies a protocol, fixed in advance of measurement, for \textbf{all evaluations that this paper has not yet measured} --- the physical simulation and real-robot setup, physical performance metrics, end-to-end pipeline latency, scenarios, the external baselines and their independent tuning protocol, and the legibility user study. This paper reports no measured values for any of these items. The protocol is not a formal preregistration: seed and trial counts and the per-case oracle values of the physical scenarios are still to be bound before any run. Fixing and publishing it before results exist is intended to limit post-hoc tuning and confirmation bias.
+
+\noindent\textbf{Physical simulation and real-robot setup.} Simulation combines Gazebo/Isaac with a reactive pedestrian model (PedSim-family, social-force-based agents) and is repeated across many seeds. Making people reactive is critical to avoiding freezing artifacts. Real-robot validation is performed on an in-house service-robot platform with real corridor-encounter cases, together with a demonstration of the presentation layer's FSD-style AR trajectory overlay. \textbf{However, this AR overlay demo is an output of the presentation layer, separate from the decision layer that is this paper's contribution; it is presented only as a qualitative demo and is not included in the quantitative evaluation below (separation of the decision-layer contribution from the presentation-layer demo).} The number of seeds, number of trials, and environment diversity will be fixed at measurement time but must be stated explicitly when reported. All quantitative comparisons are required to report per-seed variance and confidence intervals (or bootstrap intervals).
+
+\noindent\textbf{Controlling simulator circularity.} If $J_{\text{social}}$'s social-force-based cost and the pedestrian simulator (PedSim/social force) share the same assumptions, the proposed method may overfit to the simulator's reaction model. To control for this, we (i) also replace the pedestrian model with a \textbf{different family} than $J_{\text{social}}$ (e.g., ORCA-based, replay-based) to cross-check the robustness of results, (ii) separately report the sim-to-real gap using real-robot encounter cases, and (iii) conduct actual pedestrian-participation experiments where possible. These results are reported after measurement; only the design is fixed in this section.
+
+\noindent\textbf{Definition of physical performance metrics (standard metrics).} Success rate, integral of minimum social distance/proxemics intrusion, number of near-misses, physical freezing (defined below), path length, time taken, average speed, human-side disturbance (speed change and detour amount of the reactive person), and lateral jerk, which requires trajectory realization. These are to be filled in as the performance columns corresponding to the measured columns in \cref{tab:main}, together with the headline metrics of \cref{subsec:setup}; no figures are reported before measurement, and no physical performance improvement is claimed until success, collision, minimum clearance and physical freezing have been measured. \textbf{Physical freezing} is an interval in which the measured robot speed stays below a stop threshold for at least a minimum duration while the goal is not reached, clearance is adequate and free motion is warranted, and which is not an intentional yield, a commanded STOP, or HOLD; freezing episodes and duration are reported separately from intentional yields and HOLD intervals. Zero decision switches are never counted as freezing, and switch counts are never used as evidence of its absence. The software scorer \code{scripts/physical\_metrics.py} fixes provisional thresholds (0.02~m/s, 2~s, 0.3~m goal distance, 0.5~m clearance) that still require validation.
+
+\noindent\textbf{Warranted-switch evaluation.} To separate consistency from non-responsiveness (the concern that decision-stream metrics reward a frozen commitment), the planned evaluation scores decisions against a \textbf{warranted-switch oracle} that is defined independently of the algorithm's evidence, threshold and cost $J$ (for example, geometric or ground-truth labels supplied by the evaluator, never generated from \sname's own accumulator). Each oracle opportunity fixes, before the runs, its onset, confirmation time, expiry, target class (the available alternative), decision eligibility, and a response deadline. \textbf{Warranted-switch recall} is the fraction of eligible opportunities in which a discretionary switch to the target class occurs by the deadline and is held for the hold time fixed in advance. \textbf{Response delay} is measured from the oracle onset, not from the onset of the algorithm's own sustained advantage, to that switch; a missing response is right-censored at the deadline, and delays are summarized with censoring (e.g., Kaplan--Meier), never by averaging only the successful responses. \textbf{Lockup} is an eligible opportunity whose warranted target and a safe alternative both persist until the deadline without a response; the lockup rate is lockups per eligible opportunity. Opportunities excluded because of clip lockout, challenger retargeting, safety interruption, an unsafe or unavailable alternative, or an invalid log are reported as counts rather than silently dropped. Validation of the conditional response theorem (whether the hypotheses of \cref{prop:p2live} held and whether its $N_{\text{resp}}$ bound was met) is reported separately from this application-level recall. The independent oracle, integrated robot logging, closed-loop runs and physical freezing trials are external gates that this paper has not met; the offline scorer \code{scripts/evaluate\_opportunities.py} implements only the deadline, hold and censoring contract on scripted traces, with oracle labels supplied separately, and no figures are reported before measurement.
+
+\noindent\textbf{End-to-end pipeline latency.} To complement the decision-core latency measurement of \cref{subsec:latency}, we will measure, on the real ROS 2 stack, the end-to-end latency from subscription-callback receipt to velocity-command output (including TF transforms, costmap access, \code{controller\_server} dispatch, and DDS queueing/executor jitter) and report it as a distribution (p50, p99, max).
+
+\noindent\textbf{Scenarios.} 4 encounter types $\times$ corridor width (narrow/wide) --- head-on confrontation, robot overtaking a person, person overtaking the robot (where the correct behavior for the robot is to hold its lane), and crossing. Additional diagnostic scenarios --- symmetric ambiguous configuration (left/right cost tie, targeting P1), sensor noise/gap flicker (targeting anti-oscillation), narrowing corridor (targeting yield/stop via availability pruning), \textbf{a challenger-tie configuration (targeting the tie-break rule)}, \textbf{an F-formation group encounter (confirming the group is not split)}, and \textbf{vulnerable-pedestrian proximity (confirming conservative passing)}.
+
+\noindent\textbf{External baselines.} DWB (Nav2's default local planner, a memoryless oscillation baseline), TEB (multi-homotopy + switching cost), MPPI, a social-force-based planner, and ORCA/RVO for congestion. (The internal ablation baselines have already been measured in \cref{sec:exp}.)
+
+\noindent\textbf{Independent tuning protocol for external baselines.} To avoid the ``weakened baseline'' criticism, each external baseline is tuned by the following procedure. (i) Tuning is performed by a party \textbf{independent} of the authors of the proposed method (or by an automated tuning script fixed in advance). (ii) Each method is optimized under the \textbf{same scenario set and the same evaluation-metric weighting} (e.g., success rate prioritized, social distance as tiebreaker), with the same tuning budget (number/time of parameter searches). (iii) The scenarios used for tuning and the scenarios used for evaluation are \textbf{separated} (tuning-set / test-set split). (iv) The final parameter values used and the search ranges are fully disclosed in the appendix. \textbf{(v) The proposed method itself is also subject to the same tuning protocol (same tuning budget, same tuning/test split, independent party) --- that is, the proposed method is not separately hand-tuned, and every method under comparison undergoes the same procedure symmetrically.} The comparison results produced by this protocol are reported after measurement; this section fixes only the procedure.
+
+\noindent\textbf{Legibility user-study protocol.} To validate the observer-model proxy of \cref{subsec:observer} with human data, a perceptual experiment is designed as follows (results reported after measurement).
+
+\begin{itemize}
+\item \textbf{Stimuli.} Videos of the same encounter scenario driven by the proposed method vs. a comparison method (especially a memoryless baseline) are presented, truncated at time points \textbf{before} the passing side becomes apparent.
+\item \textbf{Task.} Participants are asked, at each truncation point, ``which side do you think the robot will pass you on,'' and both the \textbf{accuracy of the response and the time to respond (human time-to-legible)} are recorded.
+\item \textbf{Hypothesis.} A committing policy allows participants to predict the passing side (i) earlier and (ii) more accurately than a memoryless policy.
+\item \textbf{Analysis.} We report the correlation between the Bayesian observer proxy $t_{\text{legible}}$ of \cref{subsec:observer} and human response times, quantifying the validity of the proxy metric. \textbf{Samples for which $t_{\text{legible}}$ is undefined} (cases where the posterior never stably exceeds $p^*$ by the end of the video, so the passing side is never legible, occurring particularly for oscillatory policies) are treated not as missing but as \textbf{right-censored} data. That is, such a sample's $t_{\text{legible}}$ is treated as censored at the video length $T_{\text{clip}}$ and aggregated within a survival-analysis framework (e.g., Kaplan-Meier estimation, log-rank test), rather than being excluded from a simple average or replaced with an arbitrarily large value.
+\item \textbf{Ecological-validity limitation.} While the video-truncation stimulus approach is reasonable for control and reproducibility, legibility judgments from \textbf{third-person observation} through a screen may differ from judgments in an actual \textbf{first-person encounter} with the robot --- an ecological-validity limitation. Accordingly, the results of this protocol are reported as primary evidence, while validation with real pedestrians in first-person encounters must be filled in by a separate, currently unmeasured experiment.
+\item \textbf{Ethics and sample.} The number of participants $N$, recruitment and consent procedures, repeated-measures design, and nonparametric tests are to be fixed before data collection.
+\end{itemize}
+
+All measured values from the user study (accuracy, timing, correlation, p-values) are reported only after measurement; this item fixes only the operational definitions and procedures.

@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Historical decision-core timing} of \texttt{DecisionCore::step} (enumeration, cost integration, safety test and decision), 20{,}000 iterations per condition on an AMD Ryzen 5 5500GT, all $2^K$ labels enumerated in an all-safe fixture. Finite-batch measurements, not a worst-case execution-time bound and not an end-to-end ROS~2 pipeline measurement.}
+\label{tab:latency}
+\small
+\begin{tabular}{ccrrrrr}
+\toprule
+$K$ & Labels $2^K$ & Mean ($\mu$s) & p50 ($\mu$s) & p99 ($\mu$s) & Max ($\mu$s) & Max / 50 ms \\
+\midrule
+1 & 2 & 1.6 & 1.5 & 2.6 & 153.6 & 0.31\% \\
+2 & 4 & 5.4 & 5.2 & 7.9 & 356.1 & 0.71\% \\
+3 & 8 & 15.9 & 14.5 & 58.6 & 651.3 & 1.30\% \\
+\bottomrule
+\end{tabular}
+\end{table}

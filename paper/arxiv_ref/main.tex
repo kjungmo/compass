@@ -1,0 +1,42 @@
+\documentclass{kjpaper}
+\usepackage[authoryear,sort&compress,round]{natbib}
+\bibliographystyle{abbrvnat}
+% ---- project macros ----
+\newcommand{\sname}{COMPASS}
+\newcommand{\Class}{\texttt{class}}
+\newcommand{\Dfloor}{\Delta_{\text{floor}}}
+\newcommand{\Erev}{e^{\text{rev}}}
+\newcommand{\Eremax}{e^{\text{rev}}_{\max}}
+\newcommand{\Eth}{E_{\text{th}}}
+\newcommand{\code}[1]{\texttt{#1}}
+\setlength{\emergencystretch}{3em}
+\crefname{table}{Table}{Tables}
+\crefname{figure}{Figure}{Figures}
+\crefname{section}{Section}{Sections}
+\crefname{subsection}{Section}{Sections}
+\crefname{appendix}{Appendix}{Appendices}
+\crefname{equation}{Eq.}{Eqs.}
+\crefname{assumption}{Assumption}{Assumptions}
+\crefname{proposition}{Proposition}{Propositions}
+\crefname{remark}{Remark}{Remarks}
+\crefname{algocf}{Algorithm}{Algorithms}
+\title{\sname: Temporally Consistent Topological Passing Decisions for Socially Aware Robot Navigation}
+\correspondingauthor{kangjmo91@gmail.com}
+\paperurl{https://github.com/kjungmo/compass}
+\author[1]{Jungmo Kang}
+\affil[1]{Independent Researcher, Seoul, Republic of Korea}
+\keywords{social navigation, topological path planning, temporal consistency, human--robot interaction, ROS~2}
+\begin{document}
+\input{sections/0_abstract}
+\maketitle
+\input{sections/1_introduction}
+\input{sections/2_related_works}
+\input{sections/3_method}
+\input{sections/4_experiments}
+\input{sections/5_discussion}
+\input{sections/6_conclusion}
+\bibliography{main}
+\clearpage
+\appendix
+\input{sections/appendix}
+\end{document}

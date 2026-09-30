@@ -1,0 +1,6 @@
+{
+  "process": {"compiler": "pdflatex"},
+  "sources": [
+    {"filename": "main.tex", "usage": "toplevel"}
+  ]
+}

@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Switches per encounter by scenario} (mean\stdv{SD}, $N=50$ per cell; no column is marked best) --- the table in which oscillatory regression is most clearly evident. Fewer switches is not uniformly better: \texttt{clean\_commit} and \texttt{intermittent} contain one warranted switch (\cref{subsec:ablation}).}
+\label{tab:scenario}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Variant & near\_tie & transient\_spike & mid\_reversal & clean\_commit & intermittent \\
+\midrule
+Full (proposed) & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 1.00\stdv{0.00} & 1.00\stdv{0.00} \\
+$-$Hysteresis & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 1.00\stdv{0.00} & 1.00\stdv{0.00} \\
+$-$Progress hardening & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 0.00\stdv{0.00} & 1.00\stdv{0.00} & 1.00\stdv{0.00} \\
+$-$Accumulator (argmin) & 98.16\stdv{7.85} & 2.00\stdv{0.00} & 13.44\stdv{3.48} & 0.00\stdv{0.00} & 35.12\stdv{2.40} \\
+Simple dwell (0.6 s) & 0.00\stdv{0.00} & 2.00\stdv{0.00} & 1.00\stdv{0.00} & 1.00\stdv{0.00} & 0.00\stdv{0.00} \\
+$-$Class correspondence & 98.12\stdv{6.37} & 2.00\stdv{0.00} & 46.00\stdv{4.75} & 0.00\stdv{0.00} & 39.88\stdv{4.11} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

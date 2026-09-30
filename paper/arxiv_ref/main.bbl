@@ -1,0 +1,165 @@
+\begin{thebibliography}{30}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Alahi et~al.(2016)Alahi, Goel, Ramanathan, Robicquet, Fei-Fei, and Savarese]{alahi2016sociallstm}
+A.~Alahi, K.~Goel, V.~Ramanathan, A.~Robicquet, L.~Fei-Fei, and S.~Savarese.
+\newblock Social {LSTM}: Human trajectory prediction in crowded spaces.
+\newblock In \emph{Proc. IEEE Conf. on Computer Vision and Pattern Recognition (CVPR)}, pages 961--971, 2016.
+
+\bibitem[Bhattacharya et~al.(2012)Bhattacharya, Likhachev, and Kumar]{bhattacharya2012topological}
+S.~Bhattacharya, M.~Likhachev, and V.~Kumar.
+\newblock Topological constraints in search-based robot path planning.
+\newblock \emph{Autonomous Robots}, 33\penalty0 (3):\penalty0 273--290, 2012.
+
+\bibitem[Cao et~al.(2019)Cao, Trautman, and Iba]{cao2019dynamicchannel}
+C.~Cao, P.~Trautman, and S.~Iba.
+\newblock Dynamic channel: A planning framework for crowd navigation.
+\newblock In \emph{Proc. IEEE Int. Conf. on Robotics and Automation (ICRA)}, pages 5551--5557, 2019.
+
+\bibitem[de~Groot et~al.(2025)de~Groot, Ferranti, Gavrila, and Alonso-Mora]{degroot2024topology}
+O.~de~Groot, L.~Ferranti, D.~M. Gavrila, and J.~Alonso-Mora.
+\newblock Topology-driven parallel trajectory optimization in dynamic environments.
+\newblock \emph{IEEE Transactions on Robotics}, 41:\penalty0 110--126, 2025.
+\newblock Also arXiv:2401.06021.
+
+\bibitem[Dragan et~al.(2013)Dragan, Lee, and Srinivasa]{dragan2013legibility}
+A.~D. Dragan, K.~C.~T. Lee, and S.~S. Srinivasa.
+\newblock Legibility and predictability of robot motion.
+\newblock In \emph{Proc. ACM/IEEE Int. Conf. on Human-Robot Interaction (HRI)}, pages 301--308, 2013.
+
+\bibitem[Fox et~al.(1997)Fox, Burgard, and Thrun]{fox1997dwa}
+D.~Fox, W.~Burgard, and S.~Thrun.
+\newblock The dynamic window approach to collision avoidance.
+\newblock \emph{IEEE Robotics \& Automation Magazine}, 4\penalty0 (1):\penalty0 23--33, 1997.
+
+\bibitem[Francis et~al.(2025)Francis, P{\'e}rez-D'Arpino, Li, Xia, Alahi, Alami, et~al.]{francis2023principles}
+A.~Francis, C.~P{\'e}rez-D'Arpino, C.~Li, F.~Xia, A.~Alahi, R.~Alami, et~al.
+\newblock Principles and guidelines for evaluating social robot navigation algorithms.
+\newblock \emph{ACM Transactions on Human-Robot Interaction}, 14\penalty0 (2), 2025.
+\newblock Article 34. Also arXiv:2306.16740.
+
+\bibitem[Gao and Huang(2022)]{gao2022evaluation}
+Y.~Gao and C.-M. Huang.
+\newblock Evaluation of socially-aware robot navigation.
+\newblock \emph{Frontiers in Robotics and AI}, 8, 2022.
+\newblock Article 721317.
+
+\bibitem[Gupta et~al.(2018)Gupta, Johnson, Fei-Fei, Savarese, and Alahi]{gupta2018socialgan}
+A.~Gupta, J.~Johnson, L.~Fei-Fei, S.~Savarese, and A.~Alahi.
+\newblock Social {GAN}: Socially acceptable trajectories with generative adversarial networks.
+\newblock In \emph{Proc. IEEE Conf. on Computer Vision and Pattern Recognition (CVPR)}, pages 2255--2264, 2018.
+
+\bibitem[Hall(1966)]{hall1966hidden}
+E.~T. Hall.
+\newblock \emph{The Hidden Dimension}.
+\newblock Doubleday, 1966.
+
+\bibitem[Helbing and Moln{\'a}r(1995)]{helbing1995social}
+D.~Helbing and P.~Moln{\'a}r.
+\newblock Social force model for pedestrian dynamics.
+\newblock \emph{Physical Review E}, 51:\penalty0 4282--4286, 1995.
+
+\bibitem[Kendon(1990)]{kendon1990conducting}
+A.~Kendon.
+\newblock \emph{Conducting Interaction: Patterns of Behavior in Focused Encounters}.
+\newblock Cambridge University Press, 1990.
+
+\bibitem[Kingman(1970)]{kingman1970queues}
+J.~F.~C. Kingman.
+\newblock Inequalities in the theory of queues.
+\newblock \emph{Journal of the Royal Statistical Society, Series B}, 32\penalty0 (1):\penalty0 102--110, 1970.
+
+\bibitem[Kirby(2010)]{kirby2010thesis}
+R.~Kirby.
+\newblock \emph{Social Robot Navigation}.
+\newblock PhD thesis, Carnegie Mellon University, 2010.
+\newblock CMU-RI-TR-10-13.
+
+\bibitem[Kretzschmar et~al.(2016)Kretzschmar, Spies, Sprunk, and Burgard]{kretzschmar2016irl}
+H.~Kretzschmar, M.~Spies, C.~Sprunk, and W.~Burgard.
+\newblock Socially compliant mobile robot navigation via inverse reinforcement learning.
+\newblock \emph{International Journal of Robotics Research}, 35\penalty0 (11):\penalty0 1289--1307, 2016.
+
+\bibitem[Kuderer et~al.(2012)Kuderer, Kretzschmar, Sprunk, and Burgard]{kuderer2012feature}
+M.~Kuderer, H.~Kretzschmar, C.~Sprunk, and W.~Burgard.
+\newblock Feature-based prediction of trajectories for socially compliant navigation.
+\newblock In \emph{Robotics: Science and Systems (RSS)}, 2012.
+
+\bibitem[Lindley(1952)]{lindley1952queue}
+D.~V. Lindley.
+\newblock The theory of queues with a single server.
+\newblock \emph{Mathematical Proceedings of the Cambridge Philosophical Society}, 48\penalty0 (2):\penalty0 277--289, 1952.
+
+\bibitem[Macenski et~al.(2020)Macenski, Mart{\'i}n, White, and Gin{\'e}s~Clavero]{macenski2020nav2}
+S.~Macenski, F.~Mart{\'i}n, R.~White, and J.~Gin{\'e}s~Clavero.
+\newblock The marathon 2: A navigation system.
+\newblock In \emph{Proc. IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS)}, pages 2718--2725, 2020.
+
+\bibitem[Mavrogiannis et~al.(2022)Mavrogiannis, Alves-Oliveira, Thomason, and Knepper]{mavrogiannis2022momentum}
+C.~Mavrogiannis, P.~Alves-Oliveira, W.~Thomason, and R.~A. Knepper.
+\newblock Social momentum: Design and evaluation of a framework for socially competent robot navigation.
+\newblock \emph{ACM Transactions on Human-Robot Interaction}, 11\penalty0 (2), 2022.
+\newblock Article 14.
+
+\bibitem[Mavrogiannis et~al.(2023{\natexlab{a}})Mavrogiannis, Balasubramanian, Poddar, Gandra, and Srinivasa]{mavrogiannis2023winding}
+C.~Mavrogiannis, K.~Balasubramanian, S.~Poddar, A.~Gandra, and S.~S. Srinivasa.
+\newblock Winding through: Crowd navigation via topological invariance.
+\newblock \emph{IEEE Robotics and Automation Letters}, 8\penalty0 (1):\penalty0 121--128, 2023{\natexlab{a}}.
+\newblock Also arXiv:2109.05084.
+
+\bibitem[Mavrogiannis et~al.(2023{\natexlab{b}})Mavrogiannis, Baldini, Wang, Zhao, Trautman, Steinfeld, and Oh]{mavrogiannis2023survey}
+C.~Mavrogiannis, F.~Baldini, A.~Wang, D.~Zhao, P.~Trautman, A.~Steinfeld, and J.~Oh.
+\newblock Core challenges of social robot navigation: A survey.
+\newblock \emph{ACM Transactions on Human-Robot Interaction}, 12\penalty0 (3), 2023{\natexlab{b}}.
+\newblock Article 36.
+
+\bibitem[Moussa{\"i}d et~al.(2009)Moussa{\"i}d, Helbing, Garnier, Johansson, Combe, and Theraulaz]{moussaid2009experimental}
+M.~Moussa{\"i}d, D.~Helbing, S.~Garnier, A.~Johansson, M.~Combe, and G.~Theraulaz.
+\newblock Experimental study of the behavioural mechanisms underlying self-organization in human crowds.
+\newblock \emph{Proceedings of the Royal Society B}, 276:\penalty0 2755--2762, 2009.
+
+\bibitem[Rios-Martinez et~al.(2015)Rios-Martinez, Spalanzani, and Laugier]{riosmartinez2015survey}
+J.~Rios-Martinez, A.~Spalanzani, and C.~Laugier.
+\newblock From proxemics theory to socially-aware navigation: A survey.
+\newblock \emph{International Journal of Social Robotics}, 7:\penalty0 137--153, 2015.
+
+\bibitem[R{\"o}smann et~al.(2017)R{\"o}smann, Hoffmann, and Bertram]{rosmann2017teb}
+C.~R{\"o}smann, F.~Hoffmann, and T.~Bertram.
+\newblock Integrated online trajectory planning and optimization in distinctive topologies.
+\newblock \emph{Robotics and Autonomous Systems}, 88:\penalty0 142--153, 2017.
+
+\bibitem[Salzmann et~al.(2020)Salzmann, Ivanovic, Chakravarty, and Pavone]{salzmann2020trajectron}
+T.~Salzmann, B.~Ivanovic, P.~Chakravarty, and M.~Pavone.
+\newblock Trajectron++: Dynamically-feasible trajectory forecasting with heterogeneous data.
+\newblock In \emph{Proc. European Conf. on Computer Vision (ECCV), Part XVIII}, volume 12363 of \emph{LNCS}, pages 683--700, 2020.
+
+\bibitem[Setti et~al.(2015)Setti, Russell, Bassetti, and Cristani]{setti2015gcff}
+F.~Setti, C.~Russell, C.~Bassetti, and M.~Cristani.
+\newblock F-formation detection: Individuating free-standing conversational groups in images.
+\newblock \emph{PLoS ONE}, 10\penalty0 (5):\penalty0 e0123783, 2015.
+
+\bibitem[Trautman and Krause(2010)]{trautman2010}
+P.~Trautman and A.~Krause.
+\newblock Unfreezing the robot: Navigation in dense, interacting crowds.
+\newblock In \emph{Proc. IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS)}, pages 797--803, 2010.
+
+\bibitem[Trautman et~al.(2015)Trautman, Ma, Murray, and Krause]{trautman2015dense}
+P.~Trautman, J.~Ma, R.~M. Murray, and A.~Krause.
+\newblock Robot navigation in dense human crowds: Statistical models and experimental studies of human--robot cooperation.
+\newblock \emph{International Journal of Robotics Research}, 34\penalty0 (3):\penalty0 335--356, 2015.
+
+\bibitem[van~den Berg et~al.(2011)van~den Berg, Guy, Lin, and Manocha]{vandenberg2011rvo}
+J.~van~den Berg, S.~J. Guy, M.~Lin, and D.~Manocha.
+\newblock Reciprocal n-body collision avoidance.
+\newblock In \emph{Robotics Research: The 14th International Symposium (ISRR)}, volume~70 of \emph{Springer Tracts in Advanced Robotics}, pages 3--19. Springer, 2011.
+
+\bibitem[Williams et~al.(2017)Williams, Wagener, Goldfain, Drews, Rehg, Boots, and Theodorou]{williams2017mppi}
+G.~Williams, N.~Wagener, B.~Goldfain, P.~Drews, J.~M. Rehg, B.~Boots, and E.~A. Theodorou.
+\newblock Information theoretic {MPC} for model-based reinforcement learning.
+\newblock In \emph{Proc. IEEE Int. Conf. on Robotics and Automation (ICRA)}, pages 1714--1721, 2017.
+
+\end{thebibliography}
