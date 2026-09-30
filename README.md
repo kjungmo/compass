@@ -28,7 +28,9 @@ freezes. **COMPASS** treats the *temporal consistency* of the passing decision
 as a first-class design objective: the passing relationship is a topological
 class bound to a person's track ID, switching is governed by a single **leaky
 evidence accumulation** rule that unifies margin, dwell, and point-of-no-return,
-and safety decisions are layered **lexicographically** on top. Five conditional
+and safety decisions are layered **lexicographically** on top. The accumulator
+is a rectified, leaky variant of Page's CUSUM statistic; the formal properties
+apply standard arguments and are not claimed as new mathematics. Five conditional
 properties (P1–P5: anti-oscillation, switching-rate bound, safety dominance,
 maneuver completion, finite-window escalation to HOLD) are stated formally and
 exercised by software tests. Safety priority is a decision contract, not a proof
@@ -67,8 +69,9 @@ or on a robot. See [the implementation checkpoint](docs/COMPASS_COMPLETION.md).
   trajectory winding classes.
 - **One switching equation** — challenger advantage integrates into a leaky
   accumulator; switching fires only when accumulated evidence crosses a
-  progress-hardened threshold, subsuming hysteresis, dwell timers, and
-  point-of-no-return in a single rule with a provable switching-rate bound.
+  progress-hardened threshold, folding margin, persistence and
+  point-of-no-return into a single rule with a pathwise inter-switch bound
+  (3 cycles worst case at the default knobs, weaker than a 0.6 s dwell timer).
 - **Lexicographic safety** — safety feasibility is evaluated before, and
   strictly dominates, the commitment machinery; a rolling-window thrash guard
   enters HOLD when enough interventions occur in that window. Sparse repeated
@@ -156,7 +159,8 @@ Scope, stated plainly: these are **offline measurements of the actual decision
 core** (`compass_eval` drives the same C++ code the Nav2 plugin runs; 5
 scenarios × 50 seeds), **not** physical-simulation performance. Success rate,
 collisions, social distance, and external baselines are deliberately left as a
-pre-registered protocol in the paper's *planned evaluation* (§5.6). Every
+protocol fixed in advance of measurement (not a formal preregistration) in the
+paper's *planned evaluation* (§5.6). Every
 number below is quoted from the committed measurement records under
 [`src/compass_eval/results/`](src/compass_eval/results/). The observer's
 numerical saturation was fixed with log-odds; separately, a 0.30 s observed
@@ -177,7 +181,7 @@ to the original archive.
 
 - **R1 — oscillation control:** removing the leaky accumulator (immediate
   argmin) yields **~98 switches per encounter** under ambiguous near-ties;
-  the full method commits with **≤ 1**.
+  the full method commits with **≤ 1**. A 0.6 s simple dwell timer also records 0 in this scenario; the two differ under transient, reversing and intermittent advantage.
 - **R3 — archived latency:** the original default-cost decision core at K=3
   (8 classes, no pruning) measured **p99 58.6 µs / max 651.3 µs** — about
   **1.30 %** of a 20 Hz (50 ms) budget for that recorded maximum. This is not

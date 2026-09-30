@@ -202,11 +202,12 @@ F.~Setti, C.~Russell, C.~Bassetti, and M.~Cristani.
 \newblock F-formation detection: Individuating free-standing conversational groups in images.
 \newblock \emph{PLoS ONE}, 10\penalty0 (5):\penalty0 e0123783, 2015.
 
-\bibitem[Spieker et~al.(2024)Spieker, Le~Large, and Lauer]{spieker2024arbitration}
+\bibitem[Spieker et~al.(2025)Spieker, Le~Large, and Lauer]{spieker2024arbitration}
 P.~Spieker, N.~Le~Large, and M.~Lauer.
 \newblock Better safe than sorry: Enhancing arbitration graphs for safe and robust autonomous decision-making.
-\newblock arXiv preprint arXiv:2411.10170, 2024.
-\newblock Presented at the 2025 IEEE Int. Conf. on Systems, Man, and Cybernetics (SMC).
+\newblock In \emph{2025 IEEE International Conference on Systems, Man, and Cybernetics (SMC)}, pages 3921--3927, 2025.
+\newblock \doi{10.1109/SMC58881.2025.11343055}.
+\newblock Also arXiv:2411.10170.
 
 \bibitem[Trautman and Krause(2010)]{trautman2010}
 P.~Trautman and A.~Krause.
