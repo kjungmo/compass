@@ -117,14 +117,14 @@ def main() -> int:
         print(f"[RED] R1 종합표 파싱 실패(행 {agg_seen}/6) — {R1}")
         return 1
 
-    # 본문이 서술로 인용하는 핵심 검열 사실(간헐=제안 50/50, 단순드웰 0/50 등)
-    require_literal("R1", "검열 사실 '50/50' (intermittent 제안 전면 검열 등)", "50/50")
+    # 본문이 서술로 인용하는 핵심 검열 사실(단순드웰 mid_reversal 50/50 등)
+    require_literal("R1", "검열 사실 '50/50' (simple-dwell mid_reversal)", "50/50")
     require_literal("R1", "검열 사실 '0/50' (비검열 사례)", "0/50")
     # 시나리오별 t-legible에서 본문이 인용하는 대표값
     require("R1", "clean_commit 제안 t-legible (2.37 s)", "2.37")
-    require("R1", "near_tie argmin t-legible (7.89 s)", "7.89")
+    require("R1", "near_tie argmin t-legible (7.90 s)", "7.90")
 
-    # ---------- R5: v_lat freezing threshold ----------
+    # ---------- R5: offline v_lat transition-blocking interval ----------
     r5_text = R5.read_text(encoding="utf-8")
     r5_rows = table_rows(r5_text)
     commit_by_vlat = {}
@@ -138,8 +138,8 @@ def main() -> int:
     blocked = [v for v, c in commit_by_vlat.items() if c.startswith("0/")]
     if committing and blocked:
         lo, hi = max(committing), min(blocked)  # 문자열 비교로 충분(0.xx 고정 폭)
-        require_literal("R5", f"freezing 임계 하한 v_lat={lo}", lo)
-        require_literal("R5", f"freezing 임계 상한 v_lat={hi}", hi)
+        require_literal("R5", f"전환 봉쇄 구간 하한 v_lat={lo}", lo)
+        require_literal("R5", f"전환 봉쇄 구간 상한 v_lat={hi}", hi)
 
     # ---------- 퇴역 수치 금지 목록 ----------
     forbidden = [

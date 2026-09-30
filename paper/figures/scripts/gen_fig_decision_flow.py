@@ -73,7 +73,7 @@ def main():
     ax.set_ylim(0, 9.7)
     ax.axis("off")
 
-    ax.text(5.75, 9.45, "COMPASS decision-layer flow (per control cycle $k$)",
+    ax.text(5.75, 9.45, "COMPASS conceptual blocks (safety evaluated before switching)",
              ha="center", va="center", fontsize=17.2, weight="bold")
 
     # --- Row 1: sensing / inputs -------------------------------------------------
@@ -87,7 +87,7 @@ def main():
                   "Global plan\n(local goal $g$)",
                   facecolor="#FDEBD0", edgecolor="#B9770E")
     b_predict = box(ax, (8.3, 7.55), 2.9, 1.05,
-                      "Constant-velocity\nKalman prediction\n$\\{\\hat{p}_i(t), \\Sigma_i(t)\\}$",
+                      "External tracked state\nconstant-velocity prediction\n$\\{\\hat{p}_i(t), \\Sigma_i(t)\\}$",
                       facecolor="#FDEBD0", edgecolor="#B9770E")
 
     # --- Row 2: class enumeration -------------------------------------------------
@@ -112,12 +112,12 @@ def main():
 
     # --- Row 3: commitment switching (single challenger accumulator) -------------
     b_switch = box(ax, (0.3, 3.35), 6.35, 2.15,
-                    "Leaky-evidence commitment switching (Sec. 4.3, Sec. 4.5 step 3)\n\n"
+                    "Challenger evidence (eligible, non-safety cycles)\n"
                     "challenger $c'_k=\\mathrm{TIEBREAK}(\\arg\\min_{c\\neq c^*} J_k(c))$\n"
                     "advantage $D_k = J_k(c^*_{k-1}) - J_k(c'_k)$\n"
-                    "if $c' \\neq \\mathrm{prev}\\,c'$: $e^{rev}\\!\\leftarrow 0$\n"
-                    "$e^{rev}_k=\\mathrm{clip}(\\lambda e^{rev}_{k-1}+(D_k-\\Delta_{floor})dt,\\,0,\\,e^{rev}_{max})$\n"
-                    "switch iff  $e^{rev}_k \\geq E_{th}(\\rho_k) = E_0(1+k_\\rho\\rho_k^{\\,p})$",
+                    "if $c' \\neq \\mathrm{prev}\\,c'$: stored evidence $q\\leftarrow 0$\n"
+                    "pre-test $x_k=\\mathrm{clip}(\\lambda q_{k-1}+(D_k-\\Delta_{floor})dt,\\,0,\\,e_{max})$\n"
+                    "switch iff $x_k \\geq E_{th}(\\rho_k)$; then store $q_k=0$, else $q_k=x_k$",
                     facecolor="#EAFAF1", edgecolor="#1E8449", fontsize=11.6)
 
     b_dwell = box(ax, (6.95, 3.35), 2.15, 1.0,
@@ -134,9 +134,9 @@ def main():
 
     # --- Row 4: safety override (lexicographic, overrides everything) ------------
     b_safety = box(ax, (0.3, 1.15), 6.35, 1.75,
-                    "Lexicographic safety override (Sec. 4.4, Sec. 4.5 step 2)\n\n"
+                    "Lexicographic safety override (evaluated first)\n\n"
                     "if $c^* \\notin \\mathcal{S}$ (unsafe): ignore accumulator / dwell entirely\n"
-                    "1. switch to safe class  2. brake  3. stop / HOLD (thrash guard $N_{thrash}$)",
+                    "1. switch to safe class  2. brake  3. stop / HOLD (rolling-window guard)",
                     facecolor="#FDEDEC", edgecolor="#943126", fontsize=11.9)
 
     arrow(ax, bottom_mid(b_switch), (bottom_mid(b_switch)[0], 2.9))
@@ -163,9 +163,9 @@ def main():
                             boxstyle="round,pad=0.02,rounding_size=0.08", zorder=3)
     ax.add_patch(note)
     ax.text(note_x + note_w / 2, note_y + note_h / 2,
-             "Single-accumulator design:\nonly the challenger accumulator\n"
-             "$e^{rev}$ is tracked. Switching-rate\nbound holds for\n"
-             "$E_0 < e^{rev}_{max} \\leq E_0(1+k_\\rho)$\n(liveness of $e^{rev}$, Sec. 4.6).",
+             "Conditional software contracts:\nP2 bounds discretionary switching.\n"
+             "P5 counts safety interventions\nin $(t-W,t]$, once per decision time.\n"
+             "Threshold event enters HOLD;\nzero output until explicit release.",
              ha="center", va="center", fontsize=10.6, linespacing=1.4)
 
     fig.tight_layout()

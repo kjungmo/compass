@@ -39,7 +39,7 @@ VARIANT_LABEL_EN = {
     "-progress hardening": "No progress hardening",
     "-accumulator (즉시 argmin)": "No accumulator (immediate argmin)",
     "simple-dwell (O4)": "Simple dwell timer",
-    "-class correspondence": "No class correspondence",
+    "-class correspondence": "Synthetic label flicker + argmin",
 }
 
 # Fixed left-to-right order: proposed method first, then ablations, then the O4 baseline.
@@ -109,7 +109,7 @@ def main():
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=11, rotation=18, ha="right", rotation_mode="anchor")
     ax.tick_params(axis="y", labelsize=11)
-    ax.set_title("Ablation: passing-class oscillation count\n(N=250 runs/variant, 5 scenarios x 50 seeds, 10.0 s horizon)",
+    ax.set_title("Ablations and synthetic stress comparator: label-switch count\n(N=250 runs/variant, 5 scenarios x 50 seeds, 10.0 s horizon)",
                   fontsize=11)
     ax.grid(axis="y", which="major", linestyle="--", linewidth=0.5, alpha=0.6, zorder=0)
     ax.grid(axis="y", which="minor", linestyle=":", linewidth=0.3, alpha=0.3, zorder=0)

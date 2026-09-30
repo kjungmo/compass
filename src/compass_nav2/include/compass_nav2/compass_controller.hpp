@@ -35,6 +35,7 @@
 #include "compass_core/decision_state.hpp"
 #include "compass_core/knobs.hpp"
 #include "compass_nav2/costmap_env_query.hpp"
+#include "compass_nav2/measured_progress.hpp"
 
 namespace compass_nav2
 {
@@ -106,6 +107,12 @@ protected:
   std::unique_ptr<compass::DecisionCore> core_;
   compass::DecisionState state_;
   CostmapEnvQuery env_;
+  MeasuredProgress measured_progress_;
+  bool use_measured_progress_{false};
+  bool use_candidate_trajectories_{false};
+  double progress_max_gap_{0.25};
+  double progress_max_speed_{2.0};
+  double progress_length_{1.0};
 
   // 속도 한계 (setSpeedLimit).
   double speed_limit_{0.0};        // m/s; 0 == 무제한

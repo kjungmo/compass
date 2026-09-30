@@ -64,6 +64,25 @@ pluginlib_export_plugin_description_file(nav2_core compass_controller_plugin.xml
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  add_executable(test_candidate_cost test/test_candidate_cost.cpp src/path_tracking.cpp)
+  target_include_directories(test_candidate_cost PRIVATE include)
+  target_link_libraries(test_candidate_cost compass_core::compass_core)
+  add_test(NAME candidate_cost_contract COMMAND test_candidate_cost)
+  ament_add_gtest(test_candidate_env test/test_candidate_env.cpp)
+  target_link_libraries(test_candidate_env compass_controller)
+  ament_target_dependencies(test_candidate_env nav2_costmap_2d compass_core)
+  add_executable(test_velocity_limits test/test_velocity_limits.cpp)
+  target_include_directories(test_velocity_limits PRIVATE include)
+  target_link_libraries(test_velocity_limits compass_core::compass_core)
+  add_test(NAME safety_velocity_contract COMMAND test_velocity_limits)
+  add_executable(test_measured_progress test/test_measured_progress.cpp)
+  target_include_directories(test_measured_progress PRIVATE include)
+  target_link_libraries(test_measured_progress compass_core::compass_core)
+  add_test(NAME measured_progress_contract COMMAND test_measured_progress)
+
+  ament_add_gtest(test_plan_progress test/test_plan_progress.cpp)
+  target_link_libraries(test_plan_progress compass_controller)
+  ament_target_dependencies(test_plan_progress ${dependencies} compass_core)
 
   # 런타임 스모크: 플러그인을 pluginlib 로 로드 (설치 필요).
   ament_add_gtest(test_plugin_load test/test_plugin_load.cpp)

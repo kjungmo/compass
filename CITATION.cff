@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 message: "If you use COMPASS in your research, please cite it as below."
 title: "COMPASS: commitment-based passing for social robot navigation"
+version: "0.2.0"
 authors:
   - family-names: Kang
     given-names: Jungmo
@@ -15,4 +16,4 @@ preferred-citation:
       given-names: Jungmo
       email: kangjmo91@gmail.com
   year: 2026
-  notes: "Draft manuscript; LaTeX sources and PDF under paper/arxiv/ in the repository"
+  notes: "Research draft; canonical English source is paper/arxiv/main.tex and its PDF is paper/arxiv/main.pdf. Cite the exact source commit for reproducibility; the package version does not denote a published release."

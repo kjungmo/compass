@@ -1,0 +1,107 @@
+[
+  {
+    "scenario": "near_tie",
+    "profile": "legacy",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "near_tie",
+    "profile": "responsive",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "near_tie",
+    "profile": "responsive",
+    "progress_mode": "measured",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "transient_spike",
+    "profile": "legacy",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "transient_spike",
+    "profile": "responsive",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "transient_spike",
+    "profile": "responsive",
+    "progress_mode": "measured",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "mid_reversal",
+    "profile": "legacy",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "mid_reversal",
+    "profile": "responsive",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "mid_reversal",
+    "profile": "responsive",
+    "progress_mode": "measured",
+    "n": 250,
+    "mean_switches": 0.0
+  },
+  {
+    "scenario": "clean_commit",
+    "profile": "legacy",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.6
+  },
+  {
+    "scenario": "clean_commit",
+    "profile": "responsive",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 1.0
+  },
+  {
+    "scenario": "clean_commit",
+    "profile": "responsive",
+    "progress_mode": "measured",
+    "n": 250,
+    "mean_switches": 1.0
+  },
+  {
+    "scenario": "intermittent",
+    "profile": "legacy",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.4
+  },
+  {
+    "scenario": "intermittent",
+    "profile": "responsive",
+    "progress_mode": "legacy_proxy",
+    "n": 250,
+    "mean_switches": 0.6
+  },
+  {
+    "scenario": "intermittent",
+    "profile": "responsive",
+    "progress_mode": "measured",
+    "n": 250,
+    "mean_switches": 0.6
+  }
+]

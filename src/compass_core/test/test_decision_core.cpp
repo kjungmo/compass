@@ -225,3 +225,24 @@ TEST(DecisionCore, DefaultKnobsSwitchOnSustainedModerateAdvantage) {
   // 약한 우위: 1000 주기 내 절대 전환 없음 (e_ss<E0).
   EXPECT_EQ(switch_cycle(/*D=*/0.10), -1);
 }
+
+TEST(DecisionCore, HoldReturnsZeroUntilExplicitRelease) {
+  Knobs k; DecisionCore core(k);
+  DecisionState s; s.c_star.set(7, Side::R); s.mode = Mode::HOLD;
+  s.n_thrash = k.n_thrash;
+  s.safe_switch_times = {0.0, 0.1, 0.2, 0.3};
+  std::vector<ClassEval> evals = {
+    mk({{7, Side::R}}, 0.50), mk({{7, Side::L}}, 0.10)
+  };
+
+  DecisionOutput held = core.step_evals(evals, s, 5.0, 0.8, 10.0, 0.05);
+  EXPECT_EQ(held.mode, Mode::HOLD);
+  EXPECT_DOUBLE_EQ(held.v_target, 0.0);
+  EXPECT_TRUE(held.safety_velocity_limited);
+  EXPECT_TRUE(held.c_star.equals(s.c_star));
+
+  s.release_hold();
+  DecisionOutput released = core.step_evals(evals, s, 5.0, 0.8, 10.05, 0.05);
+  EXPECT_EQ(released.mode, Mode::NORMAL);
+  EXPECT_GT(released.v_target, 0.0);
+}

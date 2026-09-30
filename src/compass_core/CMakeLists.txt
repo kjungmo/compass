@@ -12,6 +12,8 @@ add_library(compass_core
   src/safety.cpp
   src/cost_evaluator.cpp
   src/decision_core.cpp)
+# The static core is linked into the Nav2 shared controller plugin.
+set_target_properties(compass_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(compass_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

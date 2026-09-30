@@ -1,0 +1,41 @@
+{
+  "scope": "scripted-cost unicycle diagnostic; not Nav2/Gazebo physical validation",
+  "results": {
+    "legacy_proxy": {
+      "ending": "timeout",
+      "success": false,
+      "collision": false,
+      "freezing_episodes": 1,
+      "freezing_duration_s": 39.59999999999989,
+      "elapsed_s": 60.0,
+      "time_to_goal_s": null,
+      "min_clearance_m": 1.1500000000000004,
+      "switches": 0,
+      "trace_sha256": "aadb18cd2b60cdcbe39b5479e7a597b92f3bb50309c87ac08744831d9617839a"
+    },
+    "legacy_measured": {
+      "ending": "goal",
+      "success": true,
+      "collision": false,
+      "freezing_episodes": 0,
+      "freezing_duration_s": 0.0,
+      "elapsed_s": 17.450000000000003,
+      "time_to_goal_s": 17.450000000000003,
+      "min_clearance_m": 1.1814907453903796,
+      "switches": 1,
+      "trace_sha256": "a72be5fb6606de1d0ec93aa3c08ecef49fd09d97c826d78b85384611a02360f9"
+    },
+    "responsive_measured": {
+      "ending": "goal",
+      "success": true,
+      "collision": false,
+      "freezing_episodes": 0,
+      "freezing_duration_s": 0.0,
+      "elapsed_s": 17.450000000000003,
+      "time_to_goal_s": 17.450000000000003,
+      "min_clearance_m": 1.1814907453903796,
+      "switches": 1,
+      "trace_sha256": "a72be5fb6606de1d0ec93aa3c08ecef49fd09d97c826d78b85384611a02360f9"
+    }
+  }
+}
