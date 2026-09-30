@@ -12,6 +12,11 @@ independently corroborated on Ubuntu GCC 13.3.0. The external packaging is still
 incomplete, the original Zig build was not recreated, and no general
 cross-toolchain floating-point identity is established.
 
+The 2026-09-30 addendum at the end of this note supersedes two statements
+below: four of the five remaining packaging issues are resolved in OmniLink's
+v2 package (issue 5 stands), and the libc++ result is now also confirmed by a
+native LLVM libc++ build.
+
 ## Method
 
 The eight translation units and eleven headers were retrieved at the exact
@@ -146,3 +151,76 @@ The canonical manuscript/PDF and current evaluation datasets are unchanged by
 this documentation-only addition. Inserting the paragraph later requires the
 usual manuscript rebuild and consistency checks. Exact-head CI must be
 rechecked before merge; earlier green checks refer to their own commit.
+
+## Addendum 2026-09-30: v2 package and native libc++
+
+### OmniLink v2 package
+
+OmniLink replied on 2026-09-29 with `compass_reconciliation_v2_2026-09-29.zip`
+(15,652 bytes, SHA-256
+`64e1b4a51edad8d815e1dc2eb7e6470a4e0afdd132c3d50e2145cd5276dc29ce`, equal to the
+value stated in their message). The package was read in full before it was run.
+It builds and runs the historical sources only inside its output directory and
+does not access the network.
+
+It was run against a clone containing `9fe495a` with GCC 9.4.0 on Ubuntu 20.04
+x86_64. This is a third libstdc++ toolchain, after OmniLink's MinGW g++ 15.2 and
+g++ 11.4. Runs with an absolute output path containing spaces and with a
+relative output path containing spaces both ended in `PASS`. All 20 source
+hashes, the probe-header hash and its byte equality with the repository header
+plus `substitution.diff`, and all 11 output hashes matched. The b2 LF output
+equals the repository blob byte for byte.
+
+Nine failure paths were checked, and each stopped with `FAIL` and a non-zero
+exit: a non-empty output directory; a repository without the commit; a tampered
+probe header; a missing probe header; a diff inconsistent with the header; a
+source-hash mismatch; a missing compiler; the probe directory dropped from the
+build-4 include check; and a changed expected output hash. The last two were
+added here and were not among OmniLink's own checks.
+
+Cross-checks against the 2026-09-14 reconstruction all agree. There are 336 of
+1,500 differing ablation rows and 91 of 250 differing per-seed rho rows. The R5
+means are 2.37/2.40/2.57 s against 2.40/2.42/2.59 s. The shipped reference
+per-seed CSVs are byte-identical to the regenerated ones.
+
+The v2 package resolves the first four remaining issues listed above:
+
+1. The probe header ships with the package and is checked three ways.
+2. The macros come from a real translation unit, and the runtime libraries are
+   recorded.
+3. `rho_dump.cpp` and the per-seed CSVs are included.
+4. Hashes are asserted, the sources are exported from the pinned commit, the
+   output directory must be fresh, and paths with spaces work.
+
+Issue 5 stands. Build 1 remains a labelled reconstruction, and the 2026-09-08
+command log is not recovered.
+
+### Native LLVM libc++
+
+The emulation caveat above ("not a native libc++ or Zig execution") is now
+closed for libc++. The unmodified `9fe495a` sources were built with clang 23.1.2
+against LLVM libc++ (`_LIBCPP_VERSION` 230102, conda-forge, Linux x86_64,
+`-std=c++17 -O2`). The resulting ablation CSV
+(`2cce8c729bf2027dca3382d303c1e80dc8dbf6dc17ce0f50216b3a0f82d7e709`) and rho
+summary (`e6855166e8fefcec672abed37ced963fd9280a6c76e9f315b98e4cdf120885ca`)
+equal the LF-normalised hashes of OmniLink's libc++ output. This is independent
+native evidence for the distribution-substitution explanation. It is still a
+Linux libc++ result: the original zig/Windows binary was not rerun.
+
+### Current harness
+
+The same dependence holds at the current head, because the harness still draws
+scenario noise from `std::normal_distribution` and the synthetic comparator's
+label from `std::uniform_int_distribution`. A native libc++ build of the
+unchanged current harness changes 425 of 1,500 rows. The canonical libstdc++
+switch counts for the proposed method and both knob-only ablations are
+unchanged in all 750 rows. The record and a fail-closed check are in
+[`src/compass_eval/results/stdlib_sensitivity/`](../../src/compass_eval/results/stdlib_sensitivity/README.md)
+and `scripts/check_stdlib_sensitivity.sh`.
+
+The manuscript now states this dependence, using the current-harness values, in
+the Experiments section (§5 of the canonical `paper/arxiv/main.tex`, §4 of the
+re-typeset `paper/arxiv_ref`) and in the Reproduction note (§5.3 of `main.tex`;
+Appendix A, Reproducibility, of `arxiv_ref`). It does not use the historical
+`9fe495a` values. The proposed paragraph above is superseded and is not
+inserted.
