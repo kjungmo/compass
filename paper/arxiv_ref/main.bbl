@@ -1,4 +1,4 @@
-\begin{thebibliography}{30}
+\begin{thebibliography}{44}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -19,6 +19,23 @@ S.~Bhattacharya, M.~Likhachev, and V.~Kumar.
 C.~Cao, P.~Trautman, and S.~Iba.
 \newblock Dynamic channel: A planning framework for crowd navigation.
 \newblock In \emph{Proc. IEEE Int. Conf. on Robotics and Automation (ICRA)}, pages 5551--5557, 2019.
+
+\bibitem[Cathcart et~al.(2023)Cathcart, Santos, Park, and Leonard]{cathcart2023opinion}
+C.~Cathcart, M.~Santos, S.~Park, and N.~E. Leonard.
+\newblock Proactive opinion-driven robot navigation around human movers.
+\newblock In \emph{Proc. IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS)}, pages 4052--4058, 2023.
+\newblock Also arXiv:2210.01642.
+
+\bibitem[Chen and Liu(2025)]{chen2025socialdsm}
+X.~Chen and S.~Liu.
+\newblock {Social-DSM}: Design and evaluation of socially aware navigation control through extended dynamical system modulation.
+\newblock SSRN preprint, doi:10.2139/ssrn.5251861, 2025.
+\newblock Posted 12 May 2025.
+
+\bibitem[d'Addato et~al.(2024)d'Addato, Falqueto, Palopoli, and Fontanelli]{daddato2024oval}
+G.~d'Addato, P.~Falqueto, L.~Palopoli, and D.~Fontanelli.
+\newblock Socially-aware opinion-based navigation with oval limit cycles.
+\newblock arXiv preprint arXiv:2411.04678, 2024.
 
 \bibitem[de~Groot et~al.(2025)de~Groot, Ferranti, Gavrila, and Alonso-Mora]{degroot2024topology}
 O.~de~Groot, L.~Ferranti, D.~M. Gavrila, and J.~Alonso-Mora.
@@ -63,6 +80,16 @@ D.~Helbing and P.~Moln{\'a}r.
 \newblock Social force model for pedestrian dynamics.
 \newblock \emph{Physical Review E}, 51:\penalty0 4282--4286, 1995.
 
+\bibitem[Hespanha and Morse(1999)]{hespanha1999dwell}
+J.~P. Hespanha and A.~S. Morse.
+\newblock Stability of switched systems with average dwell-time.
+\newblock In \emph{Proc. 38th IEEE Conf. on Decision and Control (CDC)}, volume~3, pages 2655--2660, 1999.
+
+\bibitem[Hespanha et~al.(2003)Hespanha, Liberzon, and Morse]{hespanha2003hysteresis}
+J.~P. Hespanha, D.~Liberzon, and A.~S. Morse.
+\newblock Hysteresis-based switching algorithms for supervisory control of uncertain systems.
+\newblock \emph{Automatica}, 39\penalty0 (2):\penalty0 263--272, 2003.
+
 \bibitem[Kendon(1990)]{kendon1990conducting}
 A.~Kendon.
 \newblock \emph{Conducting Interaction: Patterns of Behavior in Focused Encounters}.
@@ -89,6 +116,12 @@ M.~Kuderer, H.~Kretzschmar, C.~Sprunk, and W.~Burgard.
 \newblock Feature-based prediction of trajectories for socially compliant navigation.
 \newblock In \emph{Robotics: Science and Systems (RSS)}, 2012.
 
+\bibitem[Li et~al.(2026)Li, Wang, Cao, Yang, and Wu]{li2026bigcbf}
+S.~Li, Z.~Wang, J.~Cao, J.~Yang, and K.~Wu.
+\newblock {BIG-CBF}: Behavior-imagination-guided control barrier function with shared uncertainty for mobile robot navigation.
+\newblock arXiv preprint arXiv:2609.14343, 2026.
+\newblock Submitted 13 September 2026; concurrent work.
+
 \bibitem[Lindley(1952)]{lindley1952queue}
 D.~V. Lindley.
 \newblock The theory of queues with a single server.
@@ -98,6 +131,12 @@ D.~V. Lindley.
 S.~Macenski, F.~Mart{\'i}n, R.~White, and J.~Gin{\'e}s~Clavero.
 \newblock The marathon 2: A navigation system.
 \newblock In \emph{Proc. IEEE/RSJ Int. Conf. on Intelligent Robots and Systems (IROS)}, pages 2718--2725, 2020.
+
+\bibitem[Martinez-Baselga et~al.(2026)Martinez-Baselga, de~Groot, Knoedler, Riazuelo, Alonso-Mora, and Montano]{martinezbaselga2026shine}
+D.~Martinez-Baselga, O.~de~Groot, L.~Knoedler, L.~Riazuelo, J.~Alonso-Mora, and L.~Montano.
+\newblock {SHINE}: Social homology identification for navigation in crowded environments.
+\newblock \emph{International Journal of Robotics Research}, 45\penalty0 (1):\penalty0 60--79, 2026.
+\newblock Published online 2025. Also arXiv:2404.16705.
 
 \bibitem[Mavrogiannis et~al.(2022)Mavrogiannis, Alves-Oliveira, Thomason, and Knepper]{mavrogiannis2022momentum}
 C.~Mavrogiannis, P.~Alves-Oliveira, W.~Thomason, and R.~A. Knepper.
@@ -117,10 +156,31 @@ C.~Mavrogiannis, F.~Baldini, A.~Wang, D.~Zhao, P.~Trautman, A.~Steinfeld, and J.
 \newblock \emph{ACM Transactions on Human-Robot Interaction}, 12\penalty0 (3), 2023{\natexlab{b}}.
 \newblock Article 36.
 
+\bibitem[Mavrogiannis and Knepper(2019)]{mavrogiannis2019braids}
+C.~I. Mavrogiannis and R.~A. Knepper.
+\newblock Multi-agent path topology in support of socially competent navigation planning.
+\newblock \emph{International Journal of Robotics Research}, 38\penalty0 (2--3):\penalty0 338--356, 2019.
+
 \bibitem[Moussa{\"i}d et~al.(2009)Moussa{\"i}d, Helbing, Garnier, Johansson, Combe, and Theraulaz]{moussaid2009experimental}
 M.~Moussa{\"i}d, D.~Helbing, S.~Garnier, A.~Johansson, M.~Combe, and G.~Theraulaz.
 \newblock Experimental study of the behavioural mechanisms underlying self-organization in human crowds.
 \newblock \emph{Proceedings of the Royal Society B}, 276:\penalty0 2755--2762, 2009.
+
+\bibitem[Nakao et~al.(2025)Nakao, Kasaura, and Kozuno]{nakao2025wnummpc}
+T.~Nakao, K.~Kasaura, and T.~Kozuno.
+\newblock Symmetry-breaking in multi-agent navigation: Winding number-aware {MPC} with a learned topological strategy.
+\newblock arXiv preprint arXiv:2511.15239, 2025.
+
+\bibitem[Orzechowski et~al.(2020)Orzechowski, Burger, and Lauer]{orzechowski2020arbitration}
+P.~F. Orzechowski, C.~Burger, and M.~Lauer.
+\newblock Decision-making for automated vehicles using a hierarchical behavior-based arbitration scheme.
+\newblock In \emph{Proc. IEEE Intelligent Vehicles Symposium (IV)}, pages 767--774, 2020.
+\newblock Also arXiv:2003.01149.
+
+\bibitem[Page(1954)]{page1954cusum}
+E.~S. Page.
+\newblock Continuous inspection schemes.
+\newblock \emph{Biometrika}, 41\penalty0 (1--2):\penalty0 100--115, 1954.
 
 \bibitem[Rios-Martinez et~al.(2015)Rios-Martinez, Spalanzani, and Laugier]{riosmartinez2015survey}
 J.~Rios-Martinez, A.~Spalanzani, and C.~Laugier.
@@ -142,6 +202,12 @@ F.~Setti, C.~Russell, C.~Bassetti, and M.~Cristani.
 \newblock F-formation detection: Individuating free-standing conversational groups in images.
 \newblock \emph{PLoS ONE}, 10\penalty0 (5):\penalty0 e0123783, 2015.
 
+\bibitem[Spieker et~al.(2024)Spieker, Le~Large, and Lauer]{spieker2024arbitration}
+P.~Spieker, N.~Le~Large, and M.~Lauer.
+\newblock Better safe than sorry: Enhancing arbitration graphs for safe and robust autonomous decision-making.
+\newblock arXiv preprint arXiv:2411.10170, 2024.
+\newblock Presented at the 2025 IEEE Int. Conf. on Systems, Man, and Cybernetics (SMC).
+
 \bibitem[Trautman and Krause(2010)]{trautman2010}
 P.~Trautman and A.~Krause.
 \newblock Unfreezing the robot: Navigation in dense, interacting crowds.
@@ -152,6 +218,11 @@ P.~Trautman, J.~Ma, R.~M. Murray, and A.~Krause.
 \newblock Robot navigation in dense human crowds: Statistical models and experimental studies of human--robot cooperation.
 \newblock \emph{International Journal of Robotics Research}, 34\penalty0 (3):\penalty0 335--356, 2015.
 
+\bibitem[Usher and McClelland(2001)]{usher2001lca}
+M.~Usher and J.~L. McClelland.
+\newblock The time course of perceptual choice: The leaky, competing accumulator model.
+\newblock \emph{Psychological Review}, 108\penalty0 (3):\penalty0 550--592, 2001.
+
 \bibitem[van~den Berg et~al.(2011)van~den Berg, Guy, Lin, and Manocha]{vandenberg2011rvo}
 J.~van~den Berg, S.~J. Guy, M.~Lin, and D.~Manocha.
 \newblock Reciprocal n-body collision avoidance.
@@ -161,5 +232,10 @@ J.~van~den Berg, S.~J. Guy, M.~Lin, and D.~Manocha.
 G.~Williams, N.~Wagener, B.~Goldfain, P.~Drews, J.~M. Rehg, B.~Boots, and E.~A. Theodorou.
 \newblock Information theoretic {MPC} for model-based reinforcement learning.
 \newblock In \emph{Proc. IEEE Int. Conf. on Robotics and Automation (ICRA)}, pages 1714--1721, 2017.
+
+\bibitem[Zhou et~al.(2023)Zhou, Qi, Cen, Zha, Lyu, Wang, and Meng]{zhou2023minimally}
+T.~Zhou, S.~Qi, G.~Cen, Z.~Zha, E.~Lyu, J.~Wang, and M.~Q.-H. Meng.
+\newblock Minimally-intrusive navigation in dense crowds with integrated macro and micro-level dynamics.
+\newblock arXiv preprint arXiv:2312.17076, 2023.
 
 \end{thebibliography}
