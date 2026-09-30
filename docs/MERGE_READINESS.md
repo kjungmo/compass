@@ -52,7 +52,7 @@ Required gates for this research merge:
 
 | Issue | Internal merge-preparation work | What is not closed by it |
 |---|---|---|
-| #3 observer | Log-odds repair, positive observed hold, consistent tables/prose and version provenance | Human/motion legibility validity |
+| #3 observer | Log-odds repair; post-hoc 0.30 s follow-up rule named as the endpoint-suffix statistic `t_sfx`; all three result versions with a per-row comparison | Human/motion legibility validity; no preregistered hold |
 | #4 safety output | Explicit zero/small cap, dt-scaled braking and output regression | Physical stopping/collision guarantee |
 | #5 P5 | Once-per-time rolling intervention count, absorbing HOLD/release, consistent pseudocode | Eventual progress or global deadlock escape |
 | #6 P2 | Fixed/variable-period claims and finite-domain validation/tests | Physical timing bound without measured timing assumptions |
@@ -62,7 +62,8 @@ Required gates for this research merge:
 | #10 observability | Offline traces, external-opportunity and physical-metric scorers/protocol | Integrated robot logging, independently annotated oracle and physical trials |
 | #11 paper closure | Canonical manuscript/artifacts, repository checks, fresh AI review | Publication acceptance or an independent human review |
 
-These are dispositions, not automatic issue closure instructions. Issues whose
+The gate-by-gate status after the round-5 follow-up fixes is recorded in
+[`reviews/round5-closure.md`](reviews/round5-closure.md). These are dispositions, not automatic issue closure instructions. Issues whose
 physical/research conditions remain pending should stay open or be explicitly
 split when the maintainer chooses to update the issue tracker.
 

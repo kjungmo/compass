@@ -1,5 +1,6 @@
 // main.cpp — COMPASS 실험 하니스 드라이버.
 //   compass_eval ablation [outdir]   -> R1 ablation 표 + R4 가독성 프록시 (CSV + md)
+//   compass_eval observer_versions [outdir] -> per-row archived observer comparison (issue #3)
 //   compass_eval latency             -> R3 주기당 최악 지연 (2^K 무가지치기 worst-case)
 #include "compass_eval/harness.hpp"
 #include <cstdio>
@@ -82,7 +83,7 @@ static void run_ablation(const std::string & outdir) {
          N, scns.size(), SEEDS, DT, T, T * DT);
 
   printf("## 종합 (전 시나리오 평균 +/- 표준편차, N=%d)\n\n", N);
-  printf("| 변형 | 전환수/조우 | 부호변화율(/s) | 결정엔트로피(bits) | time-to-legible(s) | 검열율 |\n");
+  printf("| 변형 | 전환수/조우 | 부호변화율(/s) | 결정엔트로피(bits) | endpoint-suffix t_sfx(s) | 검열율 |\n");
   printf("|---|---|---|---|---|---|\n");
   for (size_t vi = 0; vi < vars.size(); ++vi) {
     printf("| %s | %.2f +/- %.2f | %.3f +/- %.3f | %.3f +/- %.3f | %.2f +/- %.2f | %d/%d |\n",
@@ -105,7 +106,7 @@ static void run_ablation(const std::string & outdir) {
     printf("\n");
   }
 
-  printf("\n## 시나리오별 time-to-legible (s, 평균; 괄호=검열수/%d)\n\n", SEEDS);
+  printf("\n## 시나리오별 endpoint-suffix t_sfx (s, 평균; 괄호=검열수/%d)\n\n", SEEDS);
   printf("| 변형 |");
   for (auto s : scns) printf(" %s |", scn_name(s));
   printf("\n|---|"); for (size_t i = 0; i < scns.size(); ++i) printf("---|"); printf("\n");
@@ -172,7 +173,7 @@ static void run_rho_sweep() {
   printf("# COMPASS R5 보조 — ρ-구동률(v_lat) 민감도 (full, clean_commit, 50 seeds)\n");
   printf("ρ 는 횡 기동 진행도. v_lat 이 클수록 ρ 가 빨리 포화 -> E_th=E0(1+k_rho) 로\n");
   printf("상승해 명확한 우위에서도 전환이 봉쇄됨. 물리 freezing 측정은 아님.\n\n");
-  printf("| v_lat (m/s) | ρ_end(근사) | 전환율(전환=1 비율) | 평균 전환수 | 평균 t-legible(s) | 검열수/50 |\n");
+  printf("| v_lat (m/s) | ρ_end(근사) | 전환율(전환=1 비율) | 평균 전환수 | 평균 t_sfx(s) | 검열수/50 |\n");
   printf("|---|---|---|---|---|---|\n");
   const int SEEDS = 50;
   for (double vlat : {0.05, 0.10, 0.20, 0.35, 0.50}) {
@@ -193,11 +194,39 @@ static void run_rho_sweep() {
   printf("한정한다. 로봇 정지·물리 freezing·목표 실패를 입증하지 않는다.)\n");
 }
 
+// Issue #3 audit: one row per decision stream with the three archived observer
+// versions side by side (same 1,500 streams; decision policy unchanged).
+static void run_observer_versions(const std::string & outdir) {
+  const int SEEDS = 50;
+  std::ofstream csv(outdir + "/observer_versions.csv");
+  csv << "variant,scenario,seed,switches,"
+         "t_sfx_prob_9fe495a,censored_prob_9fe495a,"
+         "t_sfx_logodds_5343d45,censored_logodds_5343d45,"
+         "t_sfx_followup030_current,censored_followup030_current\n";
+  for (auto v : all_vars()) {
+    for (auto s : all_scns()) {
+      for (int seed = 0; seed < SEEDS; ++seed) {
+        auto sides = run_variant(v, make_scenario(s, static_cast<uint32_t>(seed)),
+                                 static_cast<uint32_t>(seed));
+        const Metrics a = compute(sides, ObserverRule::ProbabilitySpace9fe495a);
+        const Metrics b = compute(sides, ObserverRule::LogOddsSuffix5343d45);
+        const Metrics c = compute(sides, ObserverRule::EndpointSuffixFollowup030);
+        csv << '"' << var_name(v) << "\"," << scn_name(s) << ',' << seed << ','
+            << c.switches << ',' << a.t_legible << ',' << (a.censored ? 1 : 0) << ','
+            << b.t_legible << ',' << (b.censored ? 1 : 0) << ','
+            << c.t_legible << ',' << (c.censored ? 1 : 0) << '\n';
+      }
+    }
+  }
+  printf("observer version rows -> %s/observer_versions.csv\n", outdir.c_str());
+}
+
 int main(int argc, char ** argv) {
   std::string cmd = (argc > 1) ? argv[1] : "ablation";
   if (cmd == "latency")   { run_latency();   return 0; }
   if (cmd == "rho_sweep") { run_rho_sweep(); return 0; }
   std::string outdir = (argc > 2) ? argv[2] : ".";
+  if (cmd == "observer_versions") { run_observer_versions(outdir); return 0; }
   run_ablation(outdir);
   return 0;
 }

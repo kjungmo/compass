@@ -117,10 +117,8 @@ void CompassController::loadKnobs(
   getParam(node, name, "use_candidate_trajectories", use_candidate_trajectories_, false);
   getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
   getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
-  getParam(node, name, "progress_length", progress_length_, 1.0);
   if (!std::isfinite(progress_max_gap_) || progress_max_gap_ <= 0 ||
-      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0 ||
-      !std::isfinite(progress_length_) || progress_length_ <= 0)
+      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0)
     throw std::invalid_argument("invalid measured progress parameters");
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
   // 궤적 계층 ② 노브 (경로 추종 cruise).
@@ -292,6 +290,11 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   const double now = cmd.header.stamp.sec + cmd.header.stamp.nanosec * 1e-9;
   in.now = now;
   // 첫 주기 또는 시계 역행 시 공칭 dt; 그 외엔 실측 주기 간격.
+  // dt contract (issue #6): any positive measured interval is accepted and no
+  // validated upper bound h_max is enforced. Knobs::lambda is applied per update,
+  // so its physical leak time -dt/ln(lambda) changes with dt; only the
+  // accumulated-time form of P2 is claimed for this adapter (manuscript
+  // Remark rem:vardt). A per-second leak would be a separate algorithm change.
   in.dt = (has_last_now_ && now > last_now_) ? (now - last_now_) : 0.1;
   last_now_ = now;
   has_last_now_ = true;
@@ -310,7 +313,14 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
       return cmd;
     }
     in.lateral_progress_delta_m = progress.delta_m;
-    state_.L_plan = progress_length_;
+    if (progress.anchor) {
+      // Issue #8: L_plan is the planned lateral offset of the committed class,
+      // fixed when its epoch is anchored: progress already credited to this
+      // commitment plus the tracker's remaining planned offset, derived from the
+      // same side bias the steering term uses (0 => no lateral maneuver, rho
+      // stays 0). Not a calibrated or validated model.
+      state_.L_plan = measured_progress_.anchored_plan_length(state_.L_real, k_side_, k_e_);
+    }
   }
 
   // Compute the exact nominal speed used for opt-in candidate evaluation.
@@ -397,14 +407,8 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   }
 
   // class 의 측면 부호로 약한 횡 편향을 더한다 (R -> 우측, L -> 좌측).
-  double side_bias = 0.0;
-  for (const auto & [id, s] : out.c_star.pairs()) {
-    (void)id;
-    side_bias += (s == compass::Side::R) ? -1.0 : 1.0;
-  }
-  if (out.c_star.size() > 0) {
-    side_bias /= static_cast<double>(out.c_star.size());
-  }
+  // Shared with L_plan (issue #8): mean of the pair signs, 0 if empty/balanced.
+  const double side_bias = compass::side_bias(out.c_star);
 
   // 조향: 경로 추종 cross-track + heading PD (pathTrackingAngularZ).
   // 예전의 베어링 비례 조향(ω = 1.0·yaw_err)은 감쇠가 없어 직선 복도에서도

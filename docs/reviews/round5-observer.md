@@ -3,8 +3,15 @@
 Baseline: 3eaf1a0b08f9b9068efe80dd1e4b03f1014e42cd (PR #1).
 
 Only the observer calculation changes; decision policy, scenario parameters,
-seeds 0–49, and final-side target are unchanged. The observer now requires a
-positive 0.30 s of observed follow-up, so a final-tick crossing is censored.
+seeds 0–49, and final-side target are unchanged. Two separate changes are
+involved: the log-odds recursion (saturation-only numerical fix, PR #12
+`5343d45`) and a 0.30 s minimum observed follow-up after the first sample of
+the final confident suffix, so a final-tick crossing is censored. The 0.30 s
+value was chosen after the PR #12 review, not preregistered. The reported
+statistic is an endpoint-suffix time `t_sfx`, not `t_legible` with a fixed
+`Delta_hold`, and not a conservative or "strictest" hold condition. All three
+result versions and a per-row comparison are kept in
+`src/compass_eval/results/observer_versions/` (issue #3 follow-up).
 R1 was regenerated on AMD EPYC 9V74 with GCC 13.3, C++17 -O2.
 Historical R3 latency measurements remain from the original Ryzen host.
 

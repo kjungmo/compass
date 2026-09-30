@@ -13,6 +13,9 @@ g++ -std=c++17 -O2 "${inc[@]}" "${core[@]}" src/compass_eval/test/test_observer.
 "$out/test"
 "$out/observer"
 "$out/eval" ablation "$out" > "$out/summary.txt"
+"$out/eval" observer_versions "$out" > /dev/null
+cmp "$out/observer_versions.csv" src/compass_eval/results/observer_versions/observer_versions.csv
+python3 scripts/check_observer_versions.py
 python3 - "$out" <<'PY'
 import csv,sys
 from pathlib import Path

@@ -65,16 +65,8 @@ compass::CandidateTrajectory CostmapEnvQuery::trajectoryAtSpeed(
 
 double CostmapEnvQuery::lateral_bias(const compass::TopoClass & c) const
 {
-  if (c.size() == 0) {
-    return 0.0;
-  }
-  double sum = 0.0;
-  for (const auto & [id, side] : c.pairs()) {
-    (void)id;
-    // Match the emitted path-tracking convention: L is positive path-normal.
-    sum += (side == compass::Side::R) ? -1.0 : 1.0;
-  }
-  return sum / static_cast<double>(c.size());
+  // Shared definition (L is positive path-normal), same as the emitted tracker.
+  return compass::side_bias(c);
 }
 
 bool CostmapEnvQuery::occupied(double wx, double wy) const

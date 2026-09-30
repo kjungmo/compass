@@ -163,13 +163,32 @@ struct Metrics {
   int switches = 0;
   double sign_change_rate = 0;   // 초당 부호 변화
   double entropy = 0;            // 결정 엔트로피 (bits/decision)
-  double t_legible = 0;          // time-to-legible (s)
+  double t_legible = 0;          // endpoint-suffix time t_sfx (s); CSV key t_legible_s kept
   bool censored = false;         // 사후확률 미안정 -> 우측 검열
 };
 
-// §4.7 베이즈 관찰자: 외부 관측 가능한 통과 측 스트림으로 사후확률을 갱신,
-// 임계 p* 를 넘어 끝까지 유지되는 최초 시각을 time-to-legible 로 둔다.
-inline Metrics compute(const std::vector<int> & sides) {
+// Offline decision-stream observer versions. They share the prior (0.5),
+// symmetric misread likelihood eps=0.2, threshold p*=0.9 and final-side target;
+// they differ only as stated. Keep all three reproducible so archived result
+// versions can be compared row by row on the same 1,500 decision streams.
+//  - ProbabilitySpace9fe495a: original probability-space recursion. Repeated
+//    updates round the posterior to exactly 1.0, an absorbing numerical state
+//    (the defect fixed in issue #3). Retained only for audit comparison.
+//  - LogOddsSuffix5343d45: saturation-only numerical fix (PR #12). Same
+//    endpoint-suffix rule; a crossing at the final sample counts as attained.
+//  - EndpointSuffixFollowup030: current reported statistic. Log-odds, plus a
+//    minimum of 0.30 s observed follow-up after the first sample of the final
+//    confident suffix. The 0.30 s value was chosen after the PR #12 review, not
+//    preregistered. This is an endpoint-suffix statistic, not the fixed
+//    Delta_hold definition of the manuscript's t_legible.
+enum class ObserverRule { ProbabilitySpace9fe495a, LogOddsSuffix5343d45, EndpointSuffixFollowup030 };
+
+// Endpoint-suffix time: first sample of the maximal final run of samples whose
+// posterior for the final output side is >= p*; censored at the horizon when no
+// such run exists (or, for the current rule, when its observed follow-up is
+// shorter than 0.30 s).
+inline Metrics compute(const std::vector<int> & sides,
+                       ObserverRule rule = ObserverRule::EndpointSuffixFollowup030) {
   if (sides.empty()) throw std::invalid_argument("empty decision stream");
   const int n = static_cast<int>(sides.size());
   int sw = 0;
@@ -182,24 +201,37 @@ inline Metrics compute(const std::vector<int> & sides) {
 
   const int Hstar = sides[n - 1];
   const double eps = 0.2, pstar = 0.9;
-  constexpr double hold_s = 0.30;
-  const int hold_intervals = static_cast<int>(std::ceil(hold_s / DT - 1e-12));
-  // Log-odds avoids an absorbing floating-point posterior of exactly 0 or 1.
-  // Keep the same prior, likelihood, final-side target and horizon hold rule.
-  double log_odds_r = 0.0;
-  const double evidence = std::log((1 - eps) / eps);
-  const double threshold = std::log(pstar / (1 - pstar));
   std::vector<bool> confident(n);
-  for (int i = 0; i < n; ++i) {
-    log_odds_r += (sides[i] == 1 ? evidence : -evidence);
-    const double target_odds = Hstar == 1 ? log_odds_r : -log_odds_r;
-    confident[i] = target_odds >= threshold;
+  if (rule == ObserverRule::ProbabilitySpace9fe495a) {
+    // Verbatim arithmetic of the original 9fe495a observer (saturating).
+    double postR = 0.5;
+    for (int i = 0; i < n; ++i) {
+      const double lik_R = (sides[i] == 1) ? (1 - eps) : eps;
+      const double lik_L = (sides[i] == 0) ? (1 - eps) : eps;
+      const double a = postR * lik_R, b = (1 - postR) * lik_L;
+      postR = a / (a + b);
+      confident[i] = ((Hstar == 1) ? postR : (1 - postR)) >= pstar;
+    }
+  } else {
+    // Log-odds avoids an absorbing floating-point posterior of exactly 0 or 1.
+    double log_odds_r = 0.0;
+    const double evidence = std::log((1 - eps) / eps);
+    const double threshold = std::log(pstar / (1 - pstar));
+    for (int i = 0; i < n; ++i) {
+      log_odds_r += (sides[i] == 1 ? evidence : -evidence);
+      const double target_odds = Hstar == 1 ? log_odds_r : -log_odds_r;
+      confident[i] = target_odds >= threshold;
+    }
   }
   int t_idx = -1;
   for (int i = n - 1; i >= 0; --i) { if (confident[i]) t_idx = i; else break; }
-  // A suffix beginning at the last sample has zero observed follow-up. Require
-  // a fixed positive hold interval inside the log before declaring attainment.
-  if (t_idx < 0 || t_idx + hold_intervals >= n) {
+  int follow_up_intervals = 0;
+  if (rule == ObserverRule::EndpointSuffixFollowup030) {
+    constexpr double follow_up_s = 0.30;
+    follow_up_intervals = static_cast<int>(std::ceil(follow_up_s / DT - 1e-12));
+  }
+  // A zero-follow-up rule accepts a final-sample crossing; the current rule does not.
+  if (t_idx < 0 || t_idx + follow_up_intervals >= n) {
     m.t_legible = n * DT; m.censored = true;
   }
   else           { m.t_legible = t_idx * DT; m.censored = false; }
