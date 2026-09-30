@@ -108,6 +108,7 @@ python3 scripts/check_observer_results.py
 python3 scripts/check_switch_bounds.py
 python3 scripts/check_paper_numbers.py
 python3 scripts/check_repo_consistency.py
+bash scripts/check_stdlib_sensitivity.sh   # libc++ side runs when available; REQUIRE_LIBCXX=1 with CXX_LIBCXX/LIBCXX_FLAGS makes it mandatory
 ```
 
 The [repository consistency gate](scripts/check_repo_consistency.py) checks named
@@ -142,6 +143,8 @@ The ablation command writes CSV to the supplied directory and prints its table;
 latency and rho-sweep print tables. Preserve the committed measurements when
 running new experiments. Exact seeded regression currently targets Linux
 g++ 13.3/libstdc++ (the recorded CI toolchain);
+the LLVM libc++ sensitivity record and its check are in
+[src/compass_eval/results/stdlib_sensitivity/](src/compass_eval/results/stdlib_sensitivity/README.md);
 latency depends on hardware, compiler, build flags and system load. Rebuild all
 dependent binaries for the 0.2.0 source version: public object layouts and the
 environment query interface changed. This version is not a published release.

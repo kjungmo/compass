@@ -13,8 +13,9 @@ incomplete, the original Zig build was not recreated, and no general
 cross-toolchain floating-point identity is established.
 
 The 2026-09-30 addendum at the end of this note supersedes two statements
-below: the packaging issues are resolved in OmniLink's v2 package, and the
-libc++ result is now also confirmed by a native LLVM libc++ build.
+below: four of the five remaining packaging issues are resolved in OmniLink's
+v2 package (issue 5 stands), and the libc++ result is now also confirmed by a
+native LLVM libc++ build.
 
 ## Method
 
@@ -208,15 +209,18 @@ Linux libc++ result: the original zig/Windows binary was not rerun.
 
 ### Current harness
 
-The same dependence holds at the current head, because `make_scenario` still
-constructs a `std::normal_distribution` every cycle. A native libc++ build of the
+The same dependence holds at the current head, because the harness still draws
+scenario noise from `std::normal_distribution` and the synthetic comparator's
+label from `std::uniform_int_distribution`. A native libc++ build of the
 unchanged current harness changes 425 of 1,500 rows. The canonical libstdc++
 switch counts for the proposed method and both knob-only ablations are
 unchanged in all 750 rows. The record and a fail-closed check are in
 [`src/compass_eval/results/stdlib_sensitivity/`](../../src/compass_eval/results/stdlib_sensitivity/README.md)
 and `scripts/check_stdlib_sensitivity.sh`.
 
-The manuscript now states this dependence in §4 and the reproducibility
-appendix, using the current-harness values. It does not use the historical
+The manuscript now states this dependence, using the current-harness values, in
+the Experiments section (§5 of the canonical `paper/arxiv/main.tex`, §4 of the
+re-typeset `paper/arxiv_ref`) and in the Reproduction note (§5.3 of `main.tex`;
+Appendix A, Reproducibility, of `arxiv_ref`). It does not use the historical
 `9fe495a` values. The proposed paragraph above is superseded and is not
 inserted.

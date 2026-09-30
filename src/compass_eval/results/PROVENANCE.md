@@ -20,7 +20,7 @@ new result file fails the gate until this record is updated.
 | `responsive_profile/paired_results.json` | `e88b597d02380bdc2b471359ce81f2ae03ab0a5004ccef4e072af627239916c6` | 3,750-run paired scripted sweep, per-seed | `scripts/run_response_comparison.py` via `scripts/test_compass_response.sh`; source `41e7837` |
 | `responsive_profile/summary.json` | `c2fb16941cfffd0e1741ab9c5cf1467e0c15173c326a7bbc551c294faa0b321c` | paired sweep summary | as above |
 | `responsive_profile/validation.txt` | `e40a3d341ba729dd551e2cb6cfd495f269d3c4fd0858478e7a919c159bc7e319` | historical validation transcript | as above |
-| `stdlib_sensitivity/R1_ablation_libcxx.md` | `c487b7c1131e86515e7191a762805d899cc6d03d15761fff8699990dff4b07e6` | R1 tables, current harness built against LLVM libc++ (CPU line removed) | `scripts/check_stdlib_sensitivity.sh --write`; base `6ea9ac3`, clang 23.1.2 / libc++ 230102 |
+| `stdlib_sensitivity/R1_ablation_libcxx.md` | `6098911ed39e1cd356a2bb0962df811bc4cff1b787381e7f2a2466521250eaf8` | R1 tables, current harness built against LLVM libc++ (CPU line removed; raw-CSV pointer names `ablation_raw_libcxx.csv`) | `scripts/check_stdlib_sensitivity.sh --write`; base `6ea9ac3`, clang 23.1.2 / libc++ 230102 |
 | `stdlib_sensitivity/R5_rho_sweep_libcxx.md` | `5c80555210ab9c7696ef57df7936c857ba52a75911c838fd2e8c2961dfd2342f` | R5 sweep, LLVM libc++ build | as above |
 | `stdlib_sensitivity/ablation_raw_libcxx.csv` | `a702c7feeccee7aff4a93b1d421214245300770cc21555938235e42b4006e2d8` | R1 raw, LLVM libc++ build (sensitivity record, not canonical) | as above |
 <!-- provenance-hashes:end -->
