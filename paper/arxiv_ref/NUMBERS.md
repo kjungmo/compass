@@ -43,8 +43,8 @@ measured values.
 | M20 | `\textbf{switching is blocked (0/50) for $v_{\text{lat}} \ge 0.35$ m/s}` | Sec. 4.3, Fig. 5 | `src/compass_eval/results/R5_rho_sweep.md` | row v_lat=0.35 | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.35 \| 1.00 \| 0/50 \|` |
 | M21 | `$v_{\text{lat}} \in (0.20, 0.35)$` | Abstract, Sec. 4.3, 5, App. D | `R5_rho_sweep.md` | last committing / first blocked row | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.20 \| 1.00 \| 50/50 \|` |
 | M22 | `from 0.05 to 0.50 m/s` | Sec. 4.3 | `R5_rho_sweep.md` | sweep range | `lit:src/compass_eval/results/R5_rho_sweep.md::\| 0.50 \|` |
-| M23 | `p99 $58.6\,\mu$s, max $651.3\,\mu$s` | Abstract | `src/compass_eval/results/R3_latency.md` | K=3 p99 / max (58.642 / 651.257) | `lit:src/compass_eval/results/R3_latency.md::\| 3 \| 8 \| 15.918 \| 14.527 \| 58.642 \| 651.257 \| 1.3025% \|` |
-| M24 | `about $1.30\%$ of the 20~Hz budget` | Abstract | `R3_latency.md` | K=3 max / 50 ms (1.3025%) | `calc:651.257/50000*100=1.30` |
+| M23 | `p99 $58.6\,\mu$s and max $651.3\,\mu$s` | Abstract, Sec. 1 | `src/compass_eval/results/R3_latency.md` | K=3 p99 / max (58.642 / 651.257) | `lit:src/compass_eval/results/R3_latency.md::\| 3 \| 8 \| 15.918 \| 14.527 \| 58.642 \| 651.257 \| 1.3025% \|` |
+| M24 | `the max is about $1.30\%$ of the 50~ms budget at 20~Hz` | Abstract | `R3_latency.md` | K=3 max / 50 ms (1.3025%) | `calc:651.257/50000*100=1.30` |
 | M25 | `2.6/153.6 $\mu$s at $K=1$` | Sec. 4.4 | `R3_latency.md` | K=1 p99 2.595 / max 153.607 | `lit:src/compass_eval/results/R3_latency.md::\| 1 \| 2 \| 1.568 \| 1.523 \| 2.595 \| 153.607 \|` |
 | M26 | `7.9/356.1 $\mu$s at $K=2$` | Sec. 4.4 | `R3_latency.md` | K=2 p99 7.885 / max 356.086 | `lit:src/compass_eval/results/R3_latency.md::\| 2 \| 4 \| 5.429 \| 5.160 \| 7.885 \| 356.086 \|` |
 | M27 | `Historical decision-core timing` | Table 4 (tab:latency), all cells | `R3_latency.md` | full R3 table, rounded to 0.1 us / 0.01 % | `lit:src/compass_eval/results/R3_latency.md::20000 iters` |
@@ -65,7 +65,7 @@ measured values.
 |---|---|---|---|---|---|
 | H1 | `($\varepsilon = 0.2$, $p^* = 0.9$ in this measurement)` | Sec. 4.1 | `src/compass_eval/include/compass_eval/harness.hpp` | observer eps, pstar | `lit:src/compass_eval/include/compass_eval/harness.hpp::const double eps = 0.2, pstar = 0.9;` |
 | H2 | `A value is reported only if at least 0.30 s of observed follow-up follows that first sample` | Sec. 4.1 | `harness.hpp` | EndpointSuffixFollowup030 follow_up_s | `lit:src/compass_eval/include/compass_eval/harness.hpp::constexpr double follow_up_s = 0.30;` |
-| H3 | `a continuous 0.6 s dwell timer` | Sec. 4.1 | `harness.hpp` | run_dwell T_dwell | `lit:src/compass_eval/include/compass_eval/harness.hpp::std::lround(0.6 / DT)` |
+| H3 | `strictly better for 12 consecutive cycles (0.6~s), any interruption resets the count` | Sec. 4.1 | `harness.hpp` | run_dwell T_dwell | `lit:src/compass_eval/include/compass_eval/harness.hpp::std::lround(0.6 / DT)` |
 | H4 | `randomly selects a label when $\|J_R-J_L\|<0.10$` | Sec. 4.1 | `harness.hpp` | correspondence-loss band | `lit:src/compass_eval/include/compass_eval/harness.hpp::const double band = 0.10;` |
 | H5 | `verified at \code{harness.hpp:56}` | Sec. 4.3 | `harness.hpp` line 56 | mid_reversal ramp to +0.25 | `lit:src/compass_eval/include/compass_eval/harness.hpp::case Scn::Reversal:    adv = -0.25 + 0.50 * (double(i) / (T - 1));` |
 | H6 | `with the scenario's advantage of $+0.40$` | Sec. 4.3 | `harness.hpp` | clean_commit advantage | `lit:src/compass_eval/include/compass_eval/harness.hpp::case Scn::CleanCommit: adv = +0.40;` |
