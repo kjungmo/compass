@@ -10,6 +10,7 @@ commitment switching under a lexicographic safety override.**
 ![ROS 2 Jazzy](https://img.shields.io/badge/ROS_2-Jazzy-22314E?logo=ros&logoColor=white)
 ![Gazebo Harmonic](https://img.shields.io/badge/Gazebo-Harmonic-f58113)
 [![Paper](https://img.shields.io/badge/Paper-PDF-b31b1b)](paper/arxiv/main.pdf)
+[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.0120.v1-blue)](https://doi.org/10.20944/preprints202610.0120.v1)
 [![Sponsor](https://img.shields.io/github/sponsors/kjungmo?logo=githubsponsors&color=ea4aaa)](https://github.com/sponsors/kjungmo)
 
 [Overview](#overview) &nbsp;·&nbsp; [Paper](#-paper) &nbsp;·&nbsp;
@@ -45,6 +46,8 @@ or on a robot. See [the implementation checkpoint](docs/COMPASS_COMPLETION.md).
 
 ## 📢 News
 
+- **2026-10** — Preprint posted on Preprints.org (version 1, not peer
+  reviewed): [doi:10.20944/preprints202610.0120.v1](https://doi.org/10.20944/preprints202610.0120.v1).
 - **2026-09** — English manuscript and offline observer results corrected after
   review; optional measured-progress and candidate-rollout interfaces added.
   The current [English manuscript](paper/arxiv/main.tex) is a research draft,
@@ -81,6 +84,7 @@ or on a robot. See [the implementation checkpoint](docs/COMPASS_COMPLETION.md).
 
 > **COMPASS: Temporally Consistent Topological Passing Decisions for Socially
 > Aware Robot Navigation** — Jungmo Kang.
+> [Preprint (Preprints.org, v1)](https://doi.org/10.20944/preprints202610.0120.v1) ·
 > [English PDF](paper/arxiv/main.pdf) (research draft) ·
 > [LaTeX source](paper/arxiv/main.tex) ·
 > [Korean draft](paper/paper_draft.md)
@@ -89,13 +93,16 @@ If COMPASS is useful in your research, please cite it
 (see also [`CITATION.cff`](CITATION.cff)):
 
 ```bibtex
-@unpublished{kang2026compass,
-  author = {Kang, Jungmo},
-  title  = {{COMPASS}: Temporally Consistent Topological Passing Decisions
-            for Socially Aware Robot Navigation},
-  year   = {2026},
-  note   = {Draft manuscript, available at
-            \url{https://github.com/kjungmo/compass} under paper/arxiv/},
+@article{kang2026compass,
+  author  = {Kang, Jungmo},
+  title   = {{COMPASS}: Temporally Consistent Topological Passing Decisions
+             for Socially Aware Robot Navigation},
+  journal = {Preprints},
+  year    = {2026},
+  doi     = {10.20944/preprints202610.0120.v1},
+  url     = {https://doi.org/10.20944/preprints202610.0120.v1},
+  note    = {Preprint, version 1, not peer reviewed. Source and code at
+             \url{https://github.com/kjungmo/compass}},
 }
 ```
 
