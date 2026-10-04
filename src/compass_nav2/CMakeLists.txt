@@ -20,6 +20,15 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
+# nav2_core::Controller gained the reset() hook in nav2_core 1.2 (Iron and later).
+# Humble ships nav2_core 1.1.x without it, so reset() must not be marked override there.
+if(nav2_core_VERSION VERSION_GREATER_EQUAL "1.2.0")
+  add_compile_definitions(COMPASS_NAV2_CONTROLLER_HAS_RESET=1)
+else()
+  add_compile_definitions(COMPASS_NAV2_CONTROLLER_HAS_RESET=0)
+endif()
+message(STATUS "compass_nav2: nav2_core ${nav2_core_VERSION}")
+
 set(dependencies
   compass_msgs
   nav2_core
