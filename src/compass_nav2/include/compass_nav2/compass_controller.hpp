@@ -60,7 +60,13 @@ public:
   void cleanup() override;
   void activate() override;
   void deactivate() override;
+#if !defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) || COMPASS_NAV2_CONTROLLER_HAS_RESET
   void reset() override;
+#else
+  // Humble (nav2_core 1.1.x) has no Controller::reset() hook; keep the same method
+  // so callers and tests can still clear controller state explicitly.
+  void reset();
+#endif
 
   void setPlan(const nav_msgs::msg::Path & path) override;
 

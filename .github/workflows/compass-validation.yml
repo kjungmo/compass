@@ -66,3 +66,24 @@ jobs:
           test -f install/compass_sim/share/compass_sim/worlds/compass_office.sdf
           test -x install/compass_sim/lib/compass_sim/send_straight_goal
           python3 -m compileall -q sim/launch sim/scripts
+  ros-humble:
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Nav2 build dependencies
+        run: |
+          apt-get update
+          apt-get install -y build-essential python3-colcon-common-extensions ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-ament-cmake-gtest
+      - name: Build all five packages (simulation assets only, no Gazebo execution)
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --base-paths src sim --cmake-args -DBUILD_TESTING=ON
+      - name: Test
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          colcon test --packages-select compass_core compass_nav2 compass_eval --event-handlers console_direct+
+          colcon test-result --verbose
