@@ -348,44 +348,126 @@ TEST(Diagnostics, PublishedOnlyWhileActive)
   controller.cleanup();
 }
 
-TEST(TaskBoundary, GapRule)
+TEST(TaskBoundary, NewPlanRule)
 {
-  using compass_nav2::controlGapStartsNewTask;
-  EXPECT_FALSE(controlGapStartsNewTask(false, 0.0, 50.0, 1.0));  // first call
-  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 10.05, 1.0));  // next period
-  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 11.0, 1.0));   // boundary excluded
-  EXPECT_TRUE(controlGapStartsNewTask(true, 10.0, 11.01, 1.0));
-  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 99.0, 0.0));   // disabled
+  using compass_nav2::newPlanStartsNewTask;
+  EXPECT_FALSE(newPlanStartsNewTask(false, 0.0, 50.0, 0.5));  // no control call yet
+  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 10.05, 0.5));  // in-loop update
+  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 10.5, 0.5));   // boundary excluded
+  EXPECT_TRUE(newPlanStartsNewTask(true, 10.0, 10.51, 0.5));
+  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 99.0, 0.0));   // disabled
 }
 
-// Humble (no reset hook): a control-call gap above task_gap_reset_s starts a new
-// task, as Jazzy's reset() at task end does. Jazzy: the gap changes nothing.
-TEST(TaskBoundary, ControlGapResetsOnlyWithoutResetHook)
+namespace
+{
+constexpr bool kHumbleTaskBoundary =
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  true;
+#else
+  false;
+#endif
+
+compass_msgs::msg::People nobody()
+{
+  compass_msgs::msg::People msg;
+  msg.header.frame_id = "map";
+  return msg;
+}
+
+// Latches STOP at t, then the person leaves (empty, fresh people input).
+void latchStop(RuntimeProbe & controller)
+{
+  controller.setPlan(straightPath());
+  controller.deliver(oncoming());
+  controller.computeVelocityCommands(startPose(), moving(), nullptr);
+  ASSERT_EQ(controller.mode(), compass::Mode::STOP);
+}
+
+compass::Mode tick(RuntimeProbe & controller)
+{
+  controller.deliver(nobody());
+  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  return controller.mode();
+}
+
+nav_msgs::msg::Path otherPath()
+{
+  auto path = straightPath();
+  path.poses.back().pose.position.y = 2.6;  // a different geometry
+  return path;
+}
+}  // namespace
+
+// In-loop plan updates (preemption, replanning) arrive within one control
+// iteration of the last call: never a new task.
+TEST(TaskBoundary, InLoopPlanUpdateKeepsState)
 {
   Fixture f;
   RuntimeProbe controller;
   double t = 100.0;
   controller.useSteady(&t);
   f.configure(controller);
+  latchStop(controller);
+  for (int i = 0; i < 20; ++i) {
+    t += 0.05;
+    controller.setPlan(i % 2 ? straightPath() : otherPath());
+    EXPECT_EQ(tick(controller), compass::Mode::STOP);
+  }
+  controller.cleanup();
+}
+
+// A stalled control loop without a new plan keeps STOP (no mid-task reset).
+TEST(TaskBoundary, GapWithoutNewPlanKeepsState)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  latchStop(controller);
+  t += 5.0;
+  EXPECT_EQ(tick(controller), compass::Mode::STOP);
+  controller.cleanup();
+}
+
+// A plan arriving after the loop was idle > task_gap_reset_s is a new FollowPath
+// action: Humble resets (parity with Jazzy's reset() at action end); on Jazzy
+// this path does nothing and only reset() clears STOP.
+TEST(TaskBoundary, NewPlanAfterIdleResetsOnlyWithoutResetHook)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  latchStop(controller);
+  t += 0.6;  // FollowPath aborted; the BT sends a new goal 0.6 s later
   controller.setPlan(straightPath());
-  controller.deliver(oncoming());
-  controller.computeVelocityCommands(startPose(), moving(), nullptr);
-  ASSERT_EQ(controller.mode(), compass::Mode::STOP);
-  controller.deliver(onePerson());
-  t += 0.5;  // within a task
-  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
-  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
-  t += 2.0;  // the next goal starts after a 2 s pause
-  controller.deliver(onePerson());
+  EXPECT_EQ(controller.mode(), kHumbleTaskBoundary ? compass::Mode::NORMAL : compass::Mode::STOP);
+  t += 0.05;
+  controller.deliver(nobody());
   const auto cmd =
     controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
-#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
-  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
-  EXPECT_GT(cmd.twist.linear.x, 0.0);
-#else
+  if (kHumbleTaskBoundary) {
+    EXPECT_GT(cmd.twist.linear.x, 0.0);
+  } else {
+    EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  }
+  controller.cleanup();
+}
+
+// A fast retry (new plan after a shorter idle period) keeps the latched state.
+TEST(TaskBoundary, FastRetryKeepsState)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  latchStop(controller);
+  t += 0.3;
+  controller.setPlan(straightPath());
   EXPECT_EQ(controller.mode(), compass::Mode::STOP);
-  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
-#endif
   controller.cleanup();
 }
 

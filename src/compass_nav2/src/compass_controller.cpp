@@ -210,7 +210,7 @@ void CompassController::loadKnobs(
   getParam(node, name, "diagnostics_period_s", diagnostics_period_s_, 1.0);
   // Humble only (no Controller::reset()); declared everywhere so one YAML serves
   // both distributions. Ignored where Nav2 calls reset() at task end.
-  getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 1.0);
+  getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 0.5);
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(
@@ -450,6 +450,23 @@ void CompassController::publishDiagnostics()
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  // Nav2 Humble never calls reset() when a task ends, so STOP/HOLD, the
+  // commitment and the decision clock would carry into the next goal. On Humble
+  // controller_server calls setPlan() when a FollowPath action starts and, while
+  // the loop runs, for goal preemption within one control iteration of the last
+  // call. A plan arriving after the loop has been idle longer than
+  // task_gap_reset_s is therefore a new action: reset as Jazzy's reset() does.
+  const double t = steady_now_();
+  if (newPlanStartsNewTask(has_last_call_, last_call_steady_, t, task_gap_reset_s_)) {
+    char why[128];
+    std::snprintf(
+      why, sizeof(why), "new plan after the control loop was idle %.2f s > task_gap_reset_s %.2f s",
+      t - last_call_steady_, task_gap_reset_s_);
+    RCLCPP_INFO(logger_, "CompassController: %s; decision state reset (new task).", why);
+    resetLocked(why);
+  }
+#endif
   bool geometry_changed = global_plan_.header.frame_id != path.header.frame_id ||
     global_plan_.poses.size() != path.poses.size();
   if (!geometry_changed) {
@@ -541,19 +558,8 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 #if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
-  // Nav2 Humble never calls reset() at task end, so STOP/HOLD, the commitment
-  // and the decision clock would carry into the next goal. Treat a control-call
-  // gap longer than task_gap_reset_s as a new task (Jazzy resets at task end).
-  const double call = steady_now_();
-  if (controlGapStartsNewTask(has_last_call_, last_call_steady_, call, task_gap_reset_s_)) {
-    char why[128];
-    std::snprintf(
-      why, sizeof(why), "no control call for %.2f s > task_gap_reset_s %.2f s, new task",
-      call - last_call_steady_, task_gap_reset_s_);
-    RCLCPP_INFO(logger_, "CompassController: %s; decision state reset.", why);
-    resetLocked(why);
-  }
-  last_call_steady_ = call;
+  // Humble task boundary (see setPlan): remember when the loop last ran.
+  last_call_steady_ = steady_now_();
   has_last_call_ = true;
 #endif
   const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
