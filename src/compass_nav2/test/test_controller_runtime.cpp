@@ -344,7 +344,7 @@ TEST(Diagnostics, NormalWithFreshPeopleIsOk)
       "people_topic", "people_count", "people_age_s", "people_timeout_s", "people_stale",
       "people_applied_last_cycle", "people_tf_failures", "people_tf_last_failure_age_s",
       "seconds_since_compute", "last_command", "stop_release_dwell_s",
-      "hold_release_after_s"}));
+      "hold_release_after_s", "stop_release_ttc_s"}));
   EXPECT_EQ(value(st, "plugin"), "FollowPath");
   EXPECT_EQ(value(st, "mode"), "NORMAL");
   // The far person is passed on one side: a one-person class "{7:L}" or "{7:R}".
@@ -361,6 +361,9 @@ TEST(Diagnostics, NormalWithFreshPeopleIsOk)
   EXPECT_EQ(value(st, "people_tf_last_failure_age_s"), "never");
   EXPECT_EQ(value(st, "seconds_since_compute"), "0.20");
   EXPECT_EQ(value(st, "last_command").rfind("drive (v=0.45", 0), 0u) << value(st, "last_command");
+  EXPECT_EQ(value(st, "stop_release_dwell_s"), "-1.00");
+  EXPECT_EQ(value(st, "hold_release_after_s"), "-1.00");
+  EXPECT_EQ(value(st, "stop_release_ttc_s"), "8.00");
   controller.cleanup();
 }
 
@@ -799,6 +802,23 @@ TEST(OptionalRelease, DwellRestartsWhenDangerReturns)
   EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
 }
 
+// No dwell credit across a period in which the controller was not running: a
+// check more than max(2 control periods, people_timeout_s) after the previous
+// one restarts the dwell.
+TEST(OptionalRelease, DwellNotCreditedAcrossIdleGap)
+{
+  Rig r(kRelease);
+  r.stopCommitted();
+  const auto away = person(4.5, 2.5, 0.0);
+  r.step(0.1, &away);  // clear since here
+  r.step(1.0, &away);  // 1.0 s without a control call: restart, not 1.1 s of credit
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  r.step(0.3, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  r.step(0.25, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
+}
+
 TEST(OptionalRelease, HoldReleasesAfterConfiguredTime)
 {
   Rig r(Params{{"FollowPath.hold_release_after_s", 4.0}});
@@ -821,6 +841,7 @@ TEST(OptionalRelease, RejectsUnsafeDurations)
     {"FollowPath.hold_release_after_s", -0.5},
     {"FollowPath.hold_release_after_s", 0.0},   // would disable the thrash guard
     {"FollowPath.hold_release_after_s", 2.9},   // shorter than W = 3 s
+    {"FollowPath.stop_release_ttc_s", 1.5},     // below ttc_min = 2 s
   };
   for (const auto & p : bad) {
     Fixture f(Params{p});
