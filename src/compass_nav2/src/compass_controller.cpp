@@ -88,15 +88,15 @@ void CompassController::configure(
   loadKnobs(node, name);
   core_ = std::make_unique<compass::DecisionCore>(knobs_);
 
-  // The first decision after (re)start has no measured interval; use one
-  // controller period instead of a fixed 0.1 s, and say so when the accumulator's
-  // non-vacuity condition fails at that period.
+  // Say so when the accumulator's non-vacuity condition fails at the nominal
+  // control period (1/controller_frequency). Used for this check only; the
+  // decision interval itself is unchanged (measured, 0.1 s fallback).
   double controller_frequency = 20.0;
   if (node->has_parameter("controller_frequency")) {
     node->get_parameter("controller_frequency", controller_frequency);
   }
-  nominal_dt_ = nominalDecisionDt(controller_frequency);
-  const std::string vacuity = switchingVacuityWarning(knobs_, nominal_dt_);
+  const std::string vacuity =
+    switchingVacuityWarning(knobs_, nominalDecisionDt(controller_frequency));
   if (!vacuity.empty()) {
     RCLCPP_WARN(logger_, "CompassController '%s': %s.", name.c_str(), vacuity.c_str());
   }
@@ -636,13 +636,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
 
   const double now = cmd.header.stamp.sec + cmd.header.stamp.nanosec * 1e-9;
   in.now = now;
-  // 첫 주기 또는 시계 역행 시 공칭 dt(= 1/controller_frequency); 그 외엔 실측 주기 간격.
+  // 첫 주기 또는 시계 역행 시 공칭 dt; 그 외엔 실측 주기 간격.
   // dt contract (issue #6): any positive measured interval is accepted and no
   // validated upper bound h_max is enforced. Knobs::lambda is applied per update,
   // so its physical leak time -dt/ln(lambda) changes with dt; only the
   // accumulated-time form of P2 is claimed for this adapter (manuscript
   // Remark rem:vardt). A per-second leak would be a separate algorithm change.
-  in.dt = decisionDt(has_last_now_, last_now_, now, nominal_dt_);
+  in.dt = (has_last_now_ && now > last_now_) ? (now - last_now_) : 0.1;
   last_now_ = now;
   has_last_now_ = true;
 

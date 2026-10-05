@@ -104,16 +104,12 @@ TEST(ParamValidation, RequireRangeRejectsNonFinite)
   EXPECT_THROW(compass_nav2::requireRange("x", 1.0, 0, 1, false, true), std::invalid_argument);
 }
 
-TEST(DecisionPeriod, FirstCycleUsesOneControllerPeriod)
+TEST(DecisionPeriod, NominalPeriodForTheVacuityCheck)
 {
   EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(20.0), 0.05);
   EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(10.0), 0.1);
   EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(0.0), 0.05);
   EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(std::nan("")), 0.05);
-  // First call and clock regression use the nominal period; otherwise measured.
-  EXPECT_DOUBLE_EQ(compass_nav2::decisionDt(false, 0.0, 5.0, 0.05), 0.05);
-  EXPECT_NEAR(compass_nav2::decisionDt(true, 1.0, 1.07, 0.05), 0.07, 1e-12);
-  EXPECT_DOUBLE_EQ(compass_nav2::decisionDt(true, 2.0, 1.0, 0.05), 0.05);
 }
 
 TEST(DecisionPeriod, VacuityWarningOnlyWhenSwitchingIsUnreachable)

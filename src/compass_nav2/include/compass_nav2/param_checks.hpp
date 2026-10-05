@@ -50,19 +50,12 @@ inline void requireRange(
 
 constexpr double kInf = std::numeric_limits<double>::infinity();
 
-// Nominal decision period used before the first measured interval (and after a
-// clock regression): one controller period. Falls back to Nav2's default 20 Hz.
+// Nominal control period (1/controller_frequency) for the configure-time
+// non-vacuity check. Falls back to Nav2's default 20 Hz.
 inline double nominalDecisionDt(double controller_frequency_hz)
 {
   return std::isfinite(controller_frequency_hz) && controller_frequency_hz > 0.0 ?
          1.0 / controller_frequency_hz : 0.05;
-}
-
-// Decision period for one control call: the measured interval since the last
-// call when it is positive, otherwise the nominal period.
-inline double decisionDt(bool has_last, double last_now, double now, double nominal_dt)
-{
-  return (has_last && now > last_now) ? (now - last_now) : nominal_dt;
 }
 
 // Humble task boundary: Nav2 Humble has no Controller::reset() hook, so a gap
