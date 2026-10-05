@@ -154,21 +154,39 @@ line-of-sight TTC, or the candidate rollout); it is not a collision guarantee.
 as a unicycle and one constant-velocity person); it has had no Gazebo or robot
 evaluation.**
 
-**`hold_release_after_s`** (default `-1`: HOLD absorbing as published). When
-set, it must be at least the thrash window `W`: a shorter value (including 0)
-would release HOLD while the interventions that caused it are still being
-counted, defeating the thrash guard. After HOLD has lasted that long,
-`DecisionState::release_hold()` is called before the next decision, which
-clears the intervention window. If the danger persists, the core enters HOLD
-again after `n_thrash` new interventions, so the robot cycles HOLD → NORMAL →
-HOLD about every `hold_release_after_s`: the log shows a `HOLD -> NORMAL:
-released after ...` line followed by `NORMAL -> STOP`/`-> HOLD` lines each
-time, and `/diagnostics` alternates between WARN (`HOLD (zero twist until
-released by hold_release_after_s or reset)`) and the state of the brief NORMAL
-interval.
+**`hold_release_after_s`** (default `-1`: HOLD absorbing as published). It
+requires the STOP release (`stop_release_dwell_s >= 0`; configure fails
+otherwise) and must be at least the thrash window `W` (a shorter value,
+including 0, would defeat the thrash guard). HOLD is never released straight
+to NORMAL: after HOLD has lasted `hold_release_after_s`, the adapter calls
+`DecisionState::release_hold()` (which clears the intervention window and the
+safety dwell) and sets the mode to **STOP**. The robot then moves again only
+when the STOP release gate above passes, with all its conditions and its
+dwell. While the hazard is still there the gate does not pass and the robot
+stays still: with a person standing ahead the core typically makes one safety
+switch to a class that is safe at the measured speed and stays in STOP; with a
+renewed approach it can count `n_thrash` new interventions and return to HOLD,
+after which the cycle repeats. Every state in that cycle sends a zero twist.
+The log shows `HOLD -> STOP: held ... s` and, when the gate passes,
+`STOP -> NORMAL: ...`; `/diagnostics` shows WARN with `HOLD (zero twist; after
+hold_release_after_s it becomes a gated STOP)` or `STOP (zero twist until
+released by stop_release_dwell_s or reset)`.
+
+**Why HOLD release is the part that matters.** With danger present the
+published core escalates STOP to HOLD within about 4 control cycles (each
+safety-branch cycle is a thrash-window intervention, `n_thrash = 4`), so in
+practice a stopped robot rests in HOLD, and this option is what lets it resume.
+An earlier version released HOLD straight to NORMAL; at measured speed 0 the
+legacy TTC reads "no approach", so a robot halted by HOLD in front of a
+standing person drove at cruise speed until the thrash guard stopped it again,
+creeping towards the person (closed loop: from 1.0 m, 1.7 m and 3.0 m it
+travelled 0.73 m, 1.45 m and 2.71 m and ended 0.28, 0.27 and 0.32 m away).
 
 Values other than `-1` or the ranges above fail configure. `/diagnostics`
-reports both parameters.
+reports all three parameters. **Evidence for both options is unit tests and
+kinematic closed-loop tests with the legacy TTC model only; the
+candidate-rollout model is not exercised by the closed-loop tests, and there
+has been no Gazebo or robot evaluation.**
 
 ## Other zero-twist cases
 

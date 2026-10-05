@@ -238,7 +238,9 @@ protected:
   // the people input is fresh with no TF failure, the committed class is in the
   // cycle's safe set with clearance >= d_safe, and min(TTC at the resume speed,
   // TTC at the measured speed) >= stop_release_ttc_s (see maybeReleaseStop).
-  // hold_release_after_s >= W: release_hold() after HOLD has lasted that long.
+  // hold_release_after_s >= W (requires stop_release_dwell_s >= 0): after HOLD
+  // has lasted that long, release_hold() and mode STOP, so motion resumes only
+  // through the STOP release gate.
   // Both timed on the steady clock.
   double stop_release_dwell_s_{-1.0};
   double stop_release_ttc_s_{8.0};

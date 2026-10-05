@@ -249,6 +249,12 @@ void CompassController::loadKnobs(
             " must be -1 (absorbing, as published) or >= W (" + std::to_string(knobs_.W) +
             " s, the thrash window)");
   }
+  if (hold_release_after_s_ >= 0.0 && stop_release_dwell_s_ < 0.0) {
+    throw std::invalid_argument(
+            name + ".hold_release_after_s = " + std::to_string(hold_release_after_s_) +
+            " requires the STOP release (" + name + ".stop_release_dwell_s >= 0): HOLD is "
+            "released into STOP and motion resumes only through the STOP release gate");
+  }
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(
@@ -445,12 +451,19 @@ void CompassController::maybeReleaseHold()
     hold_since_valid_ = true;
   }
   if (t - hold_since_ >= hold_release_after_s_) {
+    // Never straight to NORMAL: a robot halted by HOLD has measured speed 0, so
+    // its TTC reads "no approach" and the class looks safe. Leave HOLD into STOP
+    // instead (release_hold() clears the thrash window), so motion resumes only
+    // through the STOP release gate (maybeReleaseStop). If the hazard is still
+    // there the core may take STOP back to HOLD; both send a zero twist.
     state_.release_hold();
+    state_.mode = compass::Mode::STOP;
     hold_since_valid_ = false;
+    stop_clear_valid_ = false;
     RCLCPP_INFO(
-      logger_, "CompassController: mode HOLD -> NORMAL: released after %.2f s "
-      "(hold_release_after_s %.2f; opt-in, not part of the published method).",
-      t - hold_since_, hold_release_after_s_);
+      logger_, "CompassController: mode HOLD -> STOP: held %.2f s (hold_release_after_s %.2f); "
+      "motion resumes only through the STOP release gate (opt-in, not part of the published "
+      "method).", t - hold_since_, hold_release_after_s_);
   }
 }
 
@@ -553,7 +566,7 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
   if (s.mode == compass::Mode::HOLD) {
     warnings.push_back(
       hold_release_after_s_ < 0.0 ? "HOLD (zero twist until reset)" :
-      "HOLD (zero twist until released by hold_release_after_s or reset)");
+      "HOLD (zero twist; after hold_release_after_s it becomes a gated STOP)");
   }
   if (!fresh.received) {
     warnings.push_back("no people message received on " + people_topic_);

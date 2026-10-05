@@ -74,6 +74,7 @@ public:
     peopleCallback(std::make_shared<compass_msgs::msg::People>(msg));
   }
   void forceStop() {state_.mode = compass::Mode::STOP;}
+  void forceHold() {state_.mode = compass::Mode::HOLD;}
   compass::Mode mode() const {return state_.mode;}
 
 private:
@@ -93,10 +94,15 @@ struct Outcome
   double min_distance = std::numeric_limits<double>::infinity();
   double travelled = 0.0;              // m along x
   bool ever_normal = false;
+  double hold_exit_time = -1.0;        // first time out of HOLD (start in HOLD)
+  double first_motion_time = -1.0;     // first nonzero linear command
+  double max_speed = 0.0;              // largest commanded linear speed
 };
 
-// Robot at (0.5, 2.5) facing +x on a straight 4 m path, halted in STOP.
-Outcome simulate(const char * label, const Params & params, Walker p, double duration_s)
+// Robot at (0.5, 2.5) facing +x on a straight 4 m path, halted in STOP (or HOLD).
+Outcome simulate(
+  const char * label, const Params & params, Walker p, double duration_s,
+  compass::Mode start = compass::Mode::STOP)
 {
   rclcpp::NodeOptions options;
   options.parameter_overrides(params);
@@ -120,7 +126,7 @@ Outcome simulate(const char * label, const Params & params, Walker p, double dur
     path.poses.push_back(ps);
   }
   c.setPlan(path);
-  c.forceStop();
+  if (start == compass::Mode::HOLD) {c.forceHold();} else {c.forceStop();}
 
   double x = 0.5, y = 2.5, th = 0.0, v = 0.0, w = 0.0;
   Outcome r;
@@ -159,6 +165,11 @@ Outcome simulate(const char * label, const Params & params, Walker p, double dur
 
     const double elapsed = k * kDt;
     const compass::Mode m = c.mode();
+    if (start == compass::Mode::HOLD && r.hold_exit_time < 0.0 && m != compass::Mode::HOLD) {
+      r.hold_exit_time = elapsed;
+    }
+    if (v > 0.0 && r.first_motion_time < 0.0) {r.first_motion_time = elapsed;}
+    r.max_speed = std::max(r.max_speed, v);
     if (m == compass::Mode::NORMAL) {
       r.ever_normal = true;
       if (r.release_time < 0.0) {r.release_time = elapsed;}
@@ -170,8 +181,9 @@ Outcome simulate(const char * label, const Params & params, Walker p, double dur
   r.travelled = x - 0.5;
   std::printf(
     "[ closed-loop ] %-34s release %6.2f s  first STOP/HOLD after release %6.2f s  "
-    "min distance %5.2f m  travelled %5.2f m\n", label, r.release_time,
-    r.first_restop_after_release, r.min_distance, r.travelled);
+    "min distance %5.2f m  travelled %5.2f m  left HOLD %6.2f s  first motion %6.2f s\n",
+    label, r.release_time, r.first_restop_after_release, r.min_distance, r.travelled,
+    r.hold_exit_time, r.first_motion_time);
   c.cleanup();
   costmap->cleanup();
   return r;
@@ -179,6 +191,8 @@ Outcome simulate(const char * label, const Params & params, Walker p, double dur
 
 const Params kRelease{{"FollowPath.stop_release_dwell_s", 0.5}};
 const Params kLatch{};  // published behaviour
+const Params kBoth{{"FollowPath.stop_release_dwell_s", 0.5},
+  {"FollowPath.hold_release_after_s", 3.0}};
 }  // namespace
 
 // (a) A person standing 1.7 m ahead on the path: TTC at the resume speed
@@ -199,6 +213,8 @@ TEST(ReleaseClosedLoop, CrossingPersonNoCloserThanWithoutRelease)
   const Outcome latched = simulate("(b) crossing, release disabled", kLatch, crossing, 20.0);
   const Outcome released = simulate("(b) crossing, release enabled", kRelease, crossing, 20.0);
   EXPECT_FALSE(latched.ever_normal);
+  ASSERT_TRUE(released.ever_normal) << "release never happened";
+  EXPECT_GT(released.travelled, 0.0);
   EXPECT_GE(released.min_distance, latched.min_distance - 1e-9)
     << "release at " << released.release_time << " s, min distance "
     << released.min_distance << " m vs " << latched.min_distance << " m";
@@ -242,6 +258,48 @@ TEST(ReleaseClosedLoop, FarStandingPersonReleaseThenNoEarlyRestop)
   EXPECT_GE(r.first_restop_after_release, kNoRestopGuaranteed)
     << "released at " << r.release_time << " s";
   EXPECT_FALSE(std::isinf(r.first_restop_after_release));  // it does stop in front of them
+}
+
+// ---- HOLD release (needs the STOP release; HOLD -> gated STOP, never NORMAL) ----
+
+// (f) A person standing ahead while the robot rests in HOLD (as the published
+// core leaves it after sustained danger): with both options on, every HOLD
+// release becomes a gated STOP that does not pass, so the robot never moves.
+TEST(ReleaseClosedLoop, HoldReleaseNeverCreepsTowardsStandingPerson)
+{
+  for (const double ahead : {1.0, 1.7, 3.0}) {
+    const std::string label = "(f) HOLD, standing " + std::to_string(ahead).substr(0, 3) + " m";
+    const Outcome r = simulate(
+      label.c_str(), kBoth, {0.5 + ahead, 2.5, 0.0, 0.0}, 30.0, compass::Mode::HOLD);
+    EXPECT_DOUBLE_EQ(r.max_speed, 0.0) << ahead << " m ahead";
+    EXPECT_DOUBLE_EQ(r.travelled, 0.0) << ahead << " m ahead";
+    EXPECT_FALSE(r.ever_normal) << ahead << " m ahead: released at " << r.release_time << " s";
+  }
+}
+
+// (g) The person walks away while the robot is in HOLD: HOLD -> STOP after
+// hold_release_after_s, STOP -> NORMAL after the gate's dwell, then it drives;
+// no motion before the gate passes.
+TEST(ReleaseClosedLoop, HoldThenGatedStopThenDriveWhenPersonLeaves)
+{
+  const Outcome r = simulate(
+    "(g) HOLD, person walks away", kBoth, {1.2, 2.5, 1.0, 0.0}, 10.0, compass::Mode::HOLD);
+  // The HOLD timer starts at the first control call (0.05 s), so HOLD ends at the
+  // first call >= 3 s later: 3.05 s or, with floating-point rounding, 3.10 s.
+  EXPECT_GE(r.hold_exit_time, 3.05 - 1e-9);
+  EXPECT_LE(r.hold_exit_time, 3.10 + 1e-9);
+  ASSERT_TRUE(r.ever_normal);
+  EXPECT_GE(r.release_time, r.hold_exit_time + 0.5);   // the STOP gate's dwell
+  EXPECT_GT(r.first_motion_time, r.release_time);      // nothing moves before the gate
+  EXPECT_GT(r.travelled, 0.0);
+}
+
+// (h) HOLD release without the STOP release is rejected at configure.
+TEST(ReleaseClosedLoop, HoldReleaseWithoutStopReleaseFailsConfigure)
+{
+  EXPECT_THROW(
+    simulate("(h) hold only", Params{{"FollowPath.hold_release_after_s", 3.0}},
+    {4.0, 2.5, 0.0, 0.0}, 0.1, compass::Mode::HOLD), std::invalid_argument);
 }
 
 int main(int argc, char ** argv)

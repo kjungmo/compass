@@ -819,9 +819,12 @@ TEST(OptionalRelease, DwellNotCreditedAcrossIdleGap)
   EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
 }
 
-TEST(OptionalRelease, HoldReleasesAfterConfiguredTime)
+// HOLD is released into a gated STOP, never straight to NORMAL; with nobody
+// around the STOP gate then passes after its dwell.
+TEST(OptionalRelease, HoldReleasesIntoGatedStop)
 {
-  Rig r(Params{{"FollowPath.hold_release_after_s", 4.0}});
+  Rig r(Params{{"FollowPath.hold_release_after_s", 4.0},
+      {"FollowPath.stop_release_dwell_s", 0.5}});
   r.c.forceHold();
   const auto nobody = empty();
   EXPECT_DOUBLE_EQ(r.step(0.05, &nobody).twist.linear.x, 0.0);  // HOLD since here
@@ -829,9 +832,29 @@ TEST(OptionalRelease, HoldReleasesAfterConfiguredTime)
     EXPECT_DOUBLE_EQ(r.step(0.5, &nobody).twist.linear.x, 0.0);
     EXPECT_EQ(r.c.mode(), compass::Mode::HOLD);
   }
-  const auto cmd = r.step(0.55, &nobody);  // 4.05 s: released before deciding
+  auto cmd = r.step(0.55, &nobody);  // 4.05 s: HOLD -> STOP, gate dwell starts
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  cmd = r.step(0.25, &nobody);
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  cmd = r.step(0.25, &nobody);  // 0.5 s dwell: released, this command still zero
   EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
-  EXPECT_GT(cmd.twist.linear.x, 0.0);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  EXPECT_GT(r.step(0.05, &nobody).twist.linear.x, 0.0);
+}
+
+TEST(OptionalRelease, HoldReleaseRequiresStopRelease)
+{
+  Fixture f(Params{{"FollowPath.hold_release_after_s", 3.0}});
+  RuntimeProbe controller;
+  try {
+    f.configure(controller);
+    ADD_FAILURE() << "configure accepted hold_release_after_s without stop_release_dwell_s";
+  } catch (const std::invalid_argument & e) {
+    EXPECT_NE(std::string(e.what()).find("requires the STOP release"), std::string::npos)
+      << e.what();
+  }
 }
 
 TEST(OptionalRelease, RejectsUnsafeDurations)
@@ -848,7 +871,8 @@ TEST(OptionalRelease, RejectsUnsafeDurations)
     RuntimeProbe controller;
     EXPECT_THROW(f.configure(controller), std::invalid_argument) << p.get_name();
   }
-  Fixture f(Params{{"FollowPath.hold_release_after_s", 3.0}});
+  Fixture f(Params{{"FollowPath.hold_release_after_s", 3.0},
+      {"FollowPath.stop_release_dwell_s", 0.5}});
   RuntimeProbe controller;
   EXPECT_NO_THROW(f.configure(controller));
   controller.cleanup();
