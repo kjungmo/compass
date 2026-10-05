@@ -81,16 +81,17 @@ void CompassController::configure(
   }
   state_ = compass::DecisionState{};
 
-  // /people 구독 — 외부 트래커(또는 시뮬 지상 진실)가 보내는 추적 사람 목록.
-  // sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
+  // people_topic 구독 (기본 "/people") — 외부 트래커(또는 시뮬 지상 진실)가 보내는
+  // 추적 사람 목록. sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
   people_sub_ = node->create_subscription<compass_msgs::msg::People>(
-    "/people", rclcpp::SensorDataQoS(),
+    people_topic_, rclcpp::SensorDataQoS(),
     std::bind(&CompassController::peopleCallback, this, std::placeholders::_1));
 
   RCLCPP_INFO(
     logger_, "CompassController '%s' 구성 완료 (E0=%.3f, e_max_rev=%.3f, max_v=%.3f, "
-    "global_frame=%s, /people 구독).",
-    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_, global_frame_.c_str());
+    "global_frame=%s, people_topic=%s).",
+    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_, global_frame_.c_str(),
+    people_sub_->get_topic_name());
 }
 
 void CompassController::peopleCallback(const compass_msgs::msg::People::SharedPtr msg)
@@ -142,6 +143,12 @@ void CompassController::loadKnobs(
   getParam(node, name, "k_e", k_e_, k_e_);
   getParam(node, name, "k_theta", k_theta_, k_theta_);
   getParam(node, name, "k_side", k_side_, k_side_);
+  // 사람 입력 토픽. 기본 "/people"(절대 이름)은 이전 하드코딩과 같다; 상대 이름은
+  // controller_server 의 네임스페이스 아래로 해석된다 (다중 로봇).
+  getParam(node, name, "people_topic", people_topic_, std::string("/people"));
+  if (people_topic_.empty()) {
+    throw std::invalid_argument(name + ".people_topic must not be empty");
+  }
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(

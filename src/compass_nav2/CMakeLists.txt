@@ -122,6 +122,11 @@ if(BUILD_TESTING)
   ament_add_gtest(test_thread_safety test/test_thread_safety.cpp)
   target_link_libraries(test_thread_safety compass_controller)
   ament_target_dependencies(test_thread_safety ${dependencies} compass_core)
+
+  # 구성된 플러그인의 배포 동작: people 토픽·신선도, /diagnostics, Humble 과업 경계.
+  ament_add_gtest(test_controller_runtime test/test_controller_runtime.cpp)
+  target_link_libraries(test_controller_runtime compass_controller)
+  ament_target_dependencies(test_controller_runtime ${dependencies} compass_core)
 endif()
 
 ament_export_include_directories(include)

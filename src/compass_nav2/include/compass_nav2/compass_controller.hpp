@@ -110,6 +110,7 @@ protected:
   rclcpp::Subscription<compass_msgs::msg::People>::SharedPtr people_sub_;
   compass_msgs::msg::People::SharedPtr latest_people_;
   std::string global_frame_;       // costmap global_frame (변환 대상 프레임).
+  std::string people_topic_{"/people"};
   mutable std::mutex people_mutex_;
 
   // 결정 계층 상태 (주기 간 보존).
