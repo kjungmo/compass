@@ -110,7 +110,7 @@ void CompassController::configure(
 
   // Operator status on /diagnostics ("<node>: compass", hardware_id = namespace),
   // published from a wall timer while active.
-  diag_name_ = std::string(node->get_name()) + ": compass";
+  diag_name_ = std::string(node->get_name()) + ": compass (" + name + ")";
   diag_hardware_id_ = node->get_namespace();
   if (diagnostics_period_s_ > 0.0) {
     diag_pub_ = node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
@@ -419,6 +419,8 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
   kv("people_stale", fresh.stale ? "true" : "false");
   kv("people_applied_last_cycle", std::to_string(s.people_applied));
   kv("people_tf_failures", std::to_string(tf_failures_.load()));
+  kv("people_tf_last_failure_age_s", tf_failures_.load() ?
+    fmt(now - last_tf_failure_steady_.load(), "%.2f") : "never");
   kv("seconds_since_compute", s.computed ? fmt(now - s.last_compute_steady, "%.2f") : "never");
   kv("last_command", s.last_command);
 
@@ -429,6 +431,12 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
     warnings.push_back("no people message received on " + people_topic_);
   } else if (fresh.stale) {
     warnings.push_back("people input stale (" + fmt(fresh.age_s, "%.2f") + " s)");
+  }
+  // A TF failure drops every person for that cycle; warn while one is recent.
+  const uint64_t tf_failures = tf_failures_.load();
+  if (tf_failures > 0 && now - last_tf_failure_steady_.load() <= people_timeout_s_) {
+    warnings.push_back(
+      "people TF failing, deciding without people (" + std::to_string(tf_failures) + " failures)");
   }
   st.level = warnings.empty() ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
   st.message = "ok";
@@ -535,6 +543,7 @@ std::vector<compass::Person> CompassController::extractPeople(const compass::SE2
   if (!tf_error.empty()) {
     // 변환 불가 시 이번 주기는 사람 없이 진행한다(기존 동작); 이제는 알린다.
     ++tf_failures_;
+    last_tf_failure_steady_ = steady_now_();
     RCLCPP_WARN_THROTTLE(
       logger_, steady_clock_, 2000,
       "CompassController: cannot transform %zu people from '%s' to '%s' (%s); "
@@ -607,6 +616,11 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
     }
     if (people_stale_hold_) {
       cycle_reason_ = "people input stale (people_stale_action=hold)";
+      // No decision is made while holding: the first decision after fresh input
+      // must not see the whole hold as one interval (it uses the fallback), and
+      // measured progress restarts from a new sample.
+      has_last_now_ = false;
+      measured_progress_.reset();
       return cmd;
     }
   }

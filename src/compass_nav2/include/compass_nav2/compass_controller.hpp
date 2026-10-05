@@ -160,6 +160,7 @@ protected:
   double people_timeout_s_{0.5};
   bool people_stale_hold_{false};
   std::atomic<uint64_t> tf_failures_{0};  // people TF lookups that failed
+  std::atomic<double> last_tf_failure_steady_{0.0};  // steady_now_() of the latest
 
   // 운영자 가시성: 벽시계 타이머로 /diagnostics 발행 (입력이 끊겨도 보인다).
   rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr

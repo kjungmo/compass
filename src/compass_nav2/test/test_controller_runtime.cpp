@@ -42,6 +42,18 @@ public:
   compass::Mode mode() const {return state_.mode;}
   using compass_nav2::CompassController::buildDiagnostics;
   uint64_t tfFailures() const {return tf_failures_.load();}
+  double lReal() const {return state_.L_real;}
+  // Drive the decision (ROS) clock from the test.
+  void useRosTime(double s)
+  {
+    if (!ros_clock_) {
+      ros_clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+      rcl_enable_ros_time_override(ros_clock_->get_clock_handle());
+      clock_ = ros_clock_;
+    }
+    rcl_set_ros_time_override(ros_clock_->get_clock_handle(), static_cast<int64_t>(s * 1e9));
+  }
+  rclcpp::Clock::SharedPtr ros_clock_;
 };
 
 // A straight 4 m path along +x in the costmap frame ("map"), robot at its start.
@@ -186,6 +198,37 @@ TEST(PeopleFreshness, HoldEmitsZeroOnlyWhileStale)
   controller.cleanup();
 }
 
+// After a "hold" the first decision uses the published 0.1 s fallback interval,
+// not the length of the hold. Observed through the legacy progress proxy:
+// L_real grows by |v| * dt per discretionary decision.
+TEST(PeopleFreshness, HoldDoesNotInflateTheNextDecisionInterval)
+{
+  Fixture f(Params{{"FollowPath.people_stale_action", "hold"}});
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  controller.useRosTime(t);
+  controller.setPlan(straightPath());
+  compass_msgs::msg::People nobody;
+  nobody.header.frame_id = "map";
+  geometry_msgs::msg::Twist v;
+  v.linear.x = 0.45;
+  const auto decide = [&](double dt, bool fresh) {
+      t += dt;
+      controller.useRosTime(t);
+      if (fresh) {controller.deliver(nobody);}
+      const double before = controller.lReal();
+      controller.computeVelocityCommands(startPose(), v, nullptr);
+      return controller.lReal() - before;
+    };
+  EXPECT_NEAR(decide(0.0, true), 0.45 * 0.1, 1e-9);   // first decision: fallback
+  EXPECT_NEAR(decide(0.05, true), 0.45 * 0.05, 1e-9);  // measured interval
+  EXPECT_DOUBLE_EQ(decide(3.0, false), 0.0);          // stale: hold, no decision
+  EXPECT_NEAR(decide(0.05, true), 0.45 * 0.1, 1e-9);  // not 0.45 * 3.05
+  controller.cleanup();
+}
+
 TEST(PeopleFreshness, RejectsUnknownActionAndNonPositiveTimeout)
 {
   {
@@ -200,18 +243,39 @@ TEST(PeopleFreshness, RejectsUnknownActionAndNonPositiveTimeout)
   }
 }
 
+std::string value(const diagnostic_msgs::msg::DiagnosticStatus & st, const std::string & key);
+
 TEST(PeopleFreshness, TransformFailureIsCounted)
 {
   Fixture f;
   RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
   f.configure(controller);
   controller.setPlan(straightPath());
   auto msg = onePerson();
   msg.header.frame_id = "tracker_frame";  // no TF to "map"
   controller.deliver(msg);
   controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  t += 0.05;
+  controller.deliver(msg);
   controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
   EXPECT_EQ(controller.tfFailures(), 2u);
+  // Fresh input, but every person dropped: the status must say so (WARN).
+  auto st = controller.buildDiagnostics();
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(st.message, "people TF failing, deciding without people (2 failures)");
+  EXPECT_EQ(value(st, "people_tf_last_failure_age_s"), "0.00");
+  // TF recovers: the warning clears once the last failure is older than people_timeout_s.
+  t += 0.3;
+  controller.deliver(onePerson());
+  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  EXPECT_EQ(controller.buildDiagnostics().level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  t += 0.3;
+  controller.deliver(onePerson());
+  st = controller.buildDiagnostics();
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::OK) << st.message;
+  EXPECT_EQ(value(st, "people_tf_failures"), "2");
   controller.cleanup();
 }
 
@@ -258,13 +322,32 @@ TEST(Diagnostics, NormalWithFreshPeopleIsOk)
   controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
   t += 0.2;
   const auto st = controller.buildDiagnostics();
-  EXPECT_EQ(st.name, "controller_server: compass");
+  EXPECT_EQ(st.name, "controller_server: compass (FollowPath)");
   EXPECT_EQ(st.hardware_id, "/");
   EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::OK) << st.message;
+  EXPECT_EQ(st.message, "ok");
+  // Every field the deployment notes list, in order.
+  std::vector<std::string> keys;
+  for (const auto & kv : st.values) {keys.push_back(kv.key);}
+  EXPECT_EQ(
+    keys, (std::vector<std::string>{"plugin", "mode", "committed_class", "e_rev", "rho",
+      "people_topic", "people_count", "people_age_s", "people_timeout_s", "people_stale",
+      "people_applied_last_cycle", "people_tf_failures", "people_tf_last_failure_age_s",
+      "seconds_since_compute", "last_command"}));
+  EXPECT_EQ(value(st, "plugin"), "FollowPath");
   EXPECT_EQ(value(st, "mode"), "NORMAL");
+  // The far person is passed on one side: a one-person class "{7:L}" or "{7:R}".
+  EXPECT_EQ(value(st, "committed_class").rfind("{7:", 0), 0u) << value(st, "committed_class");
+  EXPECT_EQ(value(st, "e_rev"), "0.000");
+  EXPECT_EQ(value(st, "rho"), "0.000");
+  EXPECT_EQ(value(st, "people_topic"), "/people");
   EXPECT_EQ(value(st, "people_count"), "1");
   EXPECT_EQ(value(st, "people_applied_last_cycle"), "1");
   EXPECT_EQ(value(st, "people_age_s"), "0.30");
+  EXPECT_EQ(value(st, "people_timeout_s"), "0.50");
+  EXPECT_EQ(value(st, "people_stale"), "false");
+  EXPECT_EQ(value(st, "people_tf_failures"), "0");
+  EXPECT_EQ(value(st, "people_tf_last_failure_age_s"), "never");
   EXPECT_EQ(value(st, "seconds_since_compute"), "0.20");
   EXPECT_EQ(value(st, "last_command").rfind("drive (v=0.45", 0), 0u) << value(st, "last_command");
   controller.cleanup();
@@ -325,7 +408,7 @@ TEST(Diagnostics, PublishedOnlyWhileActive)
   auto sub = listener->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "/diagnostics", 10, [&](diagnostic_msgs::msg::DiagnosticArray::SharedPtr m) {
       for (const auto & s : m->status) {
-        if (s.name == "controller_server: compass") {++received;}
+        if (s.name == "controller_server: compass (FollowPath)") {++received;}
       }
     });
   rclcpp::executors::SingleThreadedExecutor exec;
