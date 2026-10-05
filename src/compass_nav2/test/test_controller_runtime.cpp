@@ -16,6 +16,8 @@
 // node with a configured costmap): people topic, people freshness, operator
 // diagnostics and the Humble task boundary.
 
+#include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,6 +39,7 @@ public:
     peopleCallback(std::make_shared<compass_msgs::msg::People>(msg));
   }
   compass::Mode mode() const {return state_.mode;}
+  using compass_nav2::CompassController::buildDiagnostics;
   uint64_t tfFailures() const {return tf_failures_.load();}
 };
 
@@ -206,6 +209,139 @@ TEST(PeopleFreshness, TransformFailureIsCounted)
   controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
   controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
   EXPECT_EQ(controller.tfFailures(), 2u);
+  controller.cleanup();
+}
+
+std::string value(const diagnostic_msgs::msg::DiagnosticStatus & st, const std::string & key)
+{
+  for (const auto & kv : st.values) {
+    if (kv.key == key) {return kv.value;}
+  }
+  return "<missing " + key + ">";
+}
+
+// A person 0.7 m ahead walking straight at the moving robot.
+compass_msgs::msg::People oncoming()
+{
+  compass_msgs::msg::People msg;
+  msg.header.frame_id = "map";
+  compass_msgs::msg::Person p;
+  p.id = 3;
+  p.x = 1.2;
+  p.y = 2.5;
+  p.vx = -1.0;
+  msg.people.push_back(p);
+  return msg;
+}
+
+geometry_msgs::msg::Twist moving()
+{
+  geometry_msgs::msg::Twist v;
+  v.linear.x = 0.45;
+  return v;
+}
+
+TEST(Diagnostics, NormalWithFreshPeopleIsOk)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  EXPECT_EQ(value(controller.buildDiagnostics(), "seconds_since_compute"), "never");
+  controller.setPlan(straightPath());
+  controller.deliver(onePerson());
+  t += 0.1;
+  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  t += 0.2;
+  const auto st = controller.buildDiagnostics();
+  EXPECT_EQ(st.name, "controller_server: compass");
+  EXPECT_EQ(st.hardware_id, "/");
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::OK) << st.message;
+  EXPECT_EQ(value(st, "mode"), "NORMAL");
+  EXPECT_EQ(value(st, "people_count"), "1");
+  EXPECT_EQ(value(st, "people_applied_last_cycle"), "1");
+  EXPECT_EQ(value(st, "people_age_s"), "0.30");
+  EXPECT_EQ(value(st, "seconds_since_compute"), "0.20");
+  EXPECT_EQ(value(st, "last_command").rfind("drive (v=0.45", 0), 0u) << value(st, "last_command");
+  controller.cleanup();
+}
+
+TEST(Diagnostics, StaleOrMissingPeopleWarn)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  auto st = controller.buildDiagnostics();
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(st.message, "no people message received on /people");
+  controller.deliver(onePerson());
+  t += 2.0;  // the tracker stopped; no control call needed for the warning
+  st = controller.buildDiagnostics();
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(st.message, "people input stale (2.00 s)");
+  EXPECT_EQ(value(st, "people_stale"), "true");
+  controller.cleanup();
+}
+
+TEST(Diagnostics, StopIsVisibleAndLatches)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  controller.setPlan(straightPath());
+  controller.deliver(oncoming());
+  const auto cmd = controller.computeVelocityCommands(startPose(), moving(), nullptr);
+  ASSERT_EQ(controller.mode(), compass::Mode::STOP);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  auto st = controller.buildDiagnostics();
+  EXPECT_EQ(st.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  EXPECT_EQ(value(st, "mode"), "STOP");
+  EXPECT_NE(st.message.find("STOP latched"), std::string::npos) << st.message;
+  EXPECT_EQ(value(st, "last_command").rfind("mode STOP", 0), 0u);
+  // The person leaves; published behaviour keeps STOP until reset.
+  controller.deliver(onePerson());
+  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
+  controller.reset();
+  EXPECT_EQ(value(controller.buildDiagnostics(), "mode"), "NORMAL");
+  controller.cleanup();
+}
+
+TEST(Diagnostics, PublishedOnlyWhileActive)
+{
+  Fixture f({{"FollowPath.diagnostics_period_s", 0.1}});
+  RuntimeProbe controller;
+  f.configure(controller);
+  auto listener = std::make_shared<rclcpp::Node>("diagnostics_listener");
+  std::atomic<int> received{0};
+  auto sub = listener->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+    "/diagnostics", 10, [&](diagnostic_msgs::msg::DiagnosticArray::SharedPtr m) {
+      for (const auto & s : m->status) {
+        if (s.name == "controller_server: compass") {++received;}
+      }
+    });
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(f.node->get_node_base_interface());
+  exec.add_node(listener);
+  const auto spin_for = [&](std::chrono::milliseconds d) {
+      const auto end = std::chrono::steady_clock::now() + d;
+      while (std::chrono::steady_clock::now() < end) {exec.spin_some(std::chrono::milliseconds(20));}
+    };
+  spin_for(std::chrono::milliseconds(500));
+  EXPECT_EQ(received.load(), 0);  // configured, not active
+  controller.activate();
+  for (int i = 0; i < 100 && received.load() < 3; ++i) {spin_for(std::chrono::milliseconds(50));}
+  EXPECT_GE(received.load(), 3);
+  controller.deactivate();
+  spin_for(std::chrono::milliseconds(300));  // drain messages already in flight
+  const int after = received.load();
+  spin_for(std::chrono::milliseconds(700));
+  EXPECT_EQ(received.load(), after);
   controller.cleanup();
 }
 

@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(compass_core REQUIRED)
 find_package(compass_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_util REQUIRED)
@@ -34,6 +35,7 @@ message(STATUS "compass_nav2: nav2_core ${nav2_core_VERSION}")
 
 set(dependencies
   compass_msgs
+  diagnostic_msgs
   nav2_core
   nav2_costmap_2d
   nav2_util

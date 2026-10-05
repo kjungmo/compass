@@ -34,6 +34,10 @@
 #include "nav_msgs/msg/path.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "diagnostic_msgs/msg/diagnostic_status.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
+
 #include "compass_msgs/msg/people.hpp"
 
 #include "compass_core/decision_core.hpp"
@@ -84,6 +88,26 @@ public:
   void setSpeedLimit(const double & speed_limit, const bool & percentage) override;
 
 protected:
+  // One control cycle; the caller holds mutex_. Sets cycle_reason_.
+  geometry_msgs::msg::TwistStamped computeLocked(
+    const geometry_msgs::msg::PoseStamped & pose,
+    const geometry_msgs::msg::Twist & velocity);
+
+  // Clears decision state (caller holds mutex_) and logs a mode change with `why`.
+  void resetLocked(const char * why);
+
+  // WARN/INFO log of a NORMAL/STOP/HOLD change with the reason (env_ still set).
+  void logModeTransition(
+    compass::Mode before, const compass::TopoClass & cstar_before, size_t people);
+
+  // Copies what the operator should see into the diagnostics snapshot.
+  void recordCycle(const geometry_msgs::msg::TwistStamped & cmd);
+
+  // The /diagnostics status for this controller at this instant (thread-safe:
+  // reads only the snapshot, the people input and atomics).
+  diagnostic_msgs::msg::DiagnosticStatus buildDiagnostics() const;
+  void publishDiagnostics();
+
   // ROS 파라미터 -> compass::Knobs 로딩 (모든 노브 1:1, plugin-name 스코프).
   void loadKnobs(
     const rclcpp_lifecycle::LifecycleNode::SharedPtr & node, const std::string & name);
@@ -136,6 +160,29 @@ protected:
   double people_timeout_s_{0.5};
   bool people_stale_hold_{false};
   std::atomic<uint64_t> tf_failures_{0};  // people TF lookups that failed
+
+  // 운영자 가시성: 벽시계 타이머로 /diagnostics 발행 (입력이 끊겨도 보인다).
+  rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    diag_pub_;
+  rclcpp::TimerBase::SharedPtr diag_timer_;
+  double diagnostics_period_s_{1.0};  // 0 disables
+  std::string diag_name_{"compass"};
+  std::string diag_hardware_id_;
+  const char * cycle_reason_{"none"};  // why the last command is what it is
+  size_t people_applied_{0};           // people passed to the core in the last cycle
+  struct Snapshot
+  {
+    compass::Mode mode{compass::Mode::NORMAL};
+    std::string committed_class{"{}"};
+    double e_rev{0.0};
+    double rho{0.0};
+    size_t people_applied{0};
+    bool computed{false};
+    double last_compute_steady{0.0};
+    std::string last_command{"none"};
+  };
+  mutable std::mutex diag_mutex_;
+  Snapshot snapshot_;  // diag_mutex_
   mutable std::mutex people_mutex_;
 
   // 결정 계층 상태 (주기 간 보존).

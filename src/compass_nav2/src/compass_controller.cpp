@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <vector>
 #include <stdexcept>
@@ -46,6 +47,26 @@ void getParam(
   const std::string full = ns + "." + key;
   nav2_util::declare_parameter_if_not_declared(node, full, rclcpp::ParameterValue(def));
   node->get_parameter(full, out);
+}
+
+const char * modeName(compass::Mode m)
+{
+  switch (m) {
+    case compass::Mode::STOP: return "STOP";
+    case compass::Mode::HOLD: return "HOLD";
+    default: return "NORMAL";
+  }
+}
+
+// "{7:L, 9:R}" — person id and the side the robot passes it on; "{}" if empty.
+std::string className(const compass::TopoClass & c)
+{
+  std::string s = "{";
+  for (const auto & [id, side] : c.pairs()) {
+    if (s.size() > 1) {s += ", ";}
+    s += std::to_string(id) + (side == compass::Side::L ? ":L" : ":R");
+  }
+  return s + "}";
 }
 }  // namespace
 
@@ -86,6 +107,15 @@ void CompassController::configure(
   people_sub_ = node->create_subscription<compass_msgs::msg::People>(
     people_topic_, rclcpp::SensorDataQoS(),
     std::bind(&CompassController::peopleCallback, this, std::placeholders::_1));
+
+  // Operator status on /diagnostics ("<node>: compass", hardware_id = namespace),
+  // published from a wall timer while active.
+  diag_name_ = std::string(node->get_name()) + ": compass";
+  diag_hardware_id_ = node->get_namespace();
+  if (diagnostics_period_s_ > 0.0) {
+    diag_pub_ = node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", rclcpp::QoS(10));
+  }
 
   RCLCPP_INFO(
     logger_, "CompassController '%s' 구성 완료 (E0=%.3f, e_max_rev=%.3f, max_v=%.3f, "
@@ -177,6 +207,7 @@ void CompassController::loadKnobs(
             "\" is not one of \"warn\", \"hold\"");
   }
   people_stale_hold_ = stale_action == "hold";
+  getParam(node, name, "diagnostics_period_s", diagnostics_period_s_, 1.0);
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(
@@ -232,11 +263,17 @@ void CompassController::validateParameters(const std::string & ns) const
   in("k_theta", k_theta_, 0.0, kInf);
   in("k_side", k_side_, 0.0, kInf);
   in("people_timeout_s", people_timeout_s_, 0.0, kInf, true);
+  in("diagnostics_period_s", diagnostics_period_s_, 0.0, kInf);
 }
 
 void CompassController::cleanup()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 정리.", plugin_name_.c_str());
+  if (diag_timer_) {
+    diag_timer_->cancel();
+    diag_timer_.reset();
+  }
+  diag_pub_.reset();
   people_sub_.reset();
   {
     std::lock_guard<std::mutex> lock(people_mutex_);
@@ -251,19 +288,159 @@ void CompassController::cleanup()
 void CompassController::activate()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 활성화.", plugin_name_.c_str());
+  auto node = node_.lock();
+  if (diag_pub_ && node) {
+    diag_pub_->on_activate();
+    // Wall timer: diagnostics keep coming when /clock or the control loop stops.
+    diag_timer_ = node->create_wall_timer(
+      std::chrono::duration<double>(diagnostics_period_s_),
+      std::bind(&CompassController::publishDiagnostics, this));
+  }
 }
 
 void CompassController::deactivate()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 비활성화.", plugin_name_.c_str());
+  if (diag_timer_) {
+    diag_timer_->cancel();
+    diag_timer_.reset();
+  }
+  if (diag_pub_) {
+    diag_pub_->on_deactivate();
+  }
 }
 
 void CompassController::reset()
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  resetLocked("controller reset (Nav2 ends the task)");
+}
+
+void CompassController::resetLocked(const char * why)
+{
+  const compass::Mode before = state_.mode;
   state_ = compass::DecisionState{};
   has_last_now_ = false;
   measured_progress_.reset();
+  if (before != compass::Mode::NORMAL) {
+    RCLCPP_INFO(
+      logger_, "CompassController: mode %s -> NORMAL: %s.", modeName(before), why);
+  }
+  std::lock_guard<std::mutex> lock(diag_mutex_);
+  snapshot_.mode = state_.mode;
+  snapshot_.committed_class = className(state_.c_star);
+  snapshot_.e_rev = state_.e_rev;
+  snapshot_.rho = state_.rho;
+}
+
+void CompassController::logModeTransition(
+  compass::Mode before, const compass::TopoClass & cstar_before, size_t people)
+{
+  const compass::Mode after = state_.mode;
+  if (after == compass::Mode::STOP) {
+    RCLCPP_WARN(
+      logger_, "CompassController: mode %s -> STOP: TTC of the committed class %s is %.2f s "
+      "< ttc_stop %.2f s while the safety ladder brakes (no safe class, or inside the safety "
+      "dwell or thrash window; %zu people). STOP holds a zero twist until reset.",
+      modeName(before), className(cstar_before).c_str(), env_.ttc(cstar_before),
+      knobs_.ttc_stop, people);
+  } else if (after == compass::Mode::HOLD) {
+    RCLCPP_WARN(
+      logger_, "CompassController: mode %s -> HOLD: %d safety interventions within W = %.1f s "
+      "reached n_thrash = %d (%zu people). HOLD holds a zero twist until reset.",
+      modeName(before), state_.n_thrash, knobs_.W, knobs_.n_thrash, people);
+  } else {
+    RCLCPP_INFO(
+      logger_, "CompassController: mode %s -> %s.", modeName(before), modeName(after));
+  }
+}
+
+void CompassController::recordCycle(const geometry_msgs::msg::TwistStamped & cmd)
+{
+  char command[160];
+  std::snprintf(
+    command, sizeof(command), "%s (v=%.2f m/s, w=%.2f rad/s)", cycle_reason_,
+    cmd.twist.linear.x, cmd.twist.angular.z);
+  const double now = steady_now_();
+  std::lock_guard<std::mutex> lock(diag_mutex_);
+  snapshot_.mode = state_.mode;
+  snapshot_.committed_class = className(state_.c_star);
+  snapshot_.e_rev = state_.e_rev;
+  snapshot_.rho = state_.rho;
+  snapshot_.people_applied = people_applied_;
+  snapshot_.computed = true;
+  snapshot_.last_compute_steady = now;
+  snapshot_.last_command = command;
+}
+
+diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() const
+{
+  using diagnostic_msgs::msg::DiagnosticStatus;
+  Snapshot s;
+  {
+    std::lock_guard<std::mutex> lock(diag_mutex_);
+    s = snapshot_;
+  }
+  size_t people_count = 0;
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    people_count = latest_people_ ? latest_people_->people.size() : 0;
+  }
+  const PeopleFreshness fresh = peopleFreshness();
+  const double now = steady_now_();
+  const auto fmt = [](double v, const char * spec) {
+      char b[48];
+      std::snprintf(b, sizeof(b), spec, v);
+      return std::string(b);
+    };
+
+  DiagnosticStatus st;
+  st.name = diag_name_;
+  st.hardware_id = diag_hardware_id_;
+  const auto kv = [&st](const std::string & k, const std::string & v) {
+      diagnostic_msgs::msg::KeyValue p;
+      p.key = k;
+      p.value = v;
+      st.values.push_back(p);
+    };
+  kv("plugin", plugin_name_);
+  kv("mode", modeName(s.mode));
+  kv("committed_class", s.committed_class);
+  kv("e_rev", fmt(s.e_rev, "%.3f"));
+  kv("rho", fmt(s.rho, "%.3f"));
+  kv("people_topic", people_topic_);
+  kv("people_count", std::to_string(people_count));
+  kv("people_age_s", fresh.received ? fmt(fresh.age_s, "%.2f") : "never received");
+  kv("people_timeout_s", fmt(people_timeout_s_, "%.2f"));
+  kv("people_stale", fresh.stale ? "true" : "false");
+  kv("people_applied_last_cycle", std::to_string(s.people_applied));
+  kv("people_tf_failures", std::to_string(tf_failures_.load()));
+  kv("seconds_since_compute", s.computed ? fmt(now - s.last_compute_steady, "%.2f") : "never");
+  kv("last_command", s.last_command);
+
+  std::vector<std::string> warnings;
+  if (s.mode == compass::Mode::STOP) {warnings.push_back("STOP latched (zero twist until reset)");}
+  if (s.mode == compass::Mode::HOLD) {warnings.push_back("HOLD (zero twist until reset)");}
+  if (!fresh.received) {
+    warnings.push_back("no people message received on " + people_topic_);
+  } else if (fresh.stale) {
+    warnings.push_back("people input stale (" + fmt(fresh.age_s, "%.2f") + " s)");
+  }
+  st.level = warnings.empty() ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
+  st.message = "ok";
+  for (size_t i = 0; i < warnings.size(); ++i) {
+    st.message = i ? st.message + "; " + warnings[i] : warnings[i];
+  }
+  return st;
+}
+
+void CompassController::publishDiagnostics()
+{
+  if (!diag_pub_ || !diag_pub_->is_activated()) {return;}
+  diagnostic_msgs::msg::DiagnosticArray array;
+  array.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
+  array.status.push_back(buildDiagnostics());
+  diag_pub_->publish(array);
 }
 
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
@@ -359,8 +536,18 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   nav2_core::GoalChecker * /*goal_checker*/)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
+  recordCycle(cmd);
+  return cmd;
+}
 
+geometry_msgs::msg::TwistStamped CompassController::computeLocked(
+  const geometry_msgs::msg::PoseStamped & pose,
+  const geometry_msgs::msg::Twist & velocity)
+{
   geometry_msgs::msg::TwistStamped cmd;
+  cycle_reason_ = "drive";
+  people_applied_ = 0;
   cmd.header.frame_id = pose.header.frame_id;
   cmd.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
 
@@ -372,6 +559,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     measured_progress_.reset();
     RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
       "Controller: pose/plan frame mismatch; holding command");
+    cycle_reason_ = "pose/plan frame differs from the costmap frame";
     return cmd;
   }
 
@@ -392,6 +580,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
         people_topic_.c_str(), people_stale_hold_ ? "holding command" : "deciding without people");
     }
     if (people_stale_hold_) {
+      cycle_reason_ = "people input stale (people_stale_action=hold)";
       return cmd;
     }
   }
@@ -412,6 +601,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   in.robot_vel = rvel;
   in.local_goal = computeLocalGoal(robot);
   in.people = extractPeople(robot);
+  people_applied_ = in.people.size();
 
   std::vector<compass::Point2D> path;
   path.reserve(global_plan_.poses.size());
@@ -441,12 +631,14 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     if (!std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
       measured_progress_.reset();
       RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: stale pose; holding command");
+      cycle_reason_ = "measured progress: stale pose";
       return cmd;
     }
     const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
       state_.c_star, path, progress_max_gap_, progress_max_speed_);
     if (!progress.valid) {
       RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: %s; holding command", progress.reason);
+      cycle_reason_ = "measured progress sample invalid";
       return cmd;
     }
     in.lateral_progress_delta_m = progress.delta_m;
@@ -477,6 +669,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   if (!std::isfinite(v) || !std::isfinite(v_cap) || v_cap < 0.0) {
     RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid controller speed configuration; holding command");
+    cycle_reason_ = "invalid speed limit";
     return cmd;
   }
   v = std::clamp(v, 0.0, v_cap);
@@ -494,6 +687,8 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     use_candidate_trajectories_, path, v, gains);
 
   // 4) 결정 코어 1주기 — DecisionState 는 멤버로 보존된다.
+  const compass::Mode mode_before = state_.mode;
+  const compass::TopoClass cstar_before = state_.c_star;
   compass::DecisionOutput out;
   try {
     out = core_->step(in, state_, env_);
@@ -502,13 +697,18 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     // the command adapter and leave a prior nonzero command unaddressed.
     RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid decision input: %s; holding command", error.what());
+    cycle_reason_ = "decision input rejected by the core";
     return cmd;
+  }
+  if (state_.mode != mode_before) {
+    logModeTransition(mode_before, cstar_before, in.people.size());
   }
 
   // 5) DecisionOutput -> TwistStamped.
   if (out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) {
     cmd.twist.linear.x = 0.0;
     cmd.twist.angular.z = 0.0;
+    cycle_reason_ = out.mode == compass::Mode::STOP ? "mode STOP" : "mode HOLD";
     return cmd;
   }
 
@@ -516,6 +716,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   // or unobserved legacy ray. In particular, a missing map must emit a complete
   // zero twist even when measured speed would otherwise produce a braking bound.
   if (!use_candidate_trajectories_ && !(env_.clearance(out.c_star) > 0.0)) {
+    cycle_reason_ = "committed ray blocked, unknown or off the costmap";
     return cmd;
   }
 
@@ -540,6 +741,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
         !env_.executionSafe(out.c_star, v, knobs_.d_safe, knobs_.ttc_min)) {
       RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
         "Candidate command changed safety outcome or is unavailable; holding command");
+      cycle_reason_ = "candidate rollout unsafe or unavailable at the commanded speed";
       return cmd;
     }
     // Sample zero is the exact command of the rollout revalidated after all

@@ -10,6 +10,7 @@
 
   <depend>compass_core</depend>
   <depend>compass_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>nav2_core</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav2_util</depend>
