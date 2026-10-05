@@ -215,6 +215,13 @@ Nav2 `controller_server` loading `compass_nav2::CompassController`:
 ros2 launch compass_sim sim_bringup.launch.py headless:=true
 ```
 
+In the published behaviour STOP latches and HOLD is absorbing: the plugin sends
+a zero twist until its state is reset, even after the person has left, and
+Nav2 then aborts the goal on its progress timeout. Optional, off-by-default
+release parameters (not part of the published method) and the operator
+diagnostics are described in the
+[plugin deployment notes](src/compass_nav2/README.md).
+
 See [`sim/README.md`](sim/README.md) for launch arguments, headless/WSL2
 notes, and the historical smoke-test scope. Re-run bringup for the current source
 before relying on it; quantitative physical metrics are future work, per §5.6.

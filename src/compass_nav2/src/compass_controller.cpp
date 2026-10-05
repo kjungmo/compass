@@ -211,6 +211,19 @@ void CompassController::loadKnobs(
   // Humble only (no Controller::reset()); declared everywhere so one YAML serves
   // both distributions. Ignored where Nav2 calls reset() at task end.
   getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 1.0);
+  // Opt-in STOP/HOLD release (adapter only, beyond the published method). -1
+  // keeps the published behaviour: STOP latches and HOLD is absorbing until reset.
+  getParam(node, name, "stop_release_dwell_s", stop_release_dwell_s_, -1.0);
+  getParam(node, name, "hold_release_after_s", hold_release_after_s_, -1.0);
+  for (const auto & [key, v] : {std::pair<const char *, double>{"stop_release_dwell_s",
+      stop_release_dwell_s_}, {"hold_release_after_s", hold_release_after_s_}})
+  {
+    if (!(v == -1.0 || (std::isfinite(v) && v >= 0.0))) {
+      throw std::invalid_argument(
+              name + "." + key + " = " + std::to_string(v) +
+              " must be -1 (latch, as published) or a duration >= 0");
+    }
+  }
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(
@@ -324,6 +337,8 @@ void CompassController::resetLocked(const char * why)
 {
   const compass::Mode before = state_.mode;
   state_ = compass::DecisionState{};
+  stop_clear_valid_ = false;
+  hold_since_valid_ = false;
   has_last_now_ = false;
   measured_progress_.reset();
   if (before != compass::Mode::NORMAL) {
@@ -335,6 +350,55 @@ void CompassController::resetLocked(const char * why)
   snapshot_.committed_class = className(state_.c_star);
   snapshot_.e_rev = state_.e_rev;
   snapshot_.rho = state_.rho;
+}
+
+void CompassController::maybeReleaseStop()
+{
+  if (stop_release_dwell_s_ < 0.0 || state_.mode != compass::Mode::STOP) {
+    stop_clear_valid_ = false;
+    return;
+  }
+  const double ttc = env_.ttc(state_.c_star);
+  if (!(ttc >= knobs_.ttc_stop)) {
+    stop_clear_valid_ = false;  // danger again: restart the dwell
+    return;
+  }
+  const double t = steady_now_();
+  if (!stop_clear_valid_) {
+    stop_clear_since_ = t;
+    stop_clear_valid_ = true;
+  }
+  if (t - stop_clear_since_ >= stop_release_dwell_s_) {
+    state_.mode = compass::Mode::NORMAL;
+    stop_clear_valid_ = false;
+    RCLCPP_INFO(
+      logger_, "CompassController: mode STOP -> NORMAL: TTC of the committed class %s has been "
+      ">= ttc_stop %.2f s for %.2f s (stop_release_dwell_s %.2f; opt-in, not part of the "
+      "published method).", className(state_.c_star).c_str(), knobs_.ttc_stop,
+      t - stop_clear_since_, stop_release_dwell_s_);
+  }
+}
+
+void CompassController::maybeReleaseHold()
+{
+  if (state_.mode != compass::Mode::HOLD) {
+    hold_since_valid_ = false;
+    return;
+  }
+  if (hold_release_after_s_ < 0.0) {return;}
+  const double t = steady_now_();
+  if (!hold_since_valid_) {
+    hold_since_ = t;
+    hold_since_valid_ = true;
+  }
+  if (t - hold_since_ >= hold_release_after_s_) {
+    state_.release_hold();
+    hold_since_valid_ = false;
+    RCLCPP_INFO(
+      logger_, "CompassController: mode HOLD -> NORMAL: released after %.2f s "
+      "(hold_release_after_s %.2f; opt-in, not part of the published method).",
+      t - hold_since_, hold_release_after_s_);
+  }
 }
 
 void CompassController::logModeTransition(
@@ -421,10 +485,20 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
   kv("people_tf_failures", std::to_string(tf_failures_.load()));
   kv("seconds_since_compute", s.computed ? fmt(now - s.last_compute_steady, "%.2f") : "never");
   kv("last_command", s.last_command);
+  kv("stop_release_dwell_s", fmt(stop_release_dwell_s_, "%.2f"));
+  kv("hold_release_after_s", fmt(hold_release_after_s_, "%.2f"));
 
   std::vector<std::string> warnings;
-  if (s.mode == compass::Mode::STOP) {warnings.push_back("STOP latched (zero twist until reset)");}
-  if (s.mode == compass::Mode::HOLD) {warnings.push_back("HOLD (zero twist until reset)");}
+  if (s.mode == compass::Mode::STOP) {
+    warnings.push_back(
+      stop_release_dwell_s_ < 0.0 ? "STOP latched (zero twist until reset)" :
+      "STOP (zero twist until released by stop_release_dwell_s or reset)");
+  }
+  if (s.mode == compass::Mode::HOLD) {
+    warnings.push_back(
+      hold_release_after_s_ < 0.0 ? "HOLD (zero twist until reset)" :
+      "HOLD (zero twist until released by hold_release_after_s or reset)");
+  }
   if (!fresh.received) {
     warnings.push_back("no people message received on " + people_topic_);
   } else if (fresh.stale) {
@@ -707,6 +781,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
     use_candidate_trajectories_, path, v, gains);
 
   // 4) 결정 코어 1주기 — DecisionState 는 멤버로 보존된다.
+  maybeReleaseHold();  // opt-in, off by default (beyond the published method)
   const compass::Mode mode_before = state_.mode;
   const compass::TopoClass cstar_before = state_.c_star;
   compass::DecisionOutput out;
@@ -723,6 +798,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
   if (state_.mode != mode_before) {
     logModeTransition(mode_before, cstar_before, in.people.size());
   }
+  if (state_.mode == compass::Mode::HOLD && !hold_since_valid_) {
+    hold_since_ = steady_now_();
+    hold_since_valid_ = true;
+  }
+  // Opt-in STOP release, off by default. This cycle's command stays the STOP
+  // zero twist; the next cycle decides in NORMAL.
+  maybeReleaseStop();
 
   // 5) DecisionOutput -> TwistStamped.
   if (out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) {

@@ -21,6 +21,7 @@ earlier behaviour except where noted.
 | `people_stale_action` | `"warn"` | `warn`: log and keep deciding with the last message (the earlier behaviour). `hold`: zero twist while stale. |
 | `diagnostics_period_s` | `1.0` | Period of the `/diagnostics` status (wall timer, while active); `0` disables it. |
 | `task_gap_reset_s` | `1.0` | Humble only, see below; `0` disables. Ignored on Iron and later. |
+| `stop_release_dwell_s`, `hold_release_after_s` | `-1` | Optional STOP/HOLD release, off by default; see below. |
 
 Why 0.5 s: it is a quarter of the default `ttc_min` (2.0 s), and a person at
 1.4 m/s closing head-on with the robot at 0.5 m/s moves about 0.95 m in that
@@ -59,6 +60,23 @@ NORMAL. Humble has no such hook; there the plugin treats a pause between control
 calls longer than `task_gap_reset_s` as a new task and resets the same state.
 Retries sent sooner than that keep the old state, and a control loop stalled
 for longer resets mid-task.
+
+### Optional release (off by default, not part of the published method)
+
+Two adapter parameters can end STOP or HOLD without a reset. They are not
+part of the method the paper describes or evaluates; enabling them is a
+deployment decision.
+
+| Parameter | Default | Meaning when `>= 0` |
+|---|---|---|
+| `stop_release_dwell_s` | `-1` (STOP latches) | STOP returns to NORMAL once the committed class's TTC has stayed `>= ttc_stop` continuously for this long (steady clock). The releasing cycle still sends the zero twist; the next cycle decides in NORMAL. |
+| `hold_release_after_s` | `-1` (HOLD absorbing) | After HOLD has lasted this long (steady clock), `DecisionState::release_hold()` is called before the next decision, which clears the intervention window. |
+
+The STOP release looks only at TTC; clearance and the safety ladder apply
+again from the next decision. If danger persists, the core may enter STOP or
+HOLD again. Any other value than `-1` or a duration `>= 0` fails configure.
+The release logs `STOP -> NORMAL` / `HOLD -> NORMAL` with the elapsed time, and
+`/diagnostics` reports both parameters.
 
 ## Other zero-twist cases
 

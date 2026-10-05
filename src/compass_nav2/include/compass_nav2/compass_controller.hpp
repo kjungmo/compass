@@ -100,6 +100,10 @@ protected:
   void logModeTransition(
     compass::Mode before, const compass::TopoClass & cstar_before, size_t people);
 
+  // Opt-in releases (no-ops with the default -1); caller holds mutex_.
+  void maybeReleaseStop();  // after the decision step (env_ set)
+  void maybeReleaseHold();  // before the decision step
+
   // Copies what the operator should see into the diagnostics snapshot.
   void recordCycle(const geometry_msgs::msg::TwistStamped & cmd);
 
@@ -224,6 +228,18 @@ protected:
   double task_gap_reset_s_{1.0};
   double last_call_steady_{0.0};
   bool has_last_call_{false};
+
+  // Opt-in STOP/HOLD release (adapter only; beyond the published method, where
+  // STOP latches and HOLD is absorbing until reset). -1 keeps that behaviour.
+  // stop_release_dwell_s >= 0: STOP -> NORMAL once TTC(c*) >= ttc_stop has held
+  // continuously that long. hold_release_after_s >= 0: release_hold() after
+  // HOLD has lasted that long. Both timed on the steady clock.
+  double stop_release_dwell_s_{-1.0};
+  double hold_release_after_s_{-1.0};
+  double stop_clear_since_{0.0};
+  bool stop_clear_valid_{false};
+  double hold_since_{0.0};
+  bool hold_since_valid_{false};
 
   std::mutex mutex_;
 };

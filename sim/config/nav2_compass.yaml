@@ -48,6 +48,9 @@ controller_server:
       people_stale_action: "warn"  # "warn": report, decide with the last message; "hold": zero twist
       diagnostics_period_s: 1.0  # s; /diagnostics status from a wall timer while active; 0 disables
       task_gap_reset_s: 1.0      # s; Humble only: a longer pause between control calls starts a new task; 0 disables
+      # Opt-in, beyond the published method (-1 = STOP latches / HOLD absorbing until reset):
+      stop_release_dwell_s: -1.0   # s; >= 0: STOP -> NORMAL after TTC >= ttc_stop held this long
+      hold_release_after_s: -1.0   # s; >= 0: leave HOLD after this long
 
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
