@@ -66,6 +66,19 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
           bash scripts/check_param_binding.sh src/compass_nav2/config/compass_params.yaml sim/config/nav2_compass.yaml
+      - name: The binding check fails on an undeclared key and on an out-of-range value
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          expect_fail() {  # <fixture> <text that must appear in the output>
+            set +e; out=$(bash scripts/check_param_binding.sh "$1" 2>&1); rc=$?; set -e
+            echo "$out" | grep -a -E "YAML keys|NOT DECLARED|rejected|outside the allowed range" || true
+            [ "$rc" -ne 0 ] && grep -a -q -F "$2" <<< "$out" || { echo "expected failure not seen for $1 (rc=$rc)"; echo "$out"; exit 1; }
+          }
+          expect_fail scripts/param_binding_fixtures/undeclared_key.yaml "NOT DECLARED by /controller_server: FollowPath.progress_length"
+          expect_fail scripts/param_binding_fixtures/out_of_range.yaml "FollowPath.d_safe = -0.5 is outside the allowed range"
       - name: Verify simulation package install assets and Python syntax
         shell: bash
         run: |
@@ -103,3 +116,16 @@ jobs:
           source /opt/ros/humble/setup.bash
           source install/setup.bash
           bash scripts/check_param_binding.sh src/compass_nav2/config/compass_params.yaml sim/config/nav2_compass.yaml
+      - name: The binding check fails on an undeclared key and on an out-of-range value
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          expect_fail() {  # <fixture> <text that must appear in the output>
+            set +e; out=$(bash scripts/check_param_binding.sh "$1" 2>&1); rc=$?; set -e
+            echo "$out" | grep -a -E "YAML keys|NOT DECLARED|rejected|outside the allowed range" || true
+            [ "$rc" -ne 0 ] && grep -a -q -F "$2" <<< "$out" || { echo "expected failure not seen for $1 (rc=$rc)"; echo "$out"; exit 1; }
+          }
+          expect_fail scripts/param_binding_fixtures/undeclared_key.yaml "NOT DECLARED by /controller_server: FollowPath.progress_length"
+          expect_fail scripts/param_binding_fixtures/out_of_range.yaml "FollowPath.d_safe = -0.5 is outside the allowed range"
