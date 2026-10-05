@@ -48,10 +48,16 @@ public:
   {
     if (!ros_clock_) {
       ros_clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
-      rcl_enable_ros_time_override(ros_clock_->get_clock_handle());
+      if (rcl_enable_ros_time_override(ros_clock_->get_clock_handle()) != RCL_RET_OK) {
+        throw std::runtime_error("cannot enable the ROS time override");
+      }
       clock_ = ros_clock_;
     }
-    rcl_set_ros_time_override(ros_clock_->get_clock_handle(), static_cast<int64_t>(s * 1e9));
+    if (rcl_set_ros_time_override(
+        ros_clock_->get_clock_handle(), static_cast<int64_t>(s * 1e9)) != RCL_RET_OK)
+    {
+      throw std::runtime_error("cannot set the ROS time override");
+    }
   }
   rclcpp::Clock::SharedPtr ros_clock_;
 };
