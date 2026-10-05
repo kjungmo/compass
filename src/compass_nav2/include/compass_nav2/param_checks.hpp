@@ -58,16 +58,6 @@ inline double nominalDecisionDt(double controller_frequency_hz)
          1.0 / controller_frequency_hz : 0.05;
 }
 
-// Humble task boundary: Nav2 Humble has no Controller::reset() hook. Evaluated
-// when a plan arrives: it starts a new task only if the control loop has been
-// idle (no control call) for longer than threshold_s (> 0). In-loop plan
-// updates arrive within one control iteration and never qualify.
-inline bool newPlanStartsNewTask(
-  bool has_last_call, double last_call_s, double now_s, double threshold_s)
-{
-  return threshold_s > 0.0 && has_last_call && now_s - last_call_s > threshold_s;
-}
-
 // Empty when discretionary switching is reachable at period dt; otherwise a
 // warning with the numbers. The bound is the core's own non-vacuity condition
 // (compass::is_non_vacuous) with D_max = w_g + w_s + w_e + w_r, the largest cost
