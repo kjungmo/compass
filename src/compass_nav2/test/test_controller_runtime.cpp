@@ -560,26 +560,77 @@ TEST(TaskBoundary, FastRetryKeepsState)
 
 namespace
 {
-// Enters STOP at t, then the person walks away; returns the controller in STOP.
-void enterStop(RuntimeProbe & controller, double & t)
+compass_msgs::msg::People person(double x, double y, double vx, const char * frame = "map")
 {
-  controller.setPlan(straightPath());
-  controller.deliver(oncoming());
-  controller.computeVelocityCommands(startPose(), moving(), nullptr);
-  ASSERT_EQ(controller.mode(), compass::Mode::STOP);
-  (void)t;
+  compass_msgs::msg::People msg;
+  msg.header.frame_id = frame;
+  compass_msgs::msg::Person p;
+  p.id = 3;
+  p.x = x;
+  p.y = y;
+  p.vx = vx;
+  msg.people.push_back(p);
+  return msg;
 }
 
-// One control call dt later; the tracker reports nobody (the person has left),
-// so the committed empty class is safe and the core takes no safety branch.
-geometry_msgs::msg::TwistStamped step(RuntimeProbe & controller, double & t, double dt)
+compass_msgs::msg::People empty()
 {
-  t += dt;
-  compass_msgs::msg::People nobody;
-  nobody.header.frame_id = "map";
-  controller.deliver(nobody);  // fresh input
-  return controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  compass_msgs::msg::People msg;
+  msg.header.frame_id = "map";
+  return msg;
 }
+
+// A configured controller whose steady and decision (ROS) clocks the test drives.
+struct Rig
+{
+  Fixture f;
+  RuntimeProbe c;
+  double t{100.0};
+
+  explicit Rig(const Params & p = {})
+  : f(p)
+  {
+    c.useSteady(&t);
+    f.configure(c);
+    c.useRosTime(t);
+    c.setPlan(straightPath());
+  }
+  ~Rig() {c.cleanup();}
+
+  // One control call dt later; `msg` (if any) arrives just before it.
+  geometry_msgs::msg::TwistStamped step(
+    double dt, const compass_msgs::msg::People * msg, double speed = 0.0)
+  {
+    t += dt;
+    c.useRosTime(t);
+    if (msg) {c.deliver(*msg);}
+    geometry_msgs::msg::Twist v;
+    v.linear.x = speed;
+    return c.computeVelocityCommands(startPose(), v, nullptr);
+  }
+
+  // STOP with the committed class {3:L|R}: the robot commits to passing person 3
+  // while it is far, then the person walks at the moving robot (TTC 0.48 s).
+  void stopCommitted()
+  {
+    const auto far = person(3.5, 2.5, 0.0);
+    step(0.0, &far, 0.45);
+    ASSERT_EQ(c.mode(), compass::Mode::NORMAL);
+    const auto oncoming = person(1.2, 2.5, -1.0);
+    step(1.0, &oncoming, 0.45);
+    ASSERT_EQ(c.mode(), compass::Mode::STOP);
+  }
+
+  // STOP with the empty committed class (first decision already in danger).
+  void stopUncommitted()
+  {
+    const auto oncoming = person(1.2, 2.5, -1.0);
+    step(0.0, &oncoming, 0.45);
+    ASSERT_EQ(c.mode(), compass::Mode::STOP);
+  }
+};
+
+const Params kRelease{{"FollowPath.stop_release_dwell_s", 0.5}};
 }  // namespace
 
 TEST(OptionalRelease, DefaultsLatchStopAndHoldAsPublished)
@@ -587,97 +638,128 @@ TEST(OptionalRelease, DefaultsLatchStopAndHoldAsPublished)
   for (const auto & params : {Params{}, Params{{"FollowPath.stop_release_dwell_s", -1.0},
       {"FollowPath.hold_release_after_s", -1.0}}})
   {
-    Fixture f(params);
-    RuntimeProbe controller;
-    double t = 100.0;
-    controller.useSteady(&t);
-    f.configure(controller);
-    enterStop(controller, t);
-    for (int i = 0; i < 60; ++i) {  // 30 s with the person gone
-      const auto cmd = step(controller, t, 0.5);
-      EXPECT_EQ(controller.mode(), compass::Mode::STOP);
+    Rig r(params);
+    r.stopUncommitted();
+    const auto nobody = empty();
+    for (int i = 0; i < 60; ++i) {  // 30 s, the person gone, fresh input
+      const auto cmd = r.step(0.5, &nobody);
+      EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
       EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
       EXPECT_DOUBLE_EQ(cmd.twist.angular.z, 0.0);
     }
-    controller.forceHold();
+    r.c.forceHold();
     for (int i = 0; i < 60; ++i) {
-      EXPECT_DOUBLE_EQ(step(controller, t, 0.5).twist.linear.x, 0.0);
-      EXPECT_EQ(controller.mode(), compass::Mode::HOLD);
+      EXPECT_DOUBLE_EQ(r.step(0.5, &nobody).twist.linear.x, 0.0);
+      EXPECT_EQ(r.c.mode(), compass::Mode::HOLD);
     }
-    controller.cleanup();
   }
 }
 
-TEST(OptionalRelease, StopReleasesAfterContinuousSafeDwell)
+// The halted robot's measured-speed TTC to a person standing 0.7 m ahead is the
+// 10 s default; at the resume speed (0.45 m/s) it is 1.56 s < ttc_min.
+TEST(OptionalRelease, StandingPersonInsideResumeEnvelopeNeverReleases)
 {
-  Fixture f(Params{{"FollowPath.stop_release_dwell_s", 0.5}});
-  RuntimeProbe controller;
-  double t = 100.0;
-  controller.useSteady(&t);
-  f.configure(controller);
-  enterStop(controller, t);
-  step(controller, t, 0.1);  // TTC clear from here (t = 100.1)
-  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
-  step(controller, t, 0.3);  // 0.3 s clear
-  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
-  auto cmd = step(controller, t, 0.25);  // 0.55 s clear: released, this command still zero
-  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
-  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
-  cmd = step(controller, t, 0.05);
-  EXPECT_GT(cmd.twist.linear.x, 0.0);
-  controller.cleanup();
+  Rig r(kRelease);
+  r.stopCommitted();
+  const auto standing = person(1.2, 2.5, 0.0);
+  for (int i = 0; i < 60; ++i) {  // 30 s
+    const auto cmd = r.step(0.5, &standing);
+    ASSERT_EQ(r.c.mode(), compass::Mode::STOP) << "released after " << (i + 1) * 0.5 << " s";
+    EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+  }
 }
 
-TEST(OptionalRelease, StopDwellRestartsWhenDangerReturns)
+TEST(OptionalRelease, PersonWalksAwayReleasesAfterDwellWithoutLurch)
 {
-  Fixture f(Params{{"FollowPath.stop_release_dwell_s", 0.5}});
-  RuntimeProbe controller;
-  double t = 100.0;
-  controller.useSteady(&t);
-  f.configure(controller);
-  enterStop(controller, t);
-  step(controller, t, 0.1);  // clear since 100.1
-  step(controller, t, 0.3);
-  t += 0.05;  // the person comes back: TTC < ttc_stop
-  controller.deliver(oncoming());
-  controller.computeVelocityCommands(startPose(), moving(), nullptr);
-  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
-  step(controller, t, 0.1);  // clear again since here
-  step(controller, t, 0.3);
-  EXPECT_EQ(controller.mode(), compass::Mode::STOP);  // only 0.3 s of the new dwell
-  step(controller, t, 0.25);
-  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
-  controller.cleanup();
+  Rig r(kRelease);
+  r.stopCommitted();
+  const auto away = person(4.5, 2.5, 0.0);  // TTC at 0.45 m/s: 8.9 s
+  r.step(0.1, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  r.step(0.3, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);  // 0.3 s of the 0.5 s dwell
+  auto cmd = r.step(0.25, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);  // the releasing cycle still stops
+  for (int i = 0; i < 10; ++i) {  // driving again: no STOP -> drive -> STOP lurch
+    cmd = r.step(0.05, &away, 0.45);
+    EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
+    EXPECT_GT(cmd.twist.linear.x, 0.0);
+  }
+}
+
+TEST(OptionalRelease, StaleOrMissingPeopleNeverRelease)
+{
+  Rig r(kRelease);
+  r.stopUncommitted();
+  const auto nobody = empty();
+  r.step(0.1, &nobody);  // the last message: nobody there
+  for (int i = 0; i < 300; ++i) {  // 30 s with the tracker silent
+    r.step(0.1, nullptr);
+    ASSERT_EQ(r.c.mode(), compass::Mode::STOP) << "released after " << (i + 1) * 0.1 << " s";
+  }
+}
+
+TEST(OptionalRelease, PeopleTfFailureNeverReleases)
+{
+  Rig r(kRelease);
+  r.stopUncommitted();
+  const auto unknown_frame = person(4.5, 2.5, 0.0, "tracker_frame");  // no TF to map
+  for (int i = 0; i < 60; ++i) {
+    r.step(0.5, &unknown_frame);
+    ASSERT_EQ(r.c.mode(), compass::Mode::STOP) << "released after " << (i + 1) * 0.5 << " s";
+  }
+}
+
+TEST(OptionalRelease, DwellRestartsWhenDangerReturns)
+{
+  Rig r(kRelease);
+  r.stopCommitted();
+  const auto away = person(4.5, 2.5, 0.0);
+  const auto standing = person(1.2, 2.5, 0.0);
+  r.step(0.1, &away);
+  r.step(0.3, &away);
+  r.step(0.05, &standing);  // back inside the envelope: dwell restarts
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);
+  r.step(0.1, &away);
+  r.step(0.3, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::STOP);  // 0.3 s of the new dwell
+  r.step(0.25, &away);
+  EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
 }
 
 TEST(OptionalRelease, HoldReleasesAfterConfiguredTime)
 {
-  Fixture f(Params{{"FollowPath.hold_release_after_s", 2.0}});
-  RuntimeProbe controller;
-  double t = 100.0;
-  controller.useSteady(&t);
-  f.configure(controller);
-  controller.setPlan(straightPath());
-  controller.forceHold();
-  EXPECT_DOUBLE_EQ(step(controller, t, 0.05).twist.linear.x, 0.0);  // HOLD since 100.05
-  // Steps stay below task_gap_reset_s so the Humble task boundary does not reset.
-  for (int i = 0; i < 3; ++i) {  // up to 1.55 s in HOLD
-    EXPECT_DOUBLE_EQ(step(controller, t, 0.5).twist.linear.x, 0.0);
-    EXPECT_EQ(controller.mode(), compass::Mode::HOLD);
+  Rig r(Params{{"FollowPath.hold_release_after_s", 4.0}});
+  r.c.forceHold();
+  const auto nobody = empty();
+  EXPECT_DOUBLE_EQ(r.step(0.05, &nobody).twist.linear.x, 0.0);  // HOLD since here
+  for (int i = 0; i < 7; ++i) {  // up to 3.5 s in HOLD
+    EXPECT_DOUBLE_EQ(r.step(0.5, &nobody).twist.linear.x, 0.0);
+    EXPECT_EQ(r.c.mode(), compass::Mode::HOLD);
   }
-  const auto cmd = step(controller, t, 0.55);  // 2.1 s: released before deciding
-  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
+  const auto cmd = r.step(0.55, &nobody);  // 4.05 s: released before deciding
+  EXPECT_EQ(r.c.mode(), compass::Mode::NORMAL);
   EXPECT_GT(cmd.twist.linear.x, 0.0);
-  controller.cleanup();
 }
 
-TEST(OptionalRelease, RejectsNegativeDurationsOtherThanMinusOne)
+TEST(OptionalRelease, RejectsUnsafeDurations)
 {
-  for (const char * key : {"FollowPath.stop_release_dwell_s", "FollowPath.hold_release_after_s"}) {
-    Fixture f(Params{{key, -0.5}});
+  const std::vector<rclcpp::Parameter> bad = {
+    {"FollowPath.stop_release_dwell_s", -0.5},
+    {"FollowPath.hold_release_after_s", -0.5},
+    {"FollowPath.hold_release_after_s", 0.0},   // would disable the thrash guard
+    {"FollowPath.hold_release_after_s", 2.9},   // shorter than W = 3 s
+  };
+  for (const auto & p : bad) {
+    Fixture f(Params{p});
     RuntimeProbe controller;
-    EXPECT_THROW(f.configure(controller), std::invalid_argument) << key;
+    EXPECT_THROW(f.configure(controller), std::invalid_argument) << p.get_name();
   }
+  Fixture f(Params{{"FollowPath.hold_release_after_s", 3.0}});
+  RuntimeProbe controller;
+  EXPECT_NO_THROW(f.configure(controller));
+  controller.cleanup();
 }
 
 int main(int argc, char ** argv)

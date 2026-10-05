@@ -101,7 +101,9 @@ protected:
     compass::Mode before, const compass::TopoClass & cstar_before, size_t people);
 
   // Opt-in releases (no-ops with the default -1); caller holds mutex_.
-  void maybeReleaseStop();  // after the decision step (env_ set)
+  // After the decision step (env_ set). resume_speed: the nominal speed the
+  // robot would drive at (cruise, goal taper and speed limit applied).
+  void maybeReleaseStop(double resume_speed, bool people_fresh, bool people_tf_ok);
   void maybeReleaseHold();  // before the decision step
 
   // Copies what the operator should see into the diagnostics snapshot.
@@ -230,13 +232,17 @@ protected:
 
   // Opt-in STOP/HOLD release (adapter only; beyond the published method, where
   // STOP latches and HOLD is absorbing until reset). -1 keeps that behaviour.
-  // stop_release_dwell_s >= 0: STOP -> NORMAL once TTC(c*) >= ttc_stop has held
-  // continuously that long. hold_release_after_s >= 0: release_hold() after
-  // HOLD has lasted that long. Both timed on the steady clock.
+  // stop_release_dwell_s >= 0: STOP -> NORMAL once, continuously for that long,
+  // the people input is fresh with no TF failure and the committed class is safe
+  // at the resume speed (clearance >= d_safe, TTC >= ttc_min, feasible).
+  // hold_release_after_s >= W: release_hold() after HOLD has lasted that long.
+  // Both timed on the steady clock.
   double stop_release_dwell_s_{-1.0};
   double hold_release_after_s_{-1.0};
   double stop_clear_since_{0.0};
   bool stop_clear_valid_{false};
+  bool stop_release_checked_{false};  // the release check ran this cycle
+  bool cycle_tf_failed_{false};       // a people TF lookup failed this cycle
   double hold_since_{0.0};
   bool hold_since_valid_{false};
 

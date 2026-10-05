@@ -61,7 +61,14 @@ public:
   bool executionSafe(
     const compass::TopoClass & c, double speed, double d_safe, double ttc_min) const;
 
+  // TTC of class c if the robot moved at `speed` instead of its measured speed
+  // (the speed it would resume at). ttc(c) == ttcAtSpeed(c, measured) in the
+  // legacy model and ttcAtSpeed(c, candidate speed) with candidate rollouts.
+  double ttcAtSpeed(const compass::TopoClass & c, double speed) const;
+
 private:
+  // Legacy line-of-sight TTC to the nearest approaching person (class-independent).
+  double legacyTtc(double robot_speed) const;
   // Mean class-side sign (L=+1, R=-1), matching path tracking; empty class -> 0.
   double lateral_bias(const compass::TopoClass & c) const;
   // (wx,wy) 가 lethal/inscribed 이상으로 점유되었는지.

@@ -215,14 +215,22 @@ void CompassController::loadKnobs(
   // keeps the published behaviour: STOP latches and HOLD is absorbing until reset.
   getParam(node, name, "stop_release_dwell_s", stop_release_dwell_s_, -1.0);
   getParam(node, name, "hold_release_after_s", hold_release_after_s_, -1.0);
-  for (const auto & [key, v] : {std::pair<const char *, double>{"stop_release_dwell_s",
-      stop_release_dwell_s_}, {"hold_release_after_s", hold_release_after_s_}})
+  if (!(stop_release_dwell_s_ == -1.0 ||
+    (std::isfinite(stop_release_dwell_s_) && stop_release_dwell_s_ >= 0.0)))
   {
-    if (!(v == -1.0 || (std::isfinite(v) && v >= 0.0))) {
-      throw std::invalid_argument(
-              name + "." + key + " = " + std::to_string(v) +
-              " must be -1 (latch, as published) or a duration >= 0");
-    }
+    throw std::invalid_argument(
+            name + ".stop_release_dwell_s = " + std::to_string(stop_release_dwell_s_) +
+            " must be -1 (latch, as published) or a duration >= 0");
+  }
+  // A HOLD shorter than the thrash window W would disable the P5 guard: the
+  // interventions that caused HOLD would still be counted when it ends.
+  if (!(hold_release_after_s_ == -1.0 ||
+    (std::isfinite(hold_release_after_s_) && hold_release_after_s_ >= knobs_.W)))
+  {
+    throw std::invalid_argument(
+            name + ".hold_release_after_s = " + std::to_string(hold_release_after_s_) +
+            " must be -1 (absorbing, as published) or >= W (" + std::to_string(knobs_.W) +
+            " s, the thrash window)");
   }
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
@@ -352,15 +360,28 @@ void CompassController::resetLocked(const char * why)
   snapshot_.rho = state_.rho;
 }
 
-void CompassController::maybeReleaseStop()
+void CompassController::maybeReleaseStop(
+  double resume_speed, bool people_fresh, bool people_tf_ok)
 {
+  stop_release_checked_ = true;
   if (stop_release_dwell_s_ < 0.0 || state_.mode != compass::Mode::STOP) {
     stop_clear_valid_ = false;
     return;
   }
-  const double ttc = env_.ttc(state_.c_star);
-  if (!(ttc >= knobs_.ttc_stop)) {
-    stop_clear_valid_ = false;  // danger again: restart the dwell
+  // Release only on evidence that resuming is safe. The robot is halted, so
+  // the measured-speed TTC says nothing about a person standing ahead, and with
+  // no usable people data it would read "clear" while blind. Require, in this
+  // cycle: (1) fresh people input and no people-TF failure; (2) the committed
+  // class in the safe set evaluated at the speed the robot would resume at:
+  // clearance >= d_safe, TTC at that speed >= ttc_min (not ttc_stop, for
+  // hysteresis) and feasible. Any violation restarts the dwell.
+  const compass::TopoClass & c = state_.c_star;
+  const double clear = env_.clearance(c);
+  const double ttc_resume = env_.ttcAtSpeed(c, resume_speed);
+  const bool safe_to_resume = people_fresh && people_tf_ok &&
+    clear >= knobs_.d_safe && ttc_resume >= knobs_.ttc_min && env_.feasible(c);
+  if (!safe_to_resume) {
+    stop_clear_valid_ = false;
     return;
   }
   const double t = steady_now_();
@@ -372,10 +393,11 @@ void CompassController::maybeReleaseStop()
     state_.mode = compass::Mode::NORMAL;
     stop_clear_valid_ = false;
     RCLCPP_INFO(
-      logger_, "CompassController: mode STOP -> NORMAL: TTC of the committed class %s has been "
-      ">= ttc_stop %.2f s for %.2f s (stop_release_dwell_s %.2f; opt-in, not part of the "
-      "published method).", className(state_.c_star).c_str(), knobs_.ttc_stop,
-      t - stop_clear_since_, stop_release_dwell_s_);
+      logger_, "CompassController: mode STOP -> NORMAL: committed class %s safe to resume at "
+      "%.2f m/s for %.2f s (clearance %.2f >= d_safe %.2f m, TTC %.2f >= ttc_min %.2f s, fresh "
+      "people input; stop_release_dwell_s %.2f; opt-in, not part of the published method).",
+      className(c).c_str(), resume_speed, t - stop_clear_since_, clear, knobs_.d_safe,
+      ttc_resume, knobs_.ttc_min, stop_release_dwell_s_);
   }
 }
 
@@ -614,6 +636,7 @@ std::vector<compass::Person> CompassController::extractPeople(const compass::SE2
   }
   std::string tf_error;
   std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_, &tf_error);
+  cycle_tf_failed_ = !tf_error.empty();
   if (!tf_error.empty()) {
     // 변환 불가 시 이번 주기는 사람 없이 진행한다(기존 동작); 이제는 알린다.
     ++tf_failures_;
@@ -645,7 +668,11 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   last_call_steady_ = steady_now_();
   has_last_call_ = true;
 #endif
+  stop_release_checked_ = false;
   const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
+  if (!stop_release_checked_) {
+    stop_clear_valid_ = false;  // a cycle without a release check restarts the dwell
+  }
   recordCycle(cmd);
   return cmd;
 }
@@ -657,6 +684,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
   geometry_msgs::msg::TwistStamped cmd;
   cycle_reason_ = "drive";
   people_applied_ = 0;
+  cycle_tf_failed_ = false;
   cmd.header.frame_id = pose.header.frame_id;
   cmd.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
 
@@ -824,7 +852,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
   }
   // Opt-in STOP release, off by default. This cycle's command stays the STOP
   // zero twist; the next cycle decides in NORMAL.
-  maybeReleaseStop();
+  maybeReleaseStop(v, !people_fresh.stale, !cycle_tf_failed_);
 
   // 5) DecisionOutput -> TwistStamped.
   if (out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) {
