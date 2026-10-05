@@ -65,6 +65,15 @@ inline double decisionDt(bool has_last, double last_now, double now, double nomi
   return (has_last && now > last_now) ? (now - last_now) : nominal_dt;
 }
 
+// Humble task boundary: Nav2 Humble has no Controller::reset() hook, so a gap
+// between control calls longer than threshold_s (> 0) is taken as the start of
+// a new task. Within a task controller_server calls the plugin every period.
+inline bool controlGapStartsNewTask(
+  bool has_last_call, double last_call_s, double now_s, double threshold_s)
+{
+  return threshold_s > 0.0 && has_last_call && now_s - last_call_s > threshold_s;
+}
+
 // Empty when discretionary switching is reachable at period dt; otherwise a
 // warning with the numbers. The bound is the core's own non-vacuity condition
 // (compass::is_non_vacuous) with D_max = w_g + w_s + w_e + w_r, the largest cost

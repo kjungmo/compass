@@ -218,6 +218,12 @@ protected:
   bool has_last_now_{false};
   // Decision period before the first measured interval: 1/controller_frequency.
   double nominal_dt_{0.05};
+  // Humble task boundary (no Controller::reset()): a control-call gap longer than
+  // this starts a new task and resets the decision state; 0 disables. Unused on
+  // distributions whose controller_server calls reset() at task end.
+  double task_gap_reset_s_{1.0};
+  double last_call_steady_{0.0};
+  bool has_last_call_{false};
 
   std::mutex mutex_;
 };

@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include "compass_nav2/compass_controller.hpp"
+#include "compass_nav2/param_checks.hpp"
 
 namespace
 {
@@ -342,6 +343,47 @@ TEST(Diagnostics, PublishedOnlyWhileActive)
   const int after = received.load();
   spin_for(std::chrono::milliseconds(700));
   EXPECT_EQ(received.load(), after);
+  controller.cleanup();
+}
+
+TEST(TaskBoundary, GapRule)
+{
+  using compass_nav2::controlGapStartsNewTask;
+  EXPECT_FALSE(controlGapStartsNewTask(false, 0.0, 50.0, 1.0));  // first call
+  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 10.05, 1.0));  // next period
+  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 11.0, 1.0));   // boundary excluded
+  EXPECT_TRUE(controlGapStartsNewTask(true, 10.0, 11.01, 1.0));
+  EXPECT_FALSE(controlGapStartsNewTask(true, 10.0, 99.0, 0.0));   // disabled
+}
+
+// Humble (no reset hook): a control-call gap above task_gap_reset_s starts a new
+// task, as Jazzy's reset() at task end does. Jazzy: the gap changes nothing.
+TEST(TaskBoundary, ControlGapResetsOnlyWithoutResetHook)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  controller.setPlan(straightPath());
+  controller.deliver(oncoming());
+  controller.computeVelocityCommands(startPose(), moving(), nullptr);
+  ASSERT_EQ(controller.mode(), compass::Mode::STOP);
+  controller.deliver(onePerson());
+  t += 0.5;  // within a task
+  controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
+  t += 2.0;  // the next goal starts after a 2 s pause
+  controller.deliver(onePerson());
+  const auto cmd =
+    controller.computeVelocityCommands(startPose(), geometry_msgs::msg::Twist(), nullptr);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
+  EXPECT_GT(cmd.twist.linear.x, 0.0);
+#else
+  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
+  EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
+#endif
   controller.cleanup();
 }
 
