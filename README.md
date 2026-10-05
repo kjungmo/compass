@@ -228,6 +228,7 @@ before relying on it; quantitative physical metrics are future work, per §5.6.
 | [`src/compass_eval/results/`](src/compass_eval/results/) | Corrected R1/R5, archived R3, raw CSV and scoped research diagnostics |
 | [`sim/README.md`](sim/README.md) | Testbed usage, launch args, WSL2/headless guidance |
 | [`src/README.md`](src/README.md) | Package-level notes |
+| [`src/compass_nav2/README.md`](src/compass_nav2/README.md) | Nav2 plugin deployment notes: people input freshness, `/diagnostics`, STOP/HOLD latching, Humble task boundary |
 | [`src/compass_eval/RESPONSIVENESS.md`](src/compass_eval/RESPONSIVENESS.md) | Opt-in responsiveness profile, measured-progress contract and pending physical pilot |
 | [`docs/CANDIDATE_TRAJECTORIES.md`](docs/CANDIDATE_TRAJECTORIES.md) | Opt-in candidate rollout, environment and command contract; limitations |
 
