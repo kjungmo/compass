@@ -494,9 +494,12 @@ TEST(OptionalRelease, HoldReleasesAfterConfiguredTime)
   controller.setPlan(straightPath());
   controller.forceHold();
   EXPECT_DOUBLE_EQ(step(controller, t, 0.05).twist.linear.x, 0.0);  // HOLD since 100.05
-  EXPECT_DOUBLE_EQ(step(controller, t, 1.5).twist.linear.x, 0.0);
-  EXPECT_EQ(controller.mode(), compass::Mode::HOLD);
-  const auto cmd = step(controller, t, 0.6);  // 2.1 s: released before deciding
+  // Steps stay below task_gap_reset_s so the Humble task boundary does not reset.
+  for (int i = 0; i < 3; ++i) {  // up to 1.55 s in HOLD
+    EXPECT_DOUBLE_EQ(step(controller, t, 0.5).twist.linear.x, 0.0);
+    EXPECT_EQ(controller.mode(), compass::Mode::HOLD);
+  }
+  const auto cmd = step(controller, t, 0.55);  // 2.1 s: released before deciding
   EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
   EXPECT_GT(cmd.twist.linear.x, 0.0);
   controller.cleanup();
