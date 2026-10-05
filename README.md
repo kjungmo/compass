@@ -142,6 +142,10 @@ source install/setup.bash
 colcon test --packages-select compass_core compass_nav2 compass_eval
 colcon test-result --verbose
 
+# Every controller_server key in both parameter files is declared and applied
+# (needs nav2_controller; starts a headless controller_server per file)
+bash scripts/check_param_binding.sh src/compass_nav2/config/compass_params.yaml sim/config/nav2_compass.yaml
+
 # Reproducing the experiments (ablation, latency, rho-sweep)
 mkdir -p /tmp/compass_eval_results
 ./build/compass_eval/compass_eval ablation /tmp/compass_eval_results
@@ -228,7 +232,7 @@ before relying on it; quantitative physical metrics are future work, per §5.6.
 | [`src/compass_eval/results/`](src/compass_eval/results/) | Corrected R1/R5, archived R3, raw CSV and scoped research diagnostics |
 | [`sim/README.md`](sim/README.md) | Testbed usage, launch args, WSL2/headless guidance |
 | [`src/README.md`](src/README.md) | Package-level notes |
-| [`src/compass_nav2/README.md`](src/compass_nav2/README.md) | Nav2 plugin deployment notes: people input freshness, `/diagnostics`, STOP/HOLD latching, Humble task boundary |
+| [`src/compass_nav2/README.md`](src/compass_nav2/README.md) | Nav2 plugin deployment notes: people input freshness and tracker requirements, `/diagnostics`, STOP/HOLD latching, the Humble task-boundary reset (the only default-on behaviour difference), invalid-configuration handling |
 | [`src/compass_eval/RESPONSIVENESS.md`](src/compass_eval/RESPONSIVENESS.md) | Opt-in responsiveness profile, measured-progress contract and pending physical pilot |
 | [`docs/CANDIDATE_TRAJECTORIES.md`](docs/CANDIDATE_TRAJECTORIES.md) | Opt-in candidate rollout, environment and command contract; limitations |
 
