@@ -19,6 +19,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+# tf2::getYaw(geometry_msgs::msg::Quaternion) calls tf2::fromMsg, which is defined in
+# tf2_geometry_msgs; without it optimized builds leave the symbol undefined at load time.
+find_package(tf2_geometry_msgs REQUIRED)
 
 # nav2_core::Controller gained the reset() hook in nav2_core 1.2 (Iron and later).
 # Humble ships nav2_core 1.1.x without it, so reset() must not be marked override there.
@@ -40,6 +43,7 @@ set(dependencies
   geometry_msgs
   nav_msgs
   tf2
+  tf2_geometry_msgs
   tf2_ros)
 
 # =============================================================================

@@ -19,6 +19,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.hpp"
 #include "tf2/utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // defines the tf2::fromMsg getYaw needs
 
 namespace compass_nav2
 {

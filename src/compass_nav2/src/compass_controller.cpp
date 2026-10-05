@@ -24,6 +24,7 @@
 #include "nav2_util/node_utils.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include "tf2/utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // defines the tf2::fromMsg getYaw needs
 
 #include "compass_nav2/people_conversion.hpp"
 #include "compass_nav2/candidate_rollout.hpp"
