@@ -96,8 +96,24 @@ void CompassController::configure(
 
 void CompassController::peopleCallback(const compass_msgs::msg::People::SharedPtr msg)
 {
+  const double received = steady_now_();
   std::lock_guard<std::mutex> lock(people_mutex_);
   latest_people_ = msg;
+  people_received_steady_ = received;
+}
+
+PeopleFreshness CompassController::peopleFreshness() const
+{
+  compass_msgs::msg::People::SharedPtr msg;
+  double received = 0.0;
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    msg = latest_people_;
+    received = people_received_steady_;
+  }
+  const double stamp = msg ? rclcpp::Time(msg->header.stamp).seconds() : 0.0;
+  const double ros_now = clock_ ? clock_->now().seconds() : 0.0;
+  return assessPeople(msg != nullptr, received, steady_now_(), stamp, ros_now, people_timeout_s_);
 }
 
 void CompassController::loadKnobs(
@@ -149,6 +165,18 @@ void CompassController::loadKnobs(
   if (people_topic_.empty()) {
     throw std::invalid_argument(name + ".people_topic must not be empty");
   }
+  // 사람 입력 신선도. 기본 0.5 s: 기본 ttc_min 2.0 s 의 1/4 이고, 사람(1.4 m/s)과
+  // 로봇(0.5 m/s)이 마주 올 때 0.5 s 묵은 트랙은 약 0.95 m 어긋나 d_safe 0.5 m 를
+  // 넘는다. 기본 동작 "warn" 은 경고만 하므로 주행 명령은 이전과 같다.
+  getParam(node, name, "people_timeout_s", people_timeout_s_, 0.5);
+  std::string stale_action = "warn";
+  getParam(node, name, "people_stale_action", stale_action, stale_action);
+  if (stale_action != "warn" && stale_action != "hold") {
+    throw std::invalid_argument(
+            name + ".people_stale_action = \"" + stale_action +
+            "\" is not one of \"warn\", \"hold\"");
+  }
+  people_stale_hold_ = stale_action == "hold";
   validateParameters(name);
   if (cruise_speed_ > max_linear_speed_) {
     RCLCPP_WARN(
@@ -203,6 +231,7 @@ void CompassController::validateParameters(const std::string & ns) const
   in("k_e", k_e_, 0.0, kInf);
   in("k_theta", k_theta_, 0.0, kInf);
   in("k_side", k_side_, 0.0, kInf);
+  in("people_timeout_s", people_timeout_s_, 0.0, kInf, true);
 }
 
 void CompassController::cleanup()
@@ -212,6 +241,7 @@ void CompassController::cleanup()
   {
     std::lock_guard<std::mutex> lock(people_mutex_);
     latest_people_.reset();
+    people_received_steady_ = 0.0;
   }
   core_.reset();
   costmap_ros_.reset();
@@ -288,7 +318,7 @@ compass::Point2D CompassController::computeLocalGoal(const compass::SE2 & robot)
   return {last.x, last.y};
 }
 
-std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot) const
+std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot)
 {
   // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
   // 변환한다. 메시지가 없으면 빈 목록(보존적) — 컨트롤러는 사람 0명이어도
@@ -302,11 +332,22 @@ std::vector<compass::Person> CompassController::extractPeople(const compass::SE2
   if (!msg) {
     return {};
   }
-  std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_);
+  std::string tf_error;
+  std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_, &tf_error);
+  if (!tf_error.empty()) {
+    // 변환 불가 시 이번 주기는 사람 없이 진행한다(기존 동작); 이제는 알린다.
+    ++tf_failures_;
+    RCLCPP_WARN_THROTTLE(
+      logger_, steady_clock_, 2000,
+      "CompassController: cannot transform %zu people from '%s' to '%s' (%s); "
+      "deciding without them this cycle (%lu TF failures so far).",
+      msg->people.size(), msg->header.frame_id.c_str(), global_frame_.c_str(),
+      tf_error.c_str(), static_cast<unsigned long>(tf_failures_.load()));
+  }
 
   // 사람 수를 throttle 로그로 남겨 스모크가 수신을 확인할 수 있게 한다.
   RCLCPP_INFO_THROTTLE(
-    logger_, *clock_, 2000, "CompassController: /people 수신 — %zu 명 적용.",
+    logger_, steady_clock_, 2000, "CompassController: /people 수신 — %zu 명 적용.",
     people.size());
 
   return people;
@@ -329,9 +370,30 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   if (global_frame_.empty() || pose.header.frame_id != global_frame_ ||
       (!global_plan_.poses.empty() && global_plan_.header.frame_id != global_frame_)) {
     measured_progress_.reset();
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
       "Controller: pose/plan frame mismatch; holding command");
     return cmd;
+  }
+
+  // People input freshness. "warn" (default) only reports and then decides with
+  // the latest message exactly as before; "hold" emits a zero twist while stale.
+  const PeopleFreshness people_fresh = peopleFreshness();
+  if (people_fresh.stale) {
+    if (people_fresh.received) {
+      RCLCPP_WARN_THROTTLE(
+        logger_, steady_clock_, 2000,
+        "CompassController: people input on %s is stale (%.2f s > people_timeout_s %.2f s); %s",
+        people_topic_.c_str(), people_fresh.age_s, people_timeout_s_,
+        people_stale_hold_ ? "holding command" : "deciding with the last message");
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        logger_, steady_clock_, 2000,
+        "CompassController: no people message received on %s since configure; %s",
+        people_topic_.c_str(), people_stale_hold_ ? "holding command" : "deciding without people");
+    }
+    if (people_stale_hold_) {
+      return cmd;
+    }
   }
 
   // 1) 자세·속도 -> compass 자료형.
@@ -378,13 +440,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     const double stamp = pose.header.stamp.sec + pose.header.stamp.nanosec * 1e-9;
     if (!std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
       measured_progress_.reset();
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose; holding command");
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: stale pose; holding command");
       return cmd;
     }
     const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
       state_.c_star, path, progress_max_gap_, progress_max_speed_);
     if (!progress.valid) {
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: %s; holding command", progress.reason);
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: %s; holding command", progress.reason);
       return cmd;
     }
     in.lateral_progress_delta_m = progress.delta_m;
@@ -413,7 +475,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     v_cap = speed_limit_is_pct_ ? max_linear_speed_ * (speed_limit_ / 100.0) : speed_limit_;
   }
   if (!std::isfinite(v) || !std::isfinite(v_cap) || v_cap < 0.0) {
-    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid controller speed configuration; holding command");
     return cmd;
   }
@@ -438,7 +500,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   } catch (const std::invalid_argument& error) {
     // Contract violations (including a regressing safety clock) cannot escape
     // the command adapter and leave a prior nonzero command unaddressed.
-    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid decision input: %s; holding command", error.what());
     return cmd;
   }
@@ -476,7 +538,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     const auto execution = env_.trajectoryAtSpeed(out.c_star, v);
     if (execution.empty() ||
         !env_.executionSafe(out.c_star, v, knobs_.d_safe, knobs_.ttc_min)) {
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
         "Candidate command changed safety outcome or is unavailable; holding command");
       return cmd;
     }

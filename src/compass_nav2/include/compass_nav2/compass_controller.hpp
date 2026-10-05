@@ -15,9 +15,14 @@
 #ifndef COMPASS_NAV2__COMPASS_CONTROLLER_HPP_
 #define COMPASS_NAV2__COMPASS_CONTROLLER_HPP_
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -36,6 +41,7 @@
 #include "compass_core/knobs.hpp"
 #include "compass_nav2/costmap_env_query.hpp"
 #include "compass_nav2/measured_progress.hpp"
+#include "compass_nav2/people_freshness.hpp"
 
 namespace compass_nav2
 {
@@ -91,10 +97,22 @@ protected:
 
   // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
   // 환산 (트래커 미수신 시 빈 목록). 변환은 toPersons 자유 함수에 위임한다.
-  std::vector<compass::Person> extractPeople(const compass::SE2 & robot) const;
+  // TF 실패는 경고(steady 시계 throttle)와 tf_failures_ 카운트로 보고한다.
+  std::vector<compass::Person> extractPeople(const compass::SE2 & robot);
 
-  // /people 구독 콜백 — 최신 메시지를 뮤텍스 보호 하에 저장.
+  // /people 구독 콜백 — 최신 메시지와 수신 시각(steady)을 뮤텍스 보호 하에 저장.
   void peopleCallback(const compass_msgs::msg::People::SharedPtr msg);
+
+  // Freshness of the latest people message at this instant (people_timeout_s).
+  PeopleFreshness peopleFreshness() const;
+
+  // Seconds on a monotonic clock; injectable for tests. Used for input ages,
+  // control-call gaps and log throttling, so none of them stop with /clock.
+  std::function<double()> steady_now_{[] {
+      return std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    }};
+  mutable rclcpp::Clock steady_clock_{RCL_STEADY_TIME};  // log throttling
 
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
   std::shared_ptr<tf2_ros::Buffer> tf_;
@@ -109,8 +127,15 @@ protected:
   // /people 구독 + 최신 메시지 (people_mutex_ 보호).
   rclcpp::Subscription<compass_msgs::msg::People>::SharedPtr people_sub_;
   compass_msgs::msg::People::SharedPtr latest_people_;
+  double people_received_steady_{0.0};  // steady_now_() at the latest message
   std::string global_frame_;       // costmap global_frame (변환 대상 프레임).
   std::string people_topic_{"/people"};
+  // 사람 입력 신선도: 이 시간보다 오래된(또는 한 번도 오지 않은) 입력은 stale.
+  // "warn" (기본): 경고만 하고 마지막 메시지를 그대로 쓴다 (기존 동작).
+  // "hold": stale 동안 영 twist 를 낸다.
+  double people_timeout_s_{0.5};
+  bool people_stale_hold_{false};
+  std::atomic<uint64_t> tf_failures_{0};  // people TF lookups that failed
   mutable std::mutex people_mutex_;
 
   // 결정 계층 상태 (주기 간 보존).

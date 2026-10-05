@@ -27,8 +27,10 @@ namespace compass_nav2
 std::vector<compass::Person> toPersons(
   const compass_msgs::msg::People & msg,
   const std::string & target_frame,
-  const std::shared_ptr<tf2_ros::Buffer> & tf_buffer)
+  const std::shared_ptr<tf2_ros::Buffer> & tf_buffer,
+  std::string * tf_error)
 {
+  if (tf_error) {tf_error->clear();}
   std::vector<compass::Person> out;
   out.reserve(msg.people.size());
 
@@ -48,10 +50,13 @@ std::vector<compass::Person> toPersons(
       ty = tf.transform.translation.y;
       tyaw = tf2::getYaw(tf.transform.rotation);
       have_tf = true;
-    } catch (const tf2::TransformException &) {
+    } catch (const tf2::TransformException & e) {
       // 변환 불가: tf 가 아직 없으면 이 메시지의 사람을 모두 건너뛴다.
       have_tf = false;
+      if (tf_error) {*tf_error = e.what();}
     }
+  } else if (!same_frame && tf_error) {
+    *tf_error = "no TF buffer to transform '" + src_frame + "' to '" + target_frame + "'";
   }
 
   if (!have_tf) {

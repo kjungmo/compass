@@ -17,6 +17,8 @@
 // 회귀로 고정한다. tf 미구성(nullptr) 동작도 확인한다.
 
 #include <cmath>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -101,6 +103,26 @@ TEST(ToPersons, DifferentFrameNoTfYieldsEmpty)
     compass_nav2::toPersons(msg, "odom", nullptr);
 
   EXPECT_TRUE(out.empty());
+}
+
+// TF 실패는 여전히 빈 목록이지만 이제 사유를 돌려준다(호출자가 경고·계수).
+TEST(PeopleConversion, MissingTransformReportsReason)
+{
+  compass_msgs::msg::People msg;
+  msg.header.frame_id = "map";
+  msg.people.push_back(makePerson(1u, 1.0, 1.0, 0.5, 0.0));
+
+  std::string error;
+  EXPECT_TRUE(compass_nav2::toPersons(msg, "odom", nullptr, &error).empty());
+  EXPECT_EQ(error, "no TF buffer to transform 'map' to 'odom'");
+
+  auto buffer = std::make_shared<tf2_ros::Buffer>(std::make_shared<rclcpp::Clock>());
+  EXPECT_TRUE(compass_nav2::toPersons(msg, "odom", buffer, &error).empty());
+  EXPECT_FALSE(error.empty());
+
+  msg.header.frame_id = "odom";
+  EXPECT_EQ(compass_nav2::toPersons(msg, "odom", buffer, &error).size(), 1u);
+  EXPECT_TRUE(error.empty());
 }
 
 int main(int argc, char ** argv)

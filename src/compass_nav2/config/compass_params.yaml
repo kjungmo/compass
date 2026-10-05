@@ -17,6 +17,8 @@ controller_server:
 
       # ---- 사람 입력 (Deployment: src/compass_nav2/README.md) ----
       people_topic: "/people"    # compass_msgs/People; a relative name resolves in the node namespace
+      people_timeout_s: 0.5      # s; older (or never received) people input is stale
+      people_stale_action: "warn"  # "warn": report, decide with the last message; "hold": zero twist
 
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
