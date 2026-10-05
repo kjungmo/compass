@@ -104,6 +104,41 @@ TEST(ParamValidation, RequireRangeRejectsNonFinite)
   EXPECT_THROW(compass_nav2::requireRange("x", 1.0, 0, 1, false, true), std::invalid_argument);
 }
 
+TEST(DecisionPeriod, FirstCycleUsesOneControllerPeriod)
+{
+  EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(20.0), 0.05);
+  EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(10.0), 0.1);
+  EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(0.0), 0.05);
+  EXPECT_DOUBLE_EQ(compass_nav2::nominalDecisionDt(std::nan("")), 0.05);
+  // First call and clock regression use the nominal period; otherwise measured.
+  EXPECT_DOUBLE_EQ(compass_nav2::decisionDt(false, 0.0, 5.0, 0.05), 0.05);
+  EXPECT_NEAR(compass_nav2::decisionDt(true, 1.0, 1.07, 0.05), 0.07, 1e-12);
+  EXPECT_DOUBLE_EQ(compass_nav2::decisionDt(true, 2.0, 1.0, 0.05), 0.05);
+}
+
+TEST(DecisionPeriod, VacuityWarningOnlyWhenSwitchingIsUnreachable)
+{
+  const compass::Knobs defaults;
+  // Defaults at 20 Hz: reach = min(0.5, 2.75*0.05/0.03) = 0.5 > E0 = 0.3.
+  EXPECT_EQ(compass_nav2::switchingVacuityWarning(defaults, 0.05), "");
+  // The paper's tuning example: D_max = 0.5, delta_floor = 0.05, dt = 0.05,
+  // lambda = 0.7 gives a leak equilibrium of 0.075 < E0.
+  compass::Knobs k;
+  k.w_g = 0.5; k.w_s = 0.0; k.w_e = 0.0; k.w_r = 0.0; k.lambda = 0.7;
+  const std::string w = compass_nav2::switchingVacuityWarning(k, 0.05);
+  EXPECT_NE(w.find("dt = 0.050 s"), std::string::npos) << w;
+  EXPECT_NE(w.find("= 0.075 does not exceed E0 = 0.300"), std::string::npos) << w;
+  // A cap at E0 makes switching unreachable at any period.
+  compass::Knobs capped;
+  capped.e_max_rev = capped.E0;
+  EXPECT_NE(compass_nav2::switchingVacuityWarning(capped, 0.05), "");
+  compass::Knobs no_advantage;
+  no_advantage.w_g = no_advantage.w_s = no_advantage.w_e = no_advantage.w_r = 0.0;
+  EXPECT_NE(
+    compass_nav2::switchingVacuityWarning(no_advantage, 0.05).find("does not exceed delta_floor"),
+    std::string::npos);
+}
+
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

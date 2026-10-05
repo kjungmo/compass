@@ -143,6 +143,8 @@ protected:
   double k_side_{0.4};             // 사회적 측면 편향 이득
   double last_now_{0.0};
   bool has_last_now_{false};
+  // Decision period before the first measured interval: 1/controller_frequency.
+  double nominal_dt_{0.05};
 
   std::mutex mutex_;
 };
