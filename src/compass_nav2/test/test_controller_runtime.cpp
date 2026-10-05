@@ -83,6 +83,8 @@ compass_msgs::msg::People onePerson(double y = 4.0)
   return msg;
 }
 
+using Params = std::vector<rclcpp::Parameter>;
+
 struct Fixture
 {
   rclcpp_lifecycle::LifecycleNode::SharedPtr node;
@@ -110,7 +112,7 @@ struct Fixture
 
 TEST(PeopleTopic, DefaultIsTheAbsolutePeopleTopic)
 {
-  Fixture f({}, "/robot1");
+  Fixture f(Params{}, "/robot1");
   RuntimeProbe controller;
   f.configure(controller);
   EXPECT_EQ(controller.peopleTopic(), "/people");
@@ -119,7 +121,7 @@ TEST(PeopleTopic, DefaultIsTheAbsolutePeopleTopic)
 
 TEST(PeopleTopic, RelativeNameResolvesInTheNodeNamespace)
 {
-  Fixture f({{"FollowPath.people_topic", "tracked_people"}}, "/robot1");
+  Fixture f(Params{{"FollowPath.people_topic", "tracked_people"}}, "/robot1");
   RuntimeProbe controller;
   f.configure(controller);
   EXPECT_EQ(controller.peopleTopic(), "/robot1/tracked_people");
@@ -164,7 +166,7 @@ TEST(PeopleFreshness, DefaultWarnLeavesTheCommandUnchanged)
 
 TEST(PeopleFreshness, HoldEmitsZeroOnlyWhileStale)
 {
-  Fixture f({{"FollowPath.people_stale_action", "hold"}});
+  Fixture f(Params{{"FollowPath.people_stale_action", "hold"}});
   RuntimeProbe controller;
   double t = 100.0;
   controller.useSteady(&t);
@@ -187,12 +189,12 @@ TEST(PeopleFreshness, HoldEmitsZeroOnlyWhileStale)
 TEST(PeopleFreshness, RejectsUnknownActionAndNonPositiveTimeout)
 {
   {
-    Fixture f({{"FollowPath.people_stale_action", "stop"}});
+    Fixture f(Params{{"FollowPath.people_stale_action", "stop"}});
     RuntimeProbe controller;
     EXPECT_THROW(f.configure(controller), std::invalid_argument);
   }
   {
-    Fixture f({{"FollowPath.people_timeout_s", 0.0}});
+    Fixture f(Params{{"FollowPath.people_timeout_s", 0.0}});
     RuntimeProbe controller;
     EXPECT_THROW(f.configure(controller), std::invalid_argument);
   }
@@ -315,7 +317,7 @@ TEST(Diagnostics, StopIsVisibleAndLatches)
 
 TEST(Diagnostics, PublishedOnlyWhileActive)
 {
-  Fixture f({{"FollowPath.diagnostics_period_s", 0.1}});
+  Fixture f(Params{{"FollowPath.diagnostics_period_s", 0.1}});
   RuntimeProbe controller;
   f.configure(controller);
   auto listener = std::make_shared<rclcpp::Node>("diagnostics_listener");
