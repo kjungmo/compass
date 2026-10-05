@@ -112,6 +112,11 @@ if(BUILD_TESTING)
   ament_add_gtest(test_path_tracking test/test_path_tracking.cpp)
   target_link_libraries(test_path_tracking compass_controller)
   ament_target_dependencies(test_path_tracking compass_core)
+
+  # configure 단계 파라미터 범위 검증 (값·허용 범위를 담은 예외, 기본값 불변).
+  ament_add_gtest(test_param_validation test/test_param_validation.cpp)
+  target_link_libraries(test_param_validation compass_controller)
+  ament_target_dependencies(test_param_validation ${dependencies} compass_core)
 endif()
 
 ament_export_include_directories(include)

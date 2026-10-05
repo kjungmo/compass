@@ -82,6 +82,10 @@ protected:
   void loadKnobs(
     const rclcpp_lifecycle::LifecycleNode::SharedPtr & node, const std::string & name);
 
+  // Configure-time range checks; throws std::invalid_argument naming the
+  // parameter (ns.key), its value and the allowed range.
+  void validateParameters(const std::string & ns) const;
+
   // 전역 계획의 마지막 점(또는 robot 전방 lookahead)을 로컬 목표로 환산.
   compass::Point2D computeLocalGoal(const compass::SE2 & robot) const;
 

@@ -26,6 +26,7 @@
 #include "tf2/utils.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // defines the tf2::fromMsg getYaw needs
 
+#include "compass_nav2/param_checks.hpp"
 #include "compass_nav2/people_conversion.hpp"
 #include "compass_nav2/candidate_rollout.hpp"
 #include "compass_nav2/path_tracking.hpp"
@@ -118,9 +119,6 @@ void CompassController::loadKnobs(
   getParam(node, name, "use_candidate_trajectories", use_candidate_trajectories_, false);
   getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
   getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
-  if (!std::isfinite(progress_max_gap_) || progress_max_gap_ <= 0 ||
-      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0)
-    throw std::invalid_argument("invalid measured progress parameters");
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
   // 궤적 계층 ② 노브 (경로 추종 cruise).
   getParam(node, name, "cruise_speed", cruise_speed_, cruise_speed_);
@@ -131,6 +129,60 @@ void CompassController::loadKnobs(
   getParam(node, name, "k_e", k_e_, k_e_);
   getParam(node, name, "k_theta", k_theta_, k_theta_);
   getParam(node, name, "k_side", k_side_, k_side_);
+  validateParameters(name);
+  if (cruise_speed_ > max_linear_speed_) {
+    RCLCPP_WARN(
+      logger_, "%s.cruise_speed %.3f m/s exceeds %s.max_linear_speed %.3f m/s; "
+      "commands are capped at max_linear_speed.", name.c_str(), cruise_speed_, name.c_str(),
+      max_linear_speed_);
+  }
+}
+
+void CompassController::validateParameters(const std::string & ns) const
+{
+  // Reject values outside the domain each knob is defined on, naming the knob and
+  // its range, instead of failing later inside the decision core or driving with
+  // a meaningless configuration. Zero stays allowed wherever it is a documented
+  // ablation (k_rho, weights, margins).
+  const auto in = [&ns](const char * key, double v, double lo, double hi,
+      bool lo_open = false, bool hi_open = false) {
+      requireRange(ns + "." + key, v, lo, hi, lo_open, hi_open);
+    };
+  const compass::Knobs & k = knobs_;
+  in("delta_floor", k.delta_floor, 0.0, kInf);
+  in("E0", k.E0, 0.0, kInf, true);
+  in("k_rho", k.k_rho, 0.0, kInf);
+  in("p", k.p, 1.0, kInf);
+  in("lambda", k.lambda, 0.0, 1.0, true);
+  in("e_max_fwd", k.e_max_fwd, 0.0, kInf);
+  in("e_max_rev", k.e_max_rev, 0.0, kInf);
+  in("d_safe", k.d_safe, 0.0, kInf);
+  in("ttc_min", k.ttc_min, 0.0, kInf);
+  in("W", k.W, 0.0, kInf, true);
+  in("n_thrash", k.n_thrash, 1.0, kInf);
+  in("w_g", k.w_g, 0.0, kInf);
+  in("w_s", k.w_s, 0.0, kInf);
+  in("w_e", k.w_e, 0.0, kInf);
+  in("w_r", k.w_r, 0.0, kInf);
+  in("sigma_front", k.sigma_front, 0.0, kInf, true);
+  in("sigma_rear", k.sigma_rear, 0.0, kInf, true);
+  in("sigma_s", k.sigma_s, 0.0, kInf, true);
+  in("K_cap", k.K_cap, 0.0, 16.0);  // the core enumerates 2^K_cap classes per cycle
+  in("a_brake", k.a_brake, 0.0, kInf);
+  in("ttc_stop", k.ttc_stop, 0.0, kInf);
+  in("T_safe_dwell", k.T_safe_dwell, 0.0, kInf);
+  in("eps_in", k.eps_in, 0.0, kInf);
+  in("eps_out", k.eps_out, 0.0, kInf);
+  in("progress_max_gap", progress_max_gap_, 0.0, kInf, true);
+  in("progress_max_speed", progress_max_speed_, 0.0, kInf, true);
+  in("max_linear_speed", max_linear_speed_, 0.0, kInf, true);
+  in("cruise_speed", cruise_speed_, 0.0, kInf, true);
+  in("max_angular_speed", max_angular_speed_, 0.0, kInf, true);
+  in("goal_decel_dist", goal_decel_dist_, 0.0, kInf);
+  in("lookahead_dist", lookahead_dist_, 0.0, kInf);
+  in("k_e", k_e_, 0.0, kInf);
+  in("k_theta", k_theta_, 0.0, kInf);
+  in("k_side", k_side_, 0.0, kInf);
 }
 
 void CompassController::cleanup()
