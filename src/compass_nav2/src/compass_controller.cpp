@@ -97,6 +97,13 @@ void CompassController::configure(
   }
   const std::string vacuity =
     switchingVacuityWarning(knobs_, nominalDecisionDt(controller_frequency));
+  task_boundary_.configure(task_gap_reset_s_, controller_frequency);
+  if (task_gap_reset_s_ > 0.0 && task_gap_reset_s_ < task_boundary_.minimumThreshold()) {
+    RCLCPP_WARN(
+      logger_, "CompassController '%s': task_gap_reset_s %.3f s is below three control periods "
+      "(%.3f s at %.1f Hz); using %.3f s.", name.c_str(), task_gap_reset_s_,
+      task_boundary_.minimumThreshold(), controller_frequency, task_boundary_.effectiveThreshold());
+  }
   if (!vacuity.empty()) {
     RCLCPP_WARN(logger_, "CompassController '%s': %s.", name.c_str(), vacuity.c_str());
   }
@@ -466,11 +473,12 @@ void CompassController::setPlan(const nav_msgs::msg::Path & path)
   // call. A plan arriving after the loop has been idle longer than
   // task_gap_reset_s is therefore a new action: reset as Jazzy's reset() does.
   const double t = steady_now_();
-  if (newPlanStartsNewTask(has_last_call_, last_call_steady_, t, task_gap_reset_s_)) {
-    char why[128];
+  if (task_boundary_.newPlanStartsTask(t)) {
+    char why[160];
     std::snprintf(
-      why, sizeof(why), "new plan after the control loop was idle %.2f s > task_gap_reset_s %.2f s",
-      t - last_call_steady_, task_gap_reset_s_);
+      why, sizeof(why),
+      "new plan after the control loop was idle %.2f s > %.2f s (task_gap_reset_s)",
+      task_boundary_.idleFor(t), task_boundary_.effectiveThreshold());
     RCLCPP_INFO(logger_, "CompassController: %s; decision state reset (new task).", why);
     resetLocked(why);
   }
@@ -566,13 +574,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   nav2_core::GoalChecker * /*goal_checker*/)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
-  // Humble task boundary (see setPlan): remember when the loop last ran.
-  last_call_steady_ = steady_now_();
-  has_last_call_ = true;
-#endif
   const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
   recordCycle(cmd);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  // Humble task boundary (see setPlan): stamped when the call returns, so time
+  // spent blocked inside it (e.g. on the costmap mutex) is not idle time.
+  task_boundary_.controlReturned(steady_now_());
+#endif
   return cmd;
 }
 

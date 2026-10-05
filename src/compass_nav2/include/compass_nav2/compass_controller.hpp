@@ -46,6 +46,7 @@
 #include "compass_nav2/costmap_env_query.hpp"
 #include "compass_nav2/measured_progress.hpp"
 #include "compass_nav2/people_freshness.hpp"
+#include "compass_nav2/task_boundary.hpp"
 
 namespace compass_nav2
 {
@@ -221,8 +222,7 @@ protected:
   // control loop has been idle longer than this starts a new task and resets the
   // decision state; 0 disables. Unused where controller_server calls reset().
   double task_gap_reset_s_{0.5};
-  double last_call_steady_{0.0};
-  bool has_last_call_{false};
+  TaskBoundary task_boundary_;  // configured from task_gap_reset_s_ and controller_frequency
 
   std::mutex mutex_;
 };

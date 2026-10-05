@@ -14,7 +14,8 @@ Knob semantics are in the paper and in `compass_core/knobs.hpp`.
 All are under the plugin name (`FollowPath.` below). With these defaults the
 commanded motion is the published behaviour, with one exception that is on by
 default: on Humble only, a new plan arriving after the control loop has been
-idle longer than `task_gap_reset_s` resets STOP/HOLD (see
+idle longer than `task_gap_reset_s` resets the decision state (STOP/HOLD,
+commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does (see
 [STOP and HOLD](#stop-and-hold-are-latched)). Everything else added here only
 reports, or is an option that is off by default.
 
@@ -87,15 +88,22 @@ controller_server calls `reset()` when a FollowPath action ends, so the next
 action starts in NORMAL.
 
 Humble has no such hook. There, a new plan arriving after the control loop has
-been idle longer than `task_gap_reset_s` resets STOP/HOLD (parity with
-Jazzy's `reset()` at action end). A mid-task stall without a new plan does not
-reset. Humble's controller_server calls `setPlan()` when a FollowPath action
-starts and, for goal preemption, inside the running loop within one control
+been idle longer than `task_gap_reset_s` resets the decision state (STOP/HOLD,
+commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does at
+action end. Idle time is measured from the moment the last control call
+returned, so a call blocked inside the plugin (for example on the costmap
+mutex) does not count. A mid-task stall without a new plan does not reset.
+Humble's controller_server calls `setPlan()` when a FollowPath action starts
+and, for goal preemption, inside the running loop within one control
 iteration of the previous call; only the first can follow an idle loop. The
 default 0.5 s is ten periods at the default 20 Hz, so in-loop updates never
-qualify. In the default Humble behaviour tree, a retry that restarts faster
-than that (the FollowPath `ClearLocalCostmap` context recovery) keeps the
-latched state until a later recovery (Spin, Wait, BackUp) opens a longer gap.
+qualify. Keep `task_gap_reset_s` well above the control period; the adapter
+never uses less than three control periods (configure warns and says which
+threshold it uses). In the default Humble behaviour tree, a retry that
+typically restarts faster than that (the FollowPath `ClearLocalCostmap`
+context recovery) keeps the latched state until a later recovery (Spin, Wait,
+BackUp) opens a longer gap (reasoned from the Humble `controller_server` and
+default BT source; not measured).
 This differs from the paper's "HOLD retained until explicit external release"
 only at task boundaries, as on Jazzy.
 

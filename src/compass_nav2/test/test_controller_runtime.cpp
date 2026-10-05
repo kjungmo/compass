@@ -20,12 +20,14 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "compass_nav2/compass_controller.hpp"
 #include "compass_nav2/param_checks.hpp"
+#include "compass_nav2/task_boundary.hpp"
 
 namespace
 {
@@ -42,6 +44,7 @@ public:
   compass::Mode mode() const {return state_.mode;}
   using compass_nav2::CompassController::buildDiagnostics;
   uint64_t tfFailures() const {return tf_failures_.load();}
+  const compass_nav2::TaskBoundary & taskBoundary() const {return task_boundary_;}
   double lReal() const {return state_.L_real;}
   // Drive the decision (ROS) clock from the test.
   void useRosTime(double s)
@@ -437,14 +440,55 @@ TEST(Diagnostics, PublishedOnlyWhileActive)
   controller.cleanup();
 }
 
-TEST(TaskBoundary, NewPlanRule)
+// The boundary rule itself is ROS-free and compiled everywhere, so these run on
+// Jazzy too (only the Humble adapter path calls it).
+TEST(TaskBoundary, NewPlanAfterIdleRule)
 {
-  using compass_nav2::newPlanStartsNewTask;
-  EXPECT_FALSE(newPlanStartsNewTask(false, 0.0, 50.0, 0.5));  // no control call yet
-  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 10.05, 0.5));  // in-loop update
-  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 10.5, 0.5));   // boundary excluded
-  EXPECT_TRUE(newPlanStartsNewTask(true, 10.0, 10.51, 0.5));
-  EXPECT_FALSE(newPlanStartsNewTask(true, 10.0, 99.0, 0.0));   // disabled
+  compass_nav2::TaskBoundary b;
+  b.configure(0.5, 20.0);
+  EXPECT_DOUBLE_EQ(b.effectiveThreshold(), 0.5);
+  EXPECT_FALSE(b.newPlanStartsTask(50.0));  // no control call has returned yet
+  b.controlReturned(10.0);
+  EXPECT_FALSE(b.newPlanStartsTask(10.05));  // in-loop update
+  EXPECT_FALSE(b.newPlanStartsTask(10.5));   // boundary excluded
+  EXPECT_TRUE(b.newPlanStartsTask(10.51));
+  b.controlReturned(10.6);                   // the loop ran again
+  EXPECT_FALSE(b.newPlanStartsTask(10.65));
+  b.configure(0.0, 20.0);                    // disabled
+  b.controlReturned(10.0);
+  EXPECT_FALSE(b.newPlanStartsTask(99.0));
+}
+
+TEST(TaskBoundary, ThresholdNeverBelowThreeControlPeriods)
+{
+  compass_nav2::TaskBoundary b;
+  b.configure(0.05, 20.0);  // one period: raised to 3 x 0.05 s
+  EXPECT_DOUBLE_EQ(b.minimumThreshold(), 0.15);
+  EXPECT_DOUBLE_EQ(b.effectiveThreshold(), 0.15);
+  b.controlReturned(10.0);
+  EXPECT_FALSE(b.newPlanStartsTask(10.1));  // two periods late: not a new task
+  EXPECT_TRUE(b.newPlanStartsTask(10.16));
+  b.configure(0.5, 2.0);    // slow controller: 3 x 0.5 s
+  EXPECT_DOUBLE_EQ(b.effectiveThreshold(), 1.5);
+}
+
+TEST(TaskBoundary, IdleIsMeasuredFromTheReturnOfTheLastCall)
+{
+  // A call that started at 10.0 but blocked until 12.0 returns at 12.0; a plan
+  // 0.1 s after that is an in-loop update, not a new task.
+  compass_nav2::TaskBoundary b;
+  b.configure(0.5, 20.0);
+  b.controlReturned(12.0);
+  EXPECT_FALSE(b.newPlanStartsTask(12.1));
+}
+
+TEST(TaskBoundary, ConfigureUsesAtLeastThreePeriods)
+{
+  Fixture f(Params{{"FollowPath.task_gap_reset_s", 0.05}});  // controller_frequency 20 Hz
+  RuntimeProbe controller;
+  f.configure(controller);
+  EXPECT_DOUBLE_EQ(controller.taskBoundary().effectiveThreshold(), 0.15);
+  controller.cleanup();
 }
 
 namespace
@@ -542,6 +586,27 @@ TEST(TaskBoundary, NewPlanAfterIdleResetsOnlyWithoutResetHook)
   } else {
     EXPECT_DOUBLE_EQ(cmd.twist.linear.x, 0.0);
   }
+  controller.cleanup();
+}
+
+// A control call blocked for 0.7 s (costmap mutex held elsewhere) is not idle
+// time: a plan right after it returns is an in-loop update (real steady clock).
+TEST(TaskBoundary, BlockedComputeIsNotIdle)
+{
+  Fixture f;
+  RuntimeProbe controller;
+  f.configure(controller);
+  latchStop(controller);
+  std::thread holder;
+  {
+    std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> hold(
+      *f.costmap->getCostmap()->getMutex());
+    holder = std::thread([&] {tick(controller);});  // blocks on the costmap mutex
+    std::this_thread::sleep_for(std::chrono::milliseconds(700));
+  }
+  holder.join();
+  controller.setPlan(otherPath());
+  EXPECT_EQ(controller.mode(), compass::Mode::STOP);
   controller.cleanup();
 }
 

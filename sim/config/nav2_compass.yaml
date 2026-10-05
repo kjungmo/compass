@@ -47,7 +47,8 @@ controller_server:
       people_timeout_s: 0.5      # s; older (or never received) people input is stale
       people_stale_action: "warn"  # "warn": report, decide with the last message; "hold": zero twist
       diagnostics_period_s: 1.0  # s; /diagnostics status from a wall timer while active; 0 disables
-      task_gap_reset_s: 0.5      # s; Humble only: a new plan after the control loop was idle this long resets STOP/HOLD; 0 disables
+      task_gap_reset_s: 0.5      # s; Humble only, 0 disables: a new plan after the control loop was idle this long
+                                 # resets the decision state (STOP/HOLD, commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does
 
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
