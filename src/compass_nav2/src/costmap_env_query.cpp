@@ -157,7 +157,20 @@ double CostmapEnvQuery::ttc(const compass::TopoClass & c) const
     const auto trajectory = trajectoryAtSpeed(c, candidate_speed_);
     return trajectory.empty() ? 0.0 : trajectoryTtc(trajectory);
   }
-  (void)c;
+  return legacyTtc(robot_vel_.vx);
+}
+
+double CostmapEnvQuery::ttcAtSpeed(const compass::TopoClass & c, double speed) const
+{
+  if (use_candidate_trajectories_) {
+    const auto trajectory = trajectoryAtSpeed(c, speed);
+    return trajectory.empty() ? 0.0 : trajectoryTtc(trajectory);
+  }
+  return legacyTtc(speed);
+}
+
+double CostmapEnvQuery::legacyTtc(double robot_speed) const
+{
   // 사람 상대 접근에서 최소 TTC 산출. 사람이 없으면 보존적으로 큰 값.
   double min_ttc = kDefaultTtc;
   for (const auto & p : people_) {
@@ -171,8 +184,8 @@ double CostmapEnvQuery::ttc(const compass::TopoClass & c) const
     // 사람 속도는 Twist2D(vx=전진 속력) — 사람 헤딩으로 평면 분해한다.
     const double pvx = p.vel.vx * std::cos(p.pose.theta);
     const double pvy = p.vel.vx * std::sin(p.pose.theta);
-    const double rvx = robot_vel_.vx * std::cos(robot_pose_.theta) - pvx;
-    const double rvy = robot_vel_.vx * std::sin(robot_pose_.theta) - pvy;
+    const double rvx = robot_speed * std::cos(robot_pose_.theta) - pvx;
+    const double rvy = robot_speed * std::sin(robot_pose_.theta) - pvy;
     const double closing = (rvx * dx + rvy * dy) / dist;  // robot-minus-person: + means approaching
     if (closing > 1e-3) {
       min_ttc = std::min(min_ttc, dist / closing);

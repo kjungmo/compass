@@ -129,6 +129,11 @@ if(BUILD_TESTING)
   ament_add_gtest(test_controller_runtime test/test_controller_runtime.cpp)
   target_link_libraries(test_controller_runtime compass_controller)
   ament_target_dependencies(test_controller_runtime ${dependencies} compass_core)
+
+  # 선택적 STOP 해제의 운동학적 폐루프 검사 (명령 twist 를 실측 속도로 되먹임).
+  ament_add_gtest(test_release_closed_loop test/test_release_closed_loop.cpp TIMEOUT 300)
+  target_link_libraries(test_release_closed_loop compass_controller)
+  ament_target_dependencies(test_release_closed_loop ${dependencies} compass_core)
 endif()
 
 ament_export_include_directories(include)

@@ -26,6 +26,7 @@ reports, or is an option that is off by default.
 | `people_stale_action` | `"warn"` | `warn`: log and report only; the decision still uses the last message regardless of age, as the paper (§4.5) states. `hold`: zero twist while stale; `hold` is an adapter option beyond the published method. |
 | `diagnostics_period_s` | `1.0` | Period of the `/diagnostics` status (wall timer, while active); `0` disables it. |
 | `task_gap_reset_s` | `0.5` | Humble only, see [STOP and HOLD](#stop-and-hold-are-latched); `0` disables. Ignored on Iron and later. |
+| `stop_release_dwell_s`, `hold_release_after_s`, `stop_release_ttc_s` | `-1`, `-1`, `8.0` | Optional STOP/HOLD release, off by default and beyond the published method; see [Optional release](#optional-release-off-by-default-not-part-of-the-published-method). |
 
 Why 0.5 s for `people_timeout_s`: it is a quarter of the default `ttc_min`
 (2.0 s), and a person at 1.4 m/s closing head-on with the robot at 0.5 m/s
@@ -67,8 +68,9 @@ the message). In both cases fix the YAML and restart controller_server.
   with exactly these fields: `plugin`, `mode`, `committed_class`, `e_rev`,
   `rho`, `people_topic`, `people_count`, `people_age_s`, `people_timeout_s`,
   `people_stale`, `people_applied_last_cycle`, `people_tf_failures`,
-  `people_tf_last_failure_age_s`, `seconds_since_compute` and `last_command`
-  (the last command and why it is what it is). Level WARN while STOP or HOLD is
+  `people_tf_last_failure_age_s`, `seconds_since_compute`, `last_command`
+  (the last command and why it is what it is), `stop_release_dwell_s`,
+  `hold_release_after_s` and `stop_release_ttc_s`. Level WARN while STOP or HOLD is
   active, while the people input is stale or missing, or while the latest
   people TF failure is within `people_timeout_s`; OK otherwise. It is published
   from a wall timer, so it keeps arriving when the control loop or `/clock`
@@ -106,6 +108,85 @@ BackUp) opens a longer gap (reasoned from the Humble `controller_server` and
 default BT source; not measured).
 This differs from the paper's "HOLD retained until explicit external release"
 only at task boundaries, as on Jazzy.
+
+### Optional release (off by default, not part of the published method)
+
+Two adapter parameters can end STOP or HOLD without a reset. They are not part
+of the method the paper describes or evaluates; enabling them is a deployment
+decision for the owner of the robot.
+
+**`stop_release_dwell_s`** (default `-1`: STOP latches as published) and
+**`stop_release_ttc_s`** (default `8.0`, must be `>= ttc_min`). When
+`stop_release_dwell_s >= 0`, STOP returns to NORMAL only after all of the
+following have held in every control cycle, continuously, for
+`stop_release_dwell_s` (steady clock). Any violation restarts the dwell, and so
+does a check that comes more than max(2 control periods, `people_timeout_s`)
+after the previous one (no credit while the controller is not running):
+
+1. the people input is fresh (age `<= people_timeout_s`) and this cycle had no
+   people TF failure, so the plugin is not blind;
+2. the committed class is in this cycle's safe set as the decision evaluated it
+   (at the measured speed), and its clearance is `>= d_safe`;
+3. min(TTC at the speed the robot would resume at, TTC at its measured speed)
+   `>= stop_release_ttc_s`. The resume speed is the nominal speed
+   (`cruise_speed` with goal taper and speed limit, or the candidate speed).
+
+**What the margin means.** At the default cruise speed of 0.45 m/s, 8 s is
+3.6 m of closing distance: a person standing on the path must be more than
+3.6 m ahead, and someone approaching must be correspondingly farther, before
+STOP can end. 8 s sits just below the legacy TTC model's 10 s "no approach"
+value, i.e. the hazard is effectively outside the envelope. **A hazard inside
+the margin keeps STOP latched exactly as published.** After a release, a
+hazard whose closing speed does not increase needs at least
+`stop_release_ttc_s - ttc_min` = 6 s before the committed class becomes unsafe
+again, so the robot cannot stop–lurch–stop in front of it. The core's
+published safety ladder still applies after a release: approaching a person
+who stands still ends in a new safety stop (in the closed-loop test about 7.2 s
+after the release, 0.7 m before the person), and the thrash guard can take a
+renewed sustained hazard to HOLD, which stays absorbing unless
+`hold_release_after_s` is set.
+
+The releasing cycle still sends the zero twist; the next cycle decides in
+NORMAL. The check uses the plugin's own estimates (the legacy ray and
+line-of-sight TTC, or the candidate rollout); it is not a collision guarantee.
+**This option has unit tests and kinematic closed-loop tests only
+(`test_release_closed_loop`: the real plugin at 20 Hz with its command fed back
+as a unicycle and one constant-velocity person); it has had no Gazebo or robot
+evaluation.**
+
+**`hold_release_after_s`** (default `-1`: HOLD absorbing as published). It
+requires the STOP release (`stop_release_dwell_s >= 0`; configure fails
+otherwise) and must be at least the thrash window `W` (a shorter value,
+including 0, would defeat the thrash guard). HOLD is never released straight
+to NORMAL: after HOLD has lasted `hold_release_after_s`, the adapter calls
+`DecisionState::release_hold()` (which clears the intervention window and the
+safety dwell) and sets the mode to **STOP**. The robot then moves again only
+when the STOP release gate above passes, with all its conditions and its
+dwell. While the hazard is still there the gate does not pass and the robot
+stays still: with a person standing ahead the core typically makes one safety
+switch to a class that is safe at the measured speed and stays in STOP; with a
+renewed approach it can count `n_thrash` new interventions and return to HOLD,
+after which the cycle repeats. Every state in that cycle sends a zero twist.
+The log shows `HOLD -> STOP: held ... s` and, when the gate passes,
+`STOP -> NORMAL: ...`; `/diagnostics` shows WARN with `HOLD (zero twist; after
+hold_release_after_s it becomes a gated STOP)` or `STOP (zero twist until
+released by stop_release_dwell_s or reset)`.
+
+**Why HOLD release is the part that matters.** With danger present the
+published core escalates STOP to HOLD within about 4 control cycles (each
+safety-branch cycle is a thrash-window intervention, `n_thrash = 4`), so in
+practice a stopped robot rests in HOLD, and this option is what lets it resume.
+An earlier version released HOLD straight to NORMAL; at measured speed 0 the
+legacy TTC reads "no approach", so a robot halted by HOLD in front of a
+standing person drove at cruise speed until the thrash guard stopped it again,
+creeping towards the person (closed loop: from 1.0 m, 1.7 m and 3.0 m it
+travelled 0.73 m, 1.45 m and 2.71 m and ended 0.28, 0.27 and 0.32 m away).
+
+Values other than `-1` or the ranges above fail configure. `/diagnostics`
+reports all three parameters. **Evidence for both options is unit tests and
+kinematic closed-loop tests with the legacy TTC model only; the
+candidate-rollout model is not exercised by the closed-loop tests, and there
+has been no Gazebo or robot evaluation.**
 
 ## Other zero-twist cases
 
