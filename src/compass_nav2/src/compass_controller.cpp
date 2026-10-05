@@ -251,6 +251,8 @@ void CompassController::setPlan(const nav_msgs::msg::Path & path)
 
 void CompassController::setSpeedLimit(const double & speed_limit, const bool & percentage)
 {
+  // Called from the speed-limit subscription while the control loop reads these.
+  std::lock_guard<std::mutex> lock(mutex_);
   speed_limit_ = speed_limit;
   speed_limit_is_pct_ = percentage;
 }
@@ -411,8 +413,14 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   v = std::clamp(v, 0.0, v_cap);
 
   // 3) costmap 컨텍스트 주입.
-  const nav2_costmap_2d::Costmap2D * costmap =
+  nav2_costmap_2d::Costmap2D * costmap =
     costmap_ros_ ? costmap_ros_->getCostmap() : nullptr;
+  // The costmap update thread rewrites cells (and may resize a rolling window)
+  // concurrently; hold its mutex for every query from here to the command.
+  std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> costmap_lock;
+  if (costmap) {
+    costmap_lock = std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t>(*costmap->getMutex());
+  }
   env_.setContext(costmap, robot, in.local_goal, in.people, rvel,
     use_candidate_trajectories_, path, v, gains);
 

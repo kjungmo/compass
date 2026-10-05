@@ -117,6 +117,11 @@ if(BUILD_TESTING)
   ament_add_gtest(test_param_validation test/test_param_validation.cpp)
   target_link_libraries(test_param_validation compass_controller)
   ament_target_dependencies(test_param_validation ${dependencies} compass_core)
+
+  # 잠금 계약: 제어 호출은 costmap 뮤텍스 아래에서 평가, setSpeedLimit 은 mutex_ 아래.
+  ament_add_gtest(test_thread_safety test/test_thread_safety.cpp)
+  target_link_libraries(test_thread_safety compass_controller)
+  ament_target_dependencies(test_thread_safety ${dependencies} compass_core)
 endif()
 
 ament_export_include_directories(include)
