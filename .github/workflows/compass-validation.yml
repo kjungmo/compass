@@ -57,6 +57,13 @@ jobs:
           source install/setup.bash
           colcon test --packages-select compass_core compass_nav2 compass_eval --event-handlers console_direct+
           colcon test-result --verbose
+      - name: Check that every controller_server key in both parameter files is declared and applied
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          bash scripts/check_param_binding.sh src/compass_nav2/config/compass_params.yaml sim/config/nav2_compass.yaml
       - name: Verify simulation package install assets and Python syntax
         shell: bash
         run: |
@@ -87,3 +94,10 @@ jobs:
           source install/setup.bash
           colcon test --packages-select compass_core compass_nav2 compass_eval --event-handlers console_direct+
           colcon test-result --verbose
+      - name: Check that every controller_server key in both parameter files is declared and applied
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          bash scripts/check_param_binding.sh src/compass_nav2/config/compass_params.yaml sim/config/nav2_compass.yaml
