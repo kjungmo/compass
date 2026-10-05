@@ -88,15 +88,15 @@ void CompassController::configure(
   loadKnobs(node, name);
   core_ = std::make_unique<compass::DecisionCore>(knobs_);
 
-  // The first decision after (re)start has no measured interval; use one
-  // controller period instead of a fixed 0.1 s, and say so when the accumulator's
-  // non-vacuity condition fails at that period.
+  // Say so when the accumulator's non-vacuity condition fails at the nominal
+  // control period (1/controller_frequency). Used for this check only; the
+  // decision interval itself is unchanged (measured, 0.1 s fallback).
   double controller_frequency = 20.0;
   if (node->has_parameter("controller_frequency")) {
     node->get_parameter("controller_frequency", controller_frequency);
   }
-  nominal_dt_ = nominalDecisionDt(controller_frequency);
-  const std::string vacuity = switchingVacuityWarning(knobs_, nominal_dt_);
+  const std::string vacuity =
+    switchingVacuityWarning(knobs_, nominalDecisionDt(controller_frequency));
   if (!vacuity.empty()) {
     RCLCPP_WARN(logger_, "CompassController '%s': %s.", name.c_str(), vacuity.c_str());
   }
@@ -110,7 +110,7 @@ void CompassController::configure(
 
   // Operator status on /diagnostics ("<node>: compass", hardware_id = namespace),
   // published from a wall timer while active.
-  diag_name_ = std::string(node->get_name()) + ": compass";
+  diag_name_ = std::string(node->get_name()) + ": compass (" + name + ")";
   diag_hardware_id_ = node->get_namespace();
   if (diagnostics_period_s_ > 0.0) {
     diag_pub_ = node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
@@ -210,7 +210,7 @@ void CompassController::loadKnobs(
   getParam(node, name, "diagnostics_period_s", diagnostics_period_s_, 1.0);
   // Humble only (no Controller::reset()); declared everywhere so one YAML serves
   // both distributions. Ignored where Nav2 calls reset() at task end.
-  getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 1.0);
+  getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 0.5);
   // Opt-in STOP/HOLD release (adapter only, beyond the published method). -1
   // keeps the published behaviour: STOP latches and HOLD is absorbing until reset.
   getParam(node, name, "stop_release_dwell_s", stop_release_dwell_s_, -1.0);
@@ -483,6 +483,8 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
   kv("people_stale", fresh.stale ? "true" : "false");
   kv("people_applied_last_cycle", std::to_string(s.people_applied));
   kv("people_tf_failures", std::to_string(tf_failures_.load()));
+  kv("people_tf_last_failure_age_s", tf_failures_.load() ?
+    fmt(now - last_tf_failure_steady_.load(), "%.2f") : "never");
   kv("seconds_since_compute", s.computed ? fmt(now - s.last_compute_steady, "%.2f") : "never");
   kv("last_command", s.last_command);
   kv("stop_release_dwell_s", fmt(stop_release_dwell_s_, "%.2f"));
@@ -504,6 +506,12 @@ diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() con
   } else if (fresh.stale) {
     warnings.push_back("people input stale (" + fmt(fresh.age_s, "%.2f") + " s)");
   }
+  // A TF failure drops every person for that cycle; warn while one is recent.
+  const uint64_t tf_failures = tf_failures_.load();
+  if (tf_failures > 0 && now - last_tf_failure_steady_.load() <= people_timeout_s_) {
+    warnings.push_back(
+      "people TF failing, deciding without people (" + std::to_string(tf_failures) + " failures)");
+  }
   st.level = warnings.empty() ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
   st.message = "ok";
   for (size_t i = 0; i < warnings.size(); ++i) {
@@ -524,6 +532,23 @@ void CompassController::publishDiagnostics()
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  // Nav2 Humble never calls reset() when a task ends, so STOP/HOLD, the
+  // commitment and the decision clock would carry into the next goal. On Humble
+  // controller_server calls setPlan() when a FollowPath action starts and, while
+  // the loop runs, for goal preemption within one control iteration of the last
+  // call. A plan arriving after the loop has been idle longer than
+  // task_gap_reset_s is therefore a new action: reset as Jazzy's reset() does.
+  const double t = steady_now_();
+  if (newPlanStartsNewTask(has_last_call_, last_call_steady_, t, task_gap_reset_s_)) {
+    char why[128];
+    std::snprintf(
+      why, sizeof(why), "new plan after the control loop was idle %.2f s > task_gap_reset_s %.2f s",
+      t - last_call_steady_, task_gap_reset_s_);
+    RCLCPP_INFO(logger_, "CompassController: %s; decision state reset (new task).", why);
+    resetLocked(why);
+  }
+#endif
   bool geometry_changed = global_plan_.header.frame_id != path.header.frame_id ||
     global_plan_.poses.size() != path.poses.size();
   if (!geometry_changed) {
@@ -592,6 +617,7 @@ std::vector<compass::Person> CompassController::extractPeople(const compass::SE2
   if (!tf_error.empty()) {
     // 변환 불가 시 이번 주기는 사람 없이 진행한다(기존 동작); 이제는 알린다.
     ++tf_failures_;
+    last_tf_failure_steady_ = steady_now_();
     RCLCPP_WARN_THROTTLE(
       logger_, steady_clock_, 2000,
       "CompassController: cannot transform %zu people from '%s' to '%s' (%s); "
@@ -615,19 +641,8 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 #if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
-  // Nav2 Humble never calls reset() at task end, so STOP/HOLD, the commitment
-  // and the decision clock would carry into the next goal. Treat a control-call
-  // gap longer than task_gap_reset_s as a new task (Jazzy resets at task end).
-  const double call = steady_now_();
-  if (controlGapStartsNewTask(has_last_call_, last_call_steady_, call, task_gap_reset_s_)) {
-    char why[128];
-    std::snprintf(
-      why, sizeof(why), "no control call for %.2f s > task_gap_reset_s %.2f s, new task",
-      call - last_call_steady_, task_gap_reset_s_);
-    RCLCPP_INFO(logger_, "CompassController: %s; decision state reset.", why);
-    resetLocked(why);
-  }
-  last_call_steady_ = call;
+  // Humble task boundary (see setPlan): remember when the loop last ran.
+  last_call_steady_ = steady_now_();
   has_last_call_ = true;
 #endif
   const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
@@ -675,6 +690,11 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
     }
     if (people_stale_hold_) {
       cycle_reason_ = "people input stale (people_stale_action=hold)";
+      // No decision is made while holding: the first decision after fresh input
+      // must not see the whole hold as one interval (it uses the fallback), and
+      // measured progress restarts from a new sample.
+      has_last_now_ = false;
+      measured_progress_.reset();
       return cmd;
     }
   }
@@ -710,13 +730,13 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
 
   const double now = cmd.header.stamp.sec + cmd.header.stamp.nanosec * 1e-9;
   in.now = now;
-  // 첫 주기 또는 시계 역행 시 공칭 dt(= 1/controller_frequency); 그 외엔 실측 주기 간격.
+  // 첫 주기 또는 시계 역행 시 공칭 dt; 그 외엔 실측 주기 간격.
   // dt contract (issue #6): any positive measured interval is accepted and no
   // validated upper bound h_max is enforced. Knobs::lambda is applied per update,
   // so its physical leak time -dt/ln(lambda) changes with dt; only the
   // accumulated-time form of P2 is claimed for this adapter (manuscript
   // Remark rem:vardt). A per-second leak would be a separate algorithm change.
-  in.dt = decisionDt(has_last_now_, last_now_, now, nominal_dt_);
+  in.dt = (has_last_now_ && now > last_now_) ? (now - last_now_) : 0.1;
   last_now_ = now;
   has_last_now_ = true;
 

@@ -164,6 +164,7 @@ protected:
   double people_timeout_s_{0.5};
   bool people_stale_hold_{false};
   std::atomic<uint64_t> tf_failures_{0};  // people TF lookups that failed
+  std::atomic<double> last_tf_failure_steady_{0.0};  // steady_now_() of the latest
 
   // 운영자 가시성: 벽시계 타이머로 /diagnostics 발행 (입력이 끊겨도 보인다).
   rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
@@ -220,12 +221,10 @@ protected:
   double k_side_{0.4};             // 사회적 측면 편향 이득
   double last_now_{0.0};
   bool has_last_now_{false};
-  // Decision period before the first measured interval: 1/controller_frequency.
-  double nominal_dt_{0.05};
-  // Humble task boundary (no Controller::reset()): a control-call gap longer than
-  // this starts a new task and resets the decision state; 0 disables. Unused on
-  // distributions whose controller_server calls reset() at task end.
-  double task_gap_reset_s_{1.0};
+  // Humble task boundary (no Controller::reset()): a plan arriving after the
+  // control loop has been idle longer than this starts a new task and resets the
+  // decision state; 0 disables. Unused where controller_server calls reset().
+  double task_gap_reset_s_{0.5};
   double last_call_steady_{0.0};
   bool has_last_call_{false};
 
