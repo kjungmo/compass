@@ -44,7 +44,11 @@ namespace compass_nav2
 std::vector<compass::Person> toPersons(
   const compass_msgs::msg::People & msg,
   const std::string & target_frame,
-  const std::shared_ptr<tf2_ros::Buffer> & tf_buffer = nullptr);
+  const std::shared_ptr<tf2_ros::Buffer> & tf_buffer = nullptr,
+  std::string * tf_error = nullptr);
+// tf_error (optional): set to the reason when the message frame differs from
+// target_frame and no transform is available (the result is then empty); cleared
+// otherwise. The caller decides how to report it.
 
 }  // namespace compass_nav2
 

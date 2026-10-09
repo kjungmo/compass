@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <vector>
 #include <stdexcept>
@@ -24,7 +25,9 @@
 #include "nav2_util/node_utils.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include "tf2/utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // defines the tf2::fromMsg getYaw needs
 
+#include "compass_nav2/param_checks.hpp"
 #include "compass_nav2/people_conversion.hpp"
 #include "compass_nav2/candidate_rollout.hpp"
 #include "compass_nav2/path_tracking.hpp"
@@ -45,6 +48,26 @@ void getParam(
   nav2_util::declare_parameter_if_not_declared(node, full, rclcpp::ParameterValue(def));
   node->get_parameter(full, out);
 }
+
+const char * modeName(compass::Mode m)
+{
+  switch (m) {
+    case compass::Mode::STOP: return "STOP";
+    case compass::Mode::HOLD: return "HOLD";
+    default: return "NORMAL";
+  }
+}
+
+// "{7:L, 9:R}" — person id and the side the robot passes it on; "{}" if empty.
+std::string className(const compass::TopoClass & c)
+{
+  std::string s = "{";
+  for (const auto & [id, side] : c.pairs()) {
+    if (s.size() > 1) {s += ", ";}
+    s += std::to_string(id) + (side == compass::Side::L ? ":L" : ":R");
+  }
+  return s + "}";
+}
 }  // namespace
 
 void CompassController::configure(
@@ -64,24 +87,70 @@ void CompassController::configure(
 
   loadKnobs(node, name);
   core_ = std::make_unique<compass::DecisionCore>(knobs_);
+
+  // Say so when the accumulator's non-vacuity condition fails at the nominal
+  // control period (1/controller_frequency). Used for this check only; the
+  // decision interval itself is unchanged (measured, 0.1 s fallback).
+  double controller_frequency = 20.0;
+  if (node->has_parameter("controller_frequency")) {
+    node->get_parameter("controller_frequency", controller_frequency);
+  }
+  const std::string vacuity =
+    switchingVacuityWarning(knobs_, nominalDecisionDt(controller_frequency));
+  task_boundary_.configure(task_gap_reset_s_, controller_frequency);
+  if (task_gap_reset_s_ > 0.0 && task_gap_reset_s_ < task_boundary_.minimumThreshold()) {
+    RCLCPP_WARN(
+      logger_, "CompassController '%s': task_gap_reset_s %.3f s is below three control periods "
+      "(%.3f s at %.1f Hz); using %.3f s.", name.c_str(), task_gap_reset_s_,
+      task_boundary_.minimumThreshold(), controller_frequency, task_boundary_.effectiveThreshold());
+  }
+  if (!vacuity.empty()) {
+    RCLCPP_WARN(logger_, "CompassController '%s': %s.", name.c_str(), vacuity.c_str());
+  }
   state_ = compass::DecisionState{};
 
-  // /people 구독 — 외부 트래커(또는 시뮬 지상 진실)가 보내는 추적 사람 목록.
-  // sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
+  // people_topic 구독 (기본 "/people") — 외부 트래커(또는 시뮬 지상 진실)가 보내는
+  // 추적 사람 목록. sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
   people_sub_ = node->create_subscription<compass_msgs::msg::People>(
-    "/people", rclcpp::SensorDataQoS(),
+    people_topic_, rclcpp::SensorDataQoS(),
     std::bind(&CompassController::peopleCallback, this, std::placeholders::_1));
+
+  // Operator status on /diagnostics ("<node>: compass", hardware_id = namespace),
+  // published from a wall timer while active.
+  diag_name_ = std::string(node->get_name()) + ": compass (" + name + ")";
+  diag_hardware_id_ = node->get_namespace();
+  if (diagnostics_period_s_ > 0.0) {
+    diag_pub_ = node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", rclcpp::QoS(10));
+  }
 
   RCLCPP_INFO(
     logger_, "CompassController '%s' 구성 완료 (E0=%.3f, e_max_rev=%.3f, max_v=%.3f, "
-    "global_frame=%s, /people 구독).",
-    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_, global_frame_.c_str());
+    "global_frame=%s, people_topic=%s).",
+    name.c_str(), knobs_.E0, knobs_.e_max_rev, max_linear_speed_, global_frame_.c_str(),
+    people_sub_->get_topic_name());
 }
 
 void CompassController::peopleCallback(const compass_msgs::msg::People::SharedPtr msg)
 {
+  const double received = steady_now_();
   std::lock_guard<std::mutex> lock(people_mutex_);
   latest_people_ = msg;
+  people_received_steady_ = received;
+}
+
+PeopleFreshness CompassController::peopleFreshness() const
+{
+  compass_msgs::msg::People::SharedPtr msg;
+  double received = 0.0;
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    msg = latest_people_;
+    received = people_received_steady_;
+  }
+  const double stamp = msg ? rclcpp::Time(msg->header.stamp).seconds() : 0.0;
+  const double ros_now = clock_ ? clock_->now().seconds() : 0.0;
+  return assessPeople(msg != nullptr, received, steady_now_(), stamp, ros_now, people_timeout_s_);
 }
 
 void CompassController::loadKnobs(
@@ -117,9 +186,6 @@ void CompassController::loadKnobs(
   getParam(node, name, "use_candidate_trajectories", use_candidate_trajectories_, false);
   getParam(node, name, "progress_max_gap", progress_max_gap_, 0.25);
   getParam(node, name, "progress_max_speed", progress_max_speed_, 2.0);
-  if (!std::isfinite(progress_max_gap_) || progress_max_gap_ <= 0 ||
-      !std::isfinite(progress_max_speed_) || progress_max_speed_ <= 0)
-    throw std::invalid_argument("invalid measured progress parameters");
   getParam(node, name, "max_linear_speed", max_linear_speed_, max_linear_speed_);
   // 궤적 계층 ② 노브 (경로 추종 cruise).
   getParam(node, name, "cruise_speed", cruise_speed_, cruise_speed_);
@@ -130,15 +196,100 @@ void CompassController::loadKnobs(
   getParam(node, name, "k_e", k_e_, k_e_);
   getParam(node, name, "k_theta", k_theta_, k_theta_);
   getParam(node, name, "k_side", k_side_, k_side_);
+  // 사람 입력 토픽. 기본 "/people"(절대 이름)은 이전 하드코딩과 같다; 상대 이름은
+  // controller_server 의 네임스페이스 아래로 해석된다 (다중 로봇).
+  getParam(node, name, "people_topic", people_topic_, std::string("/people"));
+  if (people_topic_.empty()) {
+    throw std::invalid_argument(name + ".people_topic must not be empty");
+  }
+  // 사람 입력 신선도. 기본 0.5 s: 기본 ttc_min 2.0 s 의 1/4 이고, 사람(1.4 m/s)과
+  // 로봇(0.5 m/s)이 마주 올 때 0.5 s 묵은 트랙은 약 0.95 m 어긋나 d_safe 0.5 m 를
+  // 넘는다. 기본 동작 "warn" 은 경고만 하므로 주행 명령은 이전과 같다.
+  getParam(node, name, "people_timeout_s", people_timeout_s_, 0.5);
+  std::string stale_action = "warn";
+  getParam(node, name, "people_stale_action", stale_action, stale_action);
+  if (stale_action != "warn" && stale_action != "hold") {
+    throw std::invalid_argument(
+            name + ".people_stale_action = \"" + stale_action +
+            "\" is not one of \"warn\", \"hold\"");
+  }
+  people_stale_hold_ = stale_action == "hold";
+  getParam(node, name, "diagnostics_period_s", diagnostics_period_s_, 1.0);
+  // Humble only (no Controller::reset()); declared everywhere so one YAML serves
+  // both distributions. Ignored where Nav2 calls reset() at task end.
+  getParam(node, name, "task_gap_reset_s", task_gap_reset_s_, 0.5);
+  validateParameters(name);
+  if (cruise_speed_ > max_linear_speed_) {
+    RCLCPP_WARN(
+      logger_, "%s.cruise_speed %.3f m/s exceeds %s.max_linear_speed %.3f m/s; "
+      "commands are capped at max_linear_speed.", name.c_str(), cruise_speed_, name.c_str(),
+      max_linear_speed_);
+  }
+}
+
+void CompassController::validateParameters(const std::string & ns) const
+{
+  // Reject values outside the domain each knob is defined on, naming the knob and
+  // its range, instead of failing later inside the decision core or driving with
+  // a meaningless configuration. Zero stays allowed wherever it is a documented
+  // ablation (k_rho, weights, margins).
+  const auto in = [&ns](const char * key, double v, double lo, double hi,
+      bool lo_open = false, bool hi_open = false) {
+      requireRange(ns + "." + key, v, lo, hi, lo_open, hi_open);
+    };
+  const compass::Knobs & k = knobs_;
+  in("delta_floor", k.delta_floor, 0.0, kInf);
+  in("E0", k.E0, 0.0, kInf, true);
+  in("k_rho", k.k_rho, 0.0, kInf);
+  in("p", k.p, 1.0, kInf);
+  in("lambda", k.lambda, 0.0, 1.0, true);
+  in("e_max_fwd", k.e_max_fwd, 0.0, kInf);
+  in("e_max_rev", k.e_max_rev, 0.0, kInf);
+  in("d_safe", k.d_safe, 0.0, kInf);
+  in("ttc_min", k.ttc_min, 0.0, kInf);
+  in("W", k.W, 0.0, kInf, true);
+  in("n_thrash", k.n_thrash, 1.0, kInf);
+  in("w_g", k.w_g, 0.0, kInf);
+  in("w_s", k.w_s, 0.0, kInf);
+  in("w_e", k.w_e, 0.0, kInf);
+  in("w_r", k.w_r, 0.0, kInf);
+  in("sigma_front", k.sigma_front, 0.0, kInf, true);
+  in("sigma_rear", k.sigma_rear, 0.0, kInf, true);
+  in("sigma_s", k.sigma_s, 0.0, kInf, true);
+  in("K_cap", k.K_cap, 0.0, 16.0);  // the core enumerates 2^K_cap classes per cycle
+  in("a_brake", k.a_brake, 0.0, kInf);
+  in("ttc_stop", k.ttc_stop, 0.0, kInf);
+  in("T_safe_dwell", k.T_safe_dwell, 0.0, kInf);
+  in("eps_in", k.eps_in, 0.0, kInf);
+  in("eps_out", k.eps_out, 0.0, kInf);
+  in("progress_max_gap", progress_max_gap_, 0.0, kInf, true);
+  in("progress_max_speed", progress_max_speed_, 0.0, kInf, true);
+  in("max_linear_speed", max_linear_speed_, 0.0, kInf, true);
+  in("cruise_speed", cruise_speed_, 0.0, kInf, true);
+  in("max_angular_speed", max_angular_speed_, 0.0, kInf, true);
+  in("goal_decel_dist", goal_decel_dist_, 0.0, kInf);
+  in("lookahead_dist", lookahead_dist_, 0.0, kInf);
+  in("k_e", k_e_, 0.0, kInf);
+  in("k_theta", k_theta_, 0.0, kInf);
+  in("k_side", k_side_, 0.0, kInf);
+  in("people_timeout_s", people_timeout_s_, 0.0, kInf, true);
+  in("diagnostics_period_s", diagnostics_period_s_, 0.0, kInf);
+  in("task_gap_reset_s", task_gap_reset_s_, 0.0, kInf);
 }
 
 void CompassController::cleanup()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 정리.", plugin_name_.c_str());
+  if (diag_timer_) {
+    diag_timer_->cancel();
+    diag_timer_.reset();
+  }
+  diag_pub_.reset();
   people_sub_.reset();
   {
     std::lock_guard<std::mutex> lock(people_mutex_);
     latest_people_.reset();
+    people_received_steady_ = 0.0;
   }
   core_.reset();
   costmap_ros_.reset();
@@ -148,24 +299,190 @@ void CompassController::cleanup()
 void CompassController::activate()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 활성화.", plugin_name_.c_str());
+  auto node = node_.lock();
+  if (diag_pub_ && node) {
+    diag_pub_->on_activate();
+    // Wall timer: diagnostics keep coming when /clock or the control loop stops.
+    diag_timer_ = node->create_wall_timer(
+      std::chrono::duration<double>(diagnostics_period_s_),
+      std::bind(&CompassController::publishDiagnostics, this));
+  }
 }
 
 void CompassController::deactivate()
 {
   RCLCPP_INFO(logger_, "CompassController '%s' 비활성화.", plugin_name_.c_str());
+  if (diag_timer_) {
+    diag_timer_->cancel();
+    diag_timer_.reset();
+  }
+  if (diag_pub_) {
+    diag_pub_->on_deactivate();
+  }
 }
 
 void CompassController::reset()
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  resetLocked("controller reset (Nav2 ends the task)");
+}
+
+void CompassController::resetLocked(const char * why)
+{
+  const compass::Mode before = state_.mode;
   state_ = compass::DecisionState{};
   has_last_now_ = false;
   measured_progress_.reset();
+  if (before != compass::Mode::NORMAL) {
+    RCLCPP_INFO(
+      logger_, "CompassController: mode %s -> NORMAL: %s.", modeName(before), why);
+  }
+  std::lock_guard<std::mutex> lock(diag_mutex_);
+  snapshot_.mode = state_.mode;
+  snapshot_.committed_class = className(state_.c_star);
+  snapshot_.e_rev = state_.e_rev;
+  snapshot_.rho = state_.rho;
+}
+
+void CompassController::logModeTransition(
+  compass::Mode before, const compass::TopoClass & cstar_before, size_t people)
+{
+  const compass::Mode after = state_.mode;
+  if (after == compass::Mode::STOP) {
+    RCLCPP_WARN(
+      logger_, "CompassController: mode %s -> STOP: TTC of the committed class %s is %.2f s "
+      "< ttc_stop %.2f s while the safety ladder brakes (no safe class, or inside the safety "
+      "dwell or thrash window; %zu people). STOP holds a zero twist until reset.",
+      modeName(before), className(cstar_before).c_str(), env_.ttc(cstar_before),
+      knobs_.ttc_stop, people);
+  } else if (after == compass::Mode::HOLD) {
+    RCLCPP_WARN(
+      logger_, "CompassController: mode %s -> HOLD: %d safety interventions within W = %.1f s "
+      "reached n_thrash = %d (%zu people). HOLD holds a zero twist until reset.",
+      modeName(before), state_.n_thrash, knobs_.W, knobs_.n_thrash, people);
+  } else {
+    RCLCPP_INFO(
+      logger_, "CompassController: mode %s -> %s.", modeName(before), modeName(after));
+  }
+}
+
+void CompassController::recordCycle(const geometry_msgs::msg::TwistStamped & cmd)
+{
+  char command[160];
+  std::snprintf(
+    command, sizeof(command), "%s (v=%.2f m/s, w=%.2f rad/s)", cycle_reason_,
+    cmd.twist.linear.x, cmd.twist.angular.z);
+  const double now = steady_now_();
+  std::lock_guard<std::mutex> lock(diag_mutex_);
+  snapshot_.mode = state_.mode;
+  snapshot_.committed_class = className(state_.c_star);
+  snapshot_.e_rev = state_.e_rev;
+  snapshot_.rho = state_.rho;
+  snapshot_.people_applied = people_applied_;
+  snapshot_.computed = true;
+  snapshot_.last_compute_steady = now;
+  snapshot_.last_command = command;
+}
+
+diagnostic_msgs::msg::DiagnosticStatus CompassController::buildDiagnostics() const
+{
+  using diagnostic_msgs::msg::DiagnosticStatus;
+  Snapshot s;
+  {
+    std::lock_guard<std::mutex> lock(diag_mutex_);
+    s = snapshot_;
+  }
+  size_t people_count = 0;
+  {
+    std::lock_guard<std::mutex> lock(people_mutex_);
+    people_count = latest_people_ ? latest_people_->people.size() : 0;
+  }
+  const PeopleFreshness fresh = peopleFreshness();
+  const double now = steady_now_();
+  const auto fmt = [](double v, const char * spec) {
+      char b[48];
+      std::snprintf(b, sizeof(b), spec, v);
+      return std::string(b);
+    };
+
+  DiagnosticStatus st;
+  st.name = diag_name_;
+  st.hardware_id = diag_hardware_id_;
+  const auto kv = [&st](const std::string & k, const std::string & v) {
+      diagnostic_msgs::msg::KeyValue p;
+      p.key = k;
+      p.value = v;
+      st.values.push_back(p);
+    };
+  kv("plugin", plugin_name_);
+  kv("mode", modeName(s.mode));
+  kv("committed_class", s.committed_class);
+  kv("e_rev", fmt(s.e_rev, "%.3f"));
+  kv("rho", fmt(s.rho, "%.3f"));
+  kv("people_topic", people_topic_);
+  kv("people_count", std::to_string(people_count));
+  kv("people_age_s", fresh.received ? fmt(fresh.age_s, "%.2f") : "never received");
+  kv("people_timeout_s", fmt(people_timeout_s_, "%.2f"));
+  kv("people_stale", fresh.stale ? "true" : "false");
+  kv("people_applied_last_cycle", std::to_string(s.people_applied));
+  kv("people_tf_failures", std::to_string(tf_failures_.load()));
+  kv("people_tf_last_failure_age_s", tf_failures_.load() ?
+    fmt(now - last_tf_failure_steady_.load(), "%.2f") : "never");
+  kv("seconds_since_compute", s.computed ? fmt(now - s.last_compute_steady, "%.2f") : "never");
+  kv("last_command", s.last_command);
+
+  std::vector<std::string> warnings;
+  if (s.mode == compass::Mode::STOP) {warnings.push_back("STOP latched (zero twist until reset)");}
+  if (s.mode == compass::Mode::HOLD) {warnings.push_back("HOLD (zero twist until reset)");}
+  if (!fresh.received) {
+    warnings.push_back("no people message received on " + people_topic_);
+  } else if (fresh.stale) {
+    warnings.push_back("people input stale (" + fmt(fresh.age_s, "%.2f") + " s)");
+  }
+  // A TF failure drops every person for that cycle; warn while one is recent.
+  const uint64_t tf_failures = tf_failures_.load();
+  if (tf_failures > 0 && now - last_tf_failure_steady_.load() <= people_timeout_s_) {
+    warnings.push_back(
+      "people TF failing, deciding without people (" + std::to_string(tf_failures) + " failures)");
+  }
+  st.level = warnings.empty() ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
+  st.message = "ok";
+  for (size_t i = 0; i < warnings.size(); ++i) {
+    st.message = i ? st.message + "; " + warnings[i] : warnings[i];
+  }
+  return st;
+}
+
+void CompassController::publishDiagnostics()
+{
+  if (!diag_pub_ || !diag_pub_->is_activated()) {return;}
+  diagnostic_msgs::msg::DiagnosticArray array;
+  array.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
+  array.status.push_back(buildDiagnostics());
+  diag_pub_->publish(array);
 }
 
 void CompassController::setPlan(const nav_msgs::msg::Path & path)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  // Nav2 Humble never calls reset() when a task ends, so STOP/HOLD, the
+  // commitment and the decision clock would carry into the next goal. On Humble
+  // controller_server calls setPlan() when a FollowPath action starts and, while
+  // the loop runs, for goal preemption within one control iteration of the last
+  // call. A plan arriving after the loop has been idle longer than
+  // task_gap_reset_s is therefore a new action: reset as Jazzy's reset() does.
+  const double t = steady_now_();
+  if (task_boundary_.newPlanStartsTask(t)) {
+    char why[160];
+    std::snprintf(
+      why, sizeof(why),
+      "new plan after the control loop was idle %.2f s > %.2f s (task_gap_reset_s)",
+      task_boundary_.idleFor(t), task_boundary_.effectiveThreshold());
+    RCLCPP_INFO(logger_, "CompassController: %s; decision state reset (new task).", why);
+    resetLocked(why);
+  }
+#endif
   bool geometry_changed = global_plan_.header.frame_id != path.header.frame_id ||
     global_plan_.poses.size() != path.poses.size();
   if (!geometry_changed) {
@@ -185,6 +502,8 @@ void CompassController::setPlan(const nav_msgs::msg::Path & path)
 
 void CompassController::setSpeedLimit(const double & speed_limit, const bool & percentage)
 {
+  // Called from the speed-limit subscription while the control loop reads these.
+  std::lock_guard<std::mutex> lock(mutex_);
   speed_limit_ = speed_limit;
   speed_limit_is_pct_ = percentage;
 }
@@ -213,7 +532,7 @@ compass::Point2D CompassController::computeLocalGoal(const compass::SE2 & robot)
   return {last.x, last.y};
 }
 
-std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot) const
+std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot)
 {
   // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
   // 변환한다. 메시지가 없으면 빈 목록(보존적) — 컨트롤러는 사람 0명이어도
@@ -227,11 +546,23 @@ std::vector<compass::Person> CompassController::extractPeople(const compass::SE2
   if (!msg) {
     return {};
   }
-  std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_);
+  std::string tf_error;
+  std::vector<compass::Person> people = toPersons(*msg, global_frame_, tf_, &tf_error);
+  if (!tf_error.empty()) {
+    // 변환 불가 시 이번 주기는 사람 없이 진행한다(기존 동작); 이제는 알린다.
+    ++tf_failures_;
+    last_tf_failure_steady_ = steady_now_();
+    RCLCPP_WARN_THROTTLE(
+      logger_, steady_clock_, 2000,
+      "CompassController: cannot transform %zu people from '%s' to '%s' (%s); "
+      "deciding without them this cycle (%lu TF failures so far).",
+      msg->people.size(), msg->header.frame_id.c_str(), global_frame_.c_str(),
+      tf_error.c_str(), static_cast<unsigned long>(tf_failures_.load()));
+  }
 
   // 사람 수를 throttle 로그로 남겨 스모크가 수신을 확인할 수 있게 한다.
   RCLCPP_INFO_THROTTLE(
-    logger_, *clock_, 2000, "CompassController: /people 수신 — %zu 명 적용.",
+    logger_, steady_clock_, 2000, "CompassController: /people 수신 — %zu 명 적용.",
     people.size());
 
   return people;
@@ -243,8 +574,23 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   nav2_core::GoalChecker * /*goal_checker*/)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  const geometry_msgs::msg::TwistStamped cmd = computeLocked(pose, velocity);
+  recordCycle(cmd);
+#if defined(COMPASS_NAV2_CONTROLLER_HAS_RESET) && !COMPASS_NAV2_CONTROLLER_HAS_RESET
+  // Humble task boundary (see setPlan): stamped when the call returns, so time
+  // spent blocked inside it (e.g. on the costmap mutex) is not idle time.
+  task_boundary_.controlReturned(steady_now_());
+#endif
+  return cmd;
+}
 
+geometry_msgs::msg::TwistStamped CompassController::computeLocked(
+  const geometry_msgs::msg::PoseStamped & pose,
+  const geometry_msgs::msg::Twist & velocity)
+{
   geometry_msgs::msg::TwistStamped cmd;
+  cycle_reason_ = "drive";
+  people_applied_ = 0;
   cmd.header.frame_id = pose.header.frame_id;
   cmd.header.stamp = clock_ ? clock_->now() : rclcpp::Clock().now();
 
@@ -254,9 +600,37 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   if (global_frame_.empty() || pose.header.frame_id != global_frame_ ||
       (!global_plan_.poses.empty() && global_plan_.header.frame_id != global_frame_)) {
     measured_progress_.reset();
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
       "Controller: pose/plan frame mismatch; holding command");
+    cycle_reason_ = "pose/plan frame differs from the costmap frame";
     return cmd;
+  }
+
+  // People input freshness. "warn" (default) only reports and then decides with
+  // the latest message exactly as before; "hold" emits a zero twist while stale.
+  const PeopleFreshness people_fresh = peopleFreshness();
+  if (people_fresh.stale) {
+    if (people_fresh.received) {
+      RCLCPP_WARN_THROTTLE(
+        logger_, steady_clock_, 2000,
+        "CompassController: people input on %s is stale (%.2f s > people_timeout_s %.2f s); %s",
+        people_topic_.c_str(), people_fresh.age_s, people_timeout_s_,
+        people_stale_hold_ ? "holding command" : "deciding with the last message");
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        logger_, steady_clock_, 2000,
+        "CompassController: no people message received on %s since configure; %s",
+        people_topic_.c_str(), people_stale_hold_ ? "holding command" : "deciding without people");
+    }
+    if (people_stale_hold_) {
+      cycle_reason_ = "people input stale (people_stale_action=hold)";
+      // No decision is made while holding: the first decision after fresh input
+      // must not see the whole hold as one interval (it uses the fallback), and
+      // measured progress restarts from a new sample.
+      has_last_now_ = false;
+      measured_progress_.reset();
+      return cmd;
+    }
   }
 
   // 1) 자세·속도 -> compass 자료형.
@@ -275,6 +649,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   in.robot_vel = rvel;
   in.local_goal = computeLocalGoal(robot);
   in.people = extractPeople(robot);
+  people_applied_ = in.people.size();
 
   std::vector<compass::Point2D> path;
   path.reserve(global_plan_.poses.size());
@@ -303,13 +678,15 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     const double stamp = pose.header.stamp.sec + pose.header.stamp.nanosec * 1e-9;
     if (!std::isfinite(now) || stamp > now + 1e-6 || now - stamp > progress_max_gap_) {
       measured_progress_.reset();
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: stale pose; holding command");
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: stale pose; holding command");
+      cycle_reason_ = "measured progress: stale pose";
       return cmd;
     }
     const auto progress = measured_progress_.sample(robot, stamp, pose.header.frame_id,
       state_.c_star, path, progress_max_gap_, progress_max_speed_);
     if (!progress.valid) {
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000, "Measured progress: %s; holding command", progress.reason);
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000, "Measured progress: %s; holding command", progress.reason);
+      cycle_reason_ = "measured progress sample invalid";
       return cmd;
     }
     in.lateral_progress_delta_m = progress.delta_m;
@@ -338,34 +715,48 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     v_cap = speed_limit_is_pct_ ? max_linear_speed_ * (speed_limit_ / 100.0) : speed_limit_;
   }
   if (!std::isfinite(v) || !std::isfinite(v_cap) || v_cap < 0.0) {
-    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid controller speed configuration; holding command");
+    cycle_reason_ = "invalid speed limit";
     return cmd;
   }
   v = std::clamp(v, 0.0, v_cap);
 
   // 3) costmap 컨텍스트 주입.
-  const nav2_costmap_2d::Costmap2D * costmap =
+  nav2_costmap_2d::Costmap2D * costmap =
     costmap_ros_ ? costmap_ros_->getCostmap() : nullptr;
+  // The costmap update thread rewrites cells (and may resize a rolling window)
+  // concurrently; hold its mutex for every query from here to the command.
+  std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> costmap_lock;
+  if (costmap) {
+    costmap_lock = std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t>(*costmap->getMutex());
+  }
   env_.setContext(costmap, robot, in.local_goal, in.people, rvel,
     use_candidate_trajectories_, path, v, gains);
 
   // 4) 결정 코어 1주기 — DecisionState 는 멤버로 보존된다.
+  const compass::Mode mode_before = state_.mode;
+  const compass::TopoClass cstar_before = state_.c_star;
   compass::DecisionOutput out;
   try {
     out = core_->step(in, state_, env_);
   } catch (const std::invalid_argument& error) {
     // Contract violations (including a regressing safety clock) cannot escape
     // the command adapter and leave a prior nonzero command unaddressed.
-    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 2000,
+    RCLCPP_ERROR_THROTTLE(logger_, steady_clock_, 2000,
       "Invalid decision input: %s; holding command", error.what());
+    cycle_reason_ = "decision input rejected by the core";
     return cmd;
+  }
+  if (state_.mode != mode_before) {
+    logModeTransition(mode_before, cstar_before, in.people.size());
   }
 
   // 5) DecisionOutput -> TwistStamped.
   if (out.mode == compass::Mode::STOP || out.mode == compass::Mode::HOLD) {
     cmd.twist.linear.x = 0.0;
     cmd.twist.angular.z = 0.0;
+    cycle_reason_ = out.mode == compass::Mode::STOP ? "mode STOP" : "mode HOLD";
     return cmd;
   }
 
@@ -373,6 +764,7 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
   // or unobserved legacy ray. In particular, a missing map must emit a complete
   // zero twist even when measured speed would otherwise produce a braking bound.
   if (!use_candidate_trajectories_ && !(env_.clearance(out.c_star) > 0.0)) {
+    cycle_reason_ = "committed ray blocked, unknown or off the costmap";
     return cmd;
   }
 
@@ -395,8 +787,9 @@ geometry_msgs::msg::TwistStamped CompassController::computeVelocityCommands(
     const auto execution = env_.trajectoryAtSpeed(out.c_star, v);
     if (execution.empty() ||
         !env_.executionSafe(out.c_star, v, knobs_.d_safe, knobs_.ttc_min)) {
-      RCLCPP_WARN_THROTTLE(logger_, *clock_, 2000,
+      RCLCPP_WARN_THROTTLE(logger_, steady_clock_, 2000,
         "Candidate command changed safety outcome or is unavailable; holding command");
+      cycle_reason_ = "candidate rollout unsafe or unavailable at the commanded speed";
       return cmd;
     }
     // Sample zero is the exact command of the rollout revalidated after all

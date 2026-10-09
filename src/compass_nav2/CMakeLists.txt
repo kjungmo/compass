@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(compass_core REQUIRED)
 find_package(compass_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_util REQUIRED)
@@ -19,6 +20,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+# tf2::getYaw(geometry_msgs::msg::Quaternion) calls tf2::fromMsg, which is defined in
+# tf2_geometry_msgs; without it optimized builds leave the symbol undefined at load time.
+find_package(tf2_geometry_msgs REQUIRED)
 
 # nav2_core::Controller gained the reset() hook in nav2_core 1.2 (Iron and later).
 # Humble ships nav2_core 1.1.x without it, so reset() must not be marked override there.
@@ -31,6 +35,7 @@ message(STATUS "compass_nav2: nav2_core ${nav2_core_VERSION}")
 
 set(dependencies
   compass_msgs
+  diagnostic_msgs
   nav2_core
   nav2_costmap_2d
   nav2_util
@@ -40,6 +45,7 @@ set(dependencies
   geometry_msgs
   nav_msgs
   tf2
+  tf2_geometry_msgs
   tf2_ros)
 
 # =============================================================================
@@ -108,6 +114,21 @@ if(BUILD_TESTING)
   ament_add_gtest(test_path_tracking test/test_path_tracking.cpp)
   target_link_libraries(test_path_tracking compass_controller)
   ament_target_dependencies(test_path_tracking compass_core)
+
+  # configure 단계 파라미터 범위 검증 (값·허용 범위를 담은 예외, 기본값 불변).
+  ament_add_gtest(test_param_validation test/test_param_validation.cpp)
+  target_link_libraries(test_param_validation compass_controller)
+  ament_target_dependencies(test_param_validation ${dependencies} compass_core)
+
+  # 잠금 계약: 제어 호출은 costmap 뮤텍스 아래에서 평가, setSpeedLimit 은 mutex_ 아래.
+  ament_add_gtest(test_thread_safety test/test_thread_safety.cpp)
+  target_link_libraries(test_thread_safety compass_controller)
+  ament_target_dependencies(test_thread_safety ${dependencies} compass_core)
+
+  # 구성된 플러그인의 배포 동작: people 토픽·신선도, /diagnostics, Humble 과업 경계.
+  ament_add_gtest(test_controller_runtime test/test_controller_runtime.cpp)
+  target_link_libraries(test_controller_runtime compass_controller)
+  ament_target_dependencies(test_controller_runtime ${dependencies} compass_core)
 endif()
 
 ament_export_include_directories(include)

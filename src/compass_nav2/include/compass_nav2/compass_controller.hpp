@@ -15,9 +15,14 @@
 #ifndef COMPASS_NAV2__COMPASS_CONTROLLER_HPP_
 #define COMPASS_NAV2__COMPASS_CONTROLLER_HPP_
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -29,6 +34,10 @@
 #include "nav_msgs/msg/path.hpp"
 #include "tf2_ros/buffer.h"
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "diagnostic_msgs/msg/diagnostic_status.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
+
 #include "compass_msgs/msg/people.hpp"
 
 #include "compass_core/decision_core.hpp"
@@ -36,6 +45,8 @@
 #include "compass_core/knobs.hpp"
 #include "compass_nav2/costmap_env_query.hpp"
 #include "compass_nav2/measured_progress.hpp"
+#include "compass_nav2/people_freshness.hpp"
+#include "compass_nav2/task_boundary.hpp"
 
 namespace compass_nav2
 {
@@ -78,19 +89,55 @@ public:
   void setSpeedLimit(const double & speed_limit, const bool & percentage) override;
 
 protected:
+  // One control cycle; the caller holds mutex_. Sets cycle_reason_.
+  geometry_msgs::msg::TwistStamped computeLocked(
+    const geometry_msgs::msg::PoseStamped & pose,
+    const geometry_msgs::msg::Twist & velocity);
+
+  // Clears decision state (caller holds mutex_) and logs a mode change with `why`.
+  void resetLocked(const char * why);
+
+  // WARN/INFO log of a NORMAL/STOP/HOLD change with the reason (env_ still set).
+  void logModeTransition(
+    compass::Mode before, const compass::TopoClass & cstar_before, size_t people);
+
+  // Copies what the operator should see into the diagnostics snapshot.
+  void recordCycle(const geometry_msgs::msg::TwistStamped & cmd);
+
+  // The /diagnostics status for this controller at this instant (thread-safe:
+  // reads only the snapshot, the people input and atomics).
+  diagnostic_msgs::msg::DiagnosticStatus buildDiagnostics() const;
+  void publishDiagnostics();
+
   // ROS 파라미터 -> compass::Knobs 로딩 (모든 노브 1:1, plugin-name 스코프).
   void loadKnobs(
     const rclcpp_lifecycle::LifecycleNode::SharedPtr & node, const std::string & name);
+
+  // Configure-time range checks; throws std::invalid_argument naming the
+  // parameter (ns.key), its value and the allowed range.
+  void validateParameters(const std::string & ns) const;
 
   // 전역 계획의 마지막 점(또는 robot 전방 lookahead)을 로컬 목표로 환산.
   compass::Point2D computeLocalGoal(const compass::SE2 & robot) const;
 
   // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
   // 환산 (트래커 미수신 시 빈 목록). 변환은 toPersons 자유 함수에 위임한다.
-  std::vector<compass::Person> extractPeople(const compass::SE2 & robot) const;
+  // TF 실패는 경고(steady 시계 throttle)와 tf_failures_ 카운트로 보고한다.
+  std::vector<compass::Person> extractPeople(const compass::SE2 & robot);
 
-  // /people 구독 콜백 — 최신 메시지를 뮤텍스 보호 하에 저장.
+  // /people 구독 콜백 — 최신 메시지와 수신 시각(steady)을 뮤텍스 보호 하에 저장.
   void peopleCallback(const compass_msgs::msg::People::SharedPtr msg);
+
+  // Freshness of the latest people message at this instant (people_timeout_s).
+  PeopleFreshness peopleFreshness() const;
+
+  // Seconds on a monotonic clock; injectable for tests. Used for input ages,
+  // control-call gaps and log throttling, so none of them stop with /clock.
+  std::function<double()> steady_now_{[] {
+      return std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    }};
+  mutable rclcpp::Clock steady_clock_{RCL_STEADY_TIME};  // log throttling
 
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
   std::shared_ptr<tf2_ros::Buffer> tf_;
@@ -105,7 +152,39 @@ protected:
   // /people 구독 + 최신 메시지 (people_mutex_ 보호).
   rclcpp::Subscription<compass_msgs::msg::People>::SharedPtr people_sub_;
   compass_msgs::msg::People::SharedPtr latest_people_;
+  double people_received_steady_{0.0};  // steady_now_() at the latest message
   std::string global_frame_;       // costmap global_frame (변환 대상 프레임).
+  std::string people_topic_{"/people"};
+  // 사람 입력 신선도: 이 시간보다 오래된(또는 한 번도 오지 않은) 입력은 stale.
+  // "warn" (기본): 경고만 하고 마지막 메시지를 그대로 쓴다 (기존 동작).
+  // "hold": stale 동안 영 twist 를 낸다.
+  double people_timeout_s_{0.5};
+  bool people_stale_hold_{false};
+  std::atomic<uint64_t> tf_failures_{0};  // people TF lookups that failed
+  std::atomic<double> last_tf_failure_steady_{0.0};  // steady_now_() of the latest
+
+  // 운영자 가시성: 벽시계 타이머로 /diagnostics 발행 (입력이 끊겨도 보인다).
+  rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    diag_pub_;
+  rclcpp::TimerBase::SharedPtr diag_timer_;
+  double diagnostics_period_s_{1.0};  // 0 disables
+  std::string diag_name_{"compass"};
+  std::string diag_hardware_id_;
+  const char * cycle_reason_{"none"};  // why the last command is what it is
+  size_t people_applied_{0};           // people passed to the core in the last cycle
+  struct Snapshot
+  {
+    compass::Mode mode{compass::Mode::NORMAL};
+    std::string committed_class{"{}"};
+    double e_rev{0.0};
+    double rho{0.0};
+    size_t people_applied{0};
+    bool computed{false};
+    double last_compute_steady{0.0};
+    std::string last_command{"none"};
+  };
+  mutable std::mutex diag_mutex_;
+  Snapshot snapshot_;  // diag_mutex_
   mutable std::mutex people_mutex_;
 
   // 결정 계층 상태 (주기 간 보존).
@@ -139,6 +218,11 @@ protected:
   double k_side_{0.4};             // 사회적 측면 편향 이득
   double last_now_{0.0};
   bool has_last_now_{false};
+  // Humble task boundary (no Controller::reset()): a plan arriving after the
+  // control loop has been idle longer than this starts a new task and resets the
+  // decision state; 0 disables. Unused where controller_server calls reset().
+  double task_gap_reset_s_{0.5};
+  TaskBoundary task_boundary_;  // configured from task_gap_reset_s_ and controller_frequency
 
   std::mutex mutex_;
 };

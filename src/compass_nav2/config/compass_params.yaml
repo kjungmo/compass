@@ -6,6 +6,8 @@
 # (research_spec §1.4), 런타임 튜닝은 플랫폼별로 기대된다.
 #
 # ROS2 Jazzy + Nav2 (micromamba `ros2` env) 빌드 검증됨.
+# CI checks on Humble and Jazzy that every key below is declared and applied
+# (scripts/check_param_binding.sh); ROS 2 silently ignores undeclared keys.
 
 controller_server:
   ros__parameters:
@@ -13,9 +15,20 @@ controller_server:
     FollowPath:
       plugin: "compass_nav2::CompassController"
 
+      # ---- 사람 입력 (Deployment: src/compass_nav2/README.md) ----
+      people_topic: "/people"    # compass_msgs/People; a relative name resolves in the node namespace
+      people_timeout_s: 0.5      # s; older (or never received) people input is stale
+      people_stale_action: "warn"  # "warn": report, decide with the last message; "hold": zero twist
+      diagnostics_period_s: 1.0  # s; /diagnostics status from a wall timer while active; 0 disables
+      task_gap_reset_s: 0.5      # s; Humble only, 0 disables: a new plan after the control loop was idle this long
+                                 # resets the decision state (STOP/HOLD, commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does
+
       # ---- 출력 제한 ----
       max_linear_speed: 0.5      # m/s; 하드 상한 (hard cap)
       use_candidate_trajectories: false  # research opt-in; evaluated trajectory execution
+      use_measured_progress: false       # research opt-in; legacy forward-speed rho proxy otherwise
+      progress_max_gap: 0.25             # s; measured progress: max pose age / sample gap
+      progress_max_speed: 2.0            # m/s; measured progress: max plausible pose speed
 
       # ---- 궤적 계층 ② (경로 추종 cruise) ----
       cruise_speed: 0.45         # m/s; NORMAL 기본 순항 속도

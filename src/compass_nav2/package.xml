@@ -10,6 +10,7 @@
 
   <depend>compass_core</depend>
   <depend>compass_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>nav2_core</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav2_util</depend>
@@ -19,6 +20,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

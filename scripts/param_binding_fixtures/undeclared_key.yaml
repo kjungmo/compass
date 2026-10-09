@@ -1,0 +1,8 @@
+# Negative fixture for scripts/check_param_binding.sh (CI): progress_length is a
+# retired key that no code declares. The check must report it and exit non-zero.
+controller_server:
+  ros__parameters:
+    controller_plugins: ["FollowPath"]
+    FollowPath:
+      plugin: "compass_nav2::CompassController"
+      progress_length: 1.0
