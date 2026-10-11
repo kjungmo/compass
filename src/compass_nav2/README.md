@@ -12,12 +12,15 @@ Knob semantics are in the paper and in `compass_core/knobs.hpp`.
 ## Parameters added for deployment
 
 All are under the plugin name (`FollowPath.` below). With these defaults the
-commanded motion is the published behaviour, with one exception that is on by
-default: on Humble only, a new plan arriving after the control loop has been
+commanded motion is the published behaviour, with two exceptions that are on by
+default. On Humble only, a new plan arriving after the control loop has been
 idle longer than `task_gap_reset_s` resets the decision state (STOP/HOLD,
 commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does (see
-[STOP and HOLD](#stop-and-hold-are-latched)). Everything else added here only
-reports, or is an option that is off by default.
+[STOP and HOLD](#stop-and-hold-are-latched)). On both distributions, the local
+goal is taken ahead of the robot along the plan instead of from the plan start
+(see [Local goal](#local-goal); no change when the plan is re-issued from the
+robot pose at 1 Hz). Everything else added here only reports, or is an option
+that is off by default.
 
 | Parameter | Default | Meaning |
 |---|---|---|
@@ -106,6 +109,63 @@ BackUp) opens a longer gap (reasoned from the Humble `controller_server` and
 default BT source; not measured).
 This differs from the paper's "HOLD retained until explicit external release"
 only at task boundaries, as on Jazzy.
+
+## Local goal
+
+The decision core's local goal (`g` in the paper, `lookahead_dist` in the
+parameter table) is the first plan pose that is **ahead of the robot along the
+plan** and at least `lookahead_dist` (straight-line distance) from the robot;
+the last plan pose when there is none, and the point `lookahead_dist` in front
+of the robot heading when the plan is empty. On the default (legacy) path the
+direction from the robot to the local goal is the direction of the clearance
+ray (the `d_safe` test) and of the corridor probe 1 m ahead, and the local goal
+enters the goal cost. With `use_candidate_trajectories` it enters the goal cost
+only.
+
+"Ahead" is counted from the plan segment closest to the robot. The plugin
+remembers that segment and searches forwards from it: the segment, the next
+one, and later segments that start within 1.0 m of path length, repeated until
+nothing in range is closer. The poses before the robot's projection on that
+segment are behind the robot and are never the local goal.
+
+| Event | Remembered segment |
+|---|---|
+| Control cycle that gets past the frame and people-freshness checks | The closest segment at or after the remembered one (never earlier) |
+| `setPlan()` with the same frame and the same x, y of every pose | Kept |
+| `setPlan()` with any other geometry | Plan start |
+| `reset()` (Iron and later), new task on Humble (`task_gap_reset_s`), configure | Plan start |
+| Cycle stopped by those checks (pose or plan frame mismatch; `people_stale_action: hold` while stale) | Kept |
+
+**This changes behaviour; it corrects a defect.** Until this change the search
+for the first pose at least `lookahead_dist` away started at the first pose of
+the plan. Once the robot was `lookahead_dist` (1.0 m) from that pose on a plan
+that had not been replaced, the local goal was the plan start, behind the
+robot: the ray and the probe looked backwards. An obstacle ahead on the path
+then caused no braking until the robot's own cell was occupied, and an obstacle
+behind the robot could cause braking.
+
+- **Plan re-issued from the robot pose before the robot is `lookahead_dist`
+  from its first pose** (the default Nav2 behaviour tree replans at 1 Hz, 0.45 m
+  at the default cruise speed): the local goal is the same pose as before, so
+  nothing changes. The old and the new rule select the same pose whenever every
+  plan pose behind the robot is nearer than `lookahead_dist`.
+- **Plan set once** (a FollowPath client without periodic replanning), or
+  replaced less often than about `lookahead_dist / speed` (2.2 s at the
+  defaults): the ray and the probe now point along the plan ahead of the robot
+  for the whole path.
+
+There is no parameter that restores the old rule.
+
+Limits. A robot away from the plan start is found in one cycle as long as the
+plan keeps getting closer to it within each 1.0 m of path; otherwise the
+remembered segment stays at the nearest point reached and the local goal is
+taken from there. A later pass of a plan that crosses itself, or runs back
+beside itself, is taken once it starts within 1.0 m of path length and is closer
+than the current segment. The search stops at a non-finite pose. The steering
+term and the goal-speed taper do not use the local goal: steering uses the
+segment closest to the robot over the whole plan, and the taper uses the
+straight-line distance to the last pose. Pose and plan must be in the costmap
+frame, as before; nothing is transformed.
 
 ## Other zero-twist cases
 

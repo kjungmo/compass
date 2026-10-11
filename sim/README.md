@@ -73,7 +73,8 @@ ros2 launch compass_sim sim_bringup.launch.py headless:=true
 모든 controller 모드에서 pose/plan 헤더는 costmap의 global frame과 같아야
 합니다. 다르면 좌표를 자동 변환하지 않고 zero command를 반환합니다.
 선택 경로를 모두 꺼도 legacy TTC 부호·미관측 costmap·L/R 방향·`a_brake*dt`
-제동 수정은 적용됩니다. 기본 노브 유지가 이전 안전 결함의 유지를 뜻하지 않습니다.
+제동 수정은 적용됩니다. 로컬 목표도 계획의 시작점이 아니라 로봇 앞쪽 계획에서
+고릅니다(`src/compass_nav2/README.md`의 "Local goal"). 기본 노브 유지가 이전 안전 결함의 유지를 뜻하지 않습니다.
 
 측정 진행도 한계 `progress_max_gap=0.25 s`, `progress_max_speed=2.0 m/s`는
 보정되지 않은 설정값입니다. 측정 모드의 `L_plan`은 각 진행 구간의 기준점에서

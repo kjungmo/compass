@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdio>
 #include <memory>
 #include <string>
 #include <thread>
@@ -26,6 +27,7 @@
 #include <gtest/gtest.h>
 
 #include "compass_nav2/compass_controller.hpp"
+#include "nav2_costmap_2d/cost_values.hpp"
 #include "compass_nav2/param_checks.hpp"
 #include "compass_nav2/task_boundary.hpp"
 
@@ -46,6 +48,7 @@ public:
   uint64_t tfFailures() const {return tf_failures_.load();}
   const compass_nav2::TaskBoundary & taskBoundary() const {return task_boundary_;}
   double lReal() const {return state_.L_real;}
+  std::size_t planSegment() const {return plan_segment_;}
   // Drive the decision (ROS) clock from the test.
   void useRosTime(double s)
   {
@@ -622,6 +625,314 @@ TEST(TaskBoundary, FastRetryKeepsState)
   t += 0.3;
   controller.setPlan(straightPath());
   EXPECT_EQ(controller.mode(), compass::Mode::STOP);
+  controller.cleanup();
+}
+
+// ---------------------------------------------------------------------------
+// Local goal on a plan that is not re-issued (static plan). The fixture costmap
+// is 5 x 5 m at 0.1 m, free; the path runs along y = 2.5 from x = 0.5 to 4.5.
+namespace
+{
+constexpr double kCruise = 0.45;    // cruise_speed default
+constexpr double kBrakeStep = 0.05;  // a_brake 0.5 m/s^2 x the 0.1 s first-call interval
+
+void clearMap(Fixture & f)
+{
+  nav2_costmap_2d::Costmap2D * map = f.costmap->getCostmap();
+  for (unsigned int mx = 0; mx < map->getSizeInCellsX(); ++mx) {
+    for (unsigned int my = 0; my < map->getSizeInCellsY(); ++my) {
+      map->setCost(mx, my, nav2_costmap_2d::FREE_SPACE);
+    }
+  }
+}
+
+// One costmap for all LocalGoal tests: every test starts with it free and with
+// the default lookahead_dist and people_stale_action, and each controller is
+// configured on the same node (as after a lifecycle cleanup).
+class LocalGoal : public ::testing::Test
+{
+protected:
+  static void SetUpTestSuite() {fixture_ = new Fixture;}
+  static void TearDownTestSuite()
+  {
+    delete fixture_;
+    fixture_ = nullptr;
+  }
+  void SetUp() override
+  {
+    clearMap(*fixture_);
+    if (fixture_->node->has_parameter("FollowPath.lookahead_dist")) {
+      fixture_->node->set_parameter(rclcpp::Parameter("FollowPath.lookahead_dist", 1.0));
+      fixture_->node->set_parameter(rclcpp::Parameter("FollowPath.people_stale_action", "warn"));
+    }
+  }
+  static Fixture * fixture_;
+};
+Fixture * LocalGoal::fixture_ = nullptr;
+
+// Lethal cells covering x in [x0, x0 + 0.2], y in [2.3, 2.7] (across the path).
+void putBox(Fixture & f, double x0)
+{
+  nav2_costmap_2d::Costmap2D * map = f.costmap->getCostmap();
+  for (double wx = x0 + 0.05; wx < x0 + 0.2; wx += 0.1) {
+    for (double wy = 2.35; wy < 2.7; wy += 0.1) {
+      unsigned int mx = 0, my = 0;
+      ASSERT_TRUE(map->worldToMap(wx, wy, mx, my));
+      map->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
+    }
+  }
+}
+
+geometry_msgs::msg::PoseStamped poseAt(double x)
+{
+  auto pose = startPose();
+  pose.pose.position.x = x;
+  return pose;
+}
+
+geometry_msgs::msg::Twist speed(double v)
+{
+  geometry_msgs::msg::Twist twist;
+  twist.linear.x = v;
+  return twist;
+}
+
+// The same line as straightPath(), starting at the robot (as a planner issues it).
+nav_msgs::msg::Path pathFrom(double x)
+{
+  nav_msgs::msg::Path path = straightPath();
+  path.poses.clear();
+  for (double px = x; px < 4.5; px += 0.1) {
+    geometry_msgs::msg::PoseStamped p;
+    p.header.frame_id = "map";
+    p.pose.position.x = px;
+    p.pose.position.y = 2.5;
+    p.pose.orientation.w = 1.0;
+    path.poses.push_back(p);
+  }
+  path.poses.push_back(straightPath().poses.back());
+  return path;
+}
+
+// First command of a freshly configured controller at x, moving at cruise speed,
+// with the map free except for the box.
+double firstCommand(
+  Fixture & f, const nav_msgs::msg::Path & plan, double x, double box_x0, bool box = true)
+{
+  RuntimeProbe controller;
+  f.configure(controller);
+  clearMap(f);
+  if (box) {putBox(f, box_x0);}
+  controller.setPlan(plan);
+  controller.deliver(nobody());
+  const auto cmd = controller.computeVelocityCommands(poseAt(x), speed(kCruise), nullptr);
+  EXPECT_EQ(controller.mode(), compass::Mode::NORMAL);
+  EXPECT_DOUBLE_EQ(cmd.twist.angular.z, 0.0);
+  controller.cleanup();
+  return cmd.twist.linear.x;
+}
+
+struct Drive
+{
+  std::vector<double> v;       // command per cycle
+  double first_brake_x = -1.0;  // robot x at the first command below cruise
+  double final_x = 0.0;
+};
+
+// 8 s of a kinematic drive at 20 Hz from x = 0.5 with a box at x = 3.0..3.2. The
+// measured speed is the previous command. replan_every = 0: the plan is set once.
+Drive drive(Fixture & f, int replan_every)
+{
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  controller.useRosTime(t);
+  putBox(f, 3.0);
+  controller.setPlan(straightPath());
+  controller.deliver(nobody());
+  Drive d;
+  double x = 0.5, v = 0.0;
+  for (int i = 0; i < 160; ++i) {
+    if (replan_every > 0 && i > 0 && i % replan_every == 0) {
+      controller.setPlan(pathFrom(x));
+    }
+    const auto cmd = controller.computeVelocityCommands(poseAt(x), speed(v), nullptr);
+    v = cmd.twist.linear.x;
+    d.v.push_back(v);
+    if (d.first_brake_x < 0.0 && i > 0 && v < d.v[i - 1]) {d.first_brake_x = x;}
+    x += v * 0.05;
+    t += 0.05;
+    controller.useRosTime(t);
+  }
+  d.final_x = x;
+  controller.cleanup();
+  return d;
+}
+}  // namespace
+
+// Robot positions are 3 cm off the 0.1 m grid so that every 0.1 m ray step falls
+// inside a cell, not on a cell edge.
+//
+// The robot is 1.53 m along a plan that was set once (more than lookahead_dist
+// 1.0 m from its first pose). A box whose first cell is hit 0.4 m ahead is closer
+// than d_safe 0.5 m: the command is one braking step below cruise. A box hit at
+// exactly 0.5 m is not closer than d_safe, and without a box it is cruise.
+TEST_F(LocalGoal, StaticPlanBrakesForAnObstacleAhead)
+{
+  EXPECT_DOUBLE_EQ(firstCommand(*fixture_, straightPath(), 2.03, 2.4, false), kCruise);
+  EXPECT_NEAR(firstCommand(*fixture_, straightPath(), 2.03, 2.4), kCruise - kBrakeStep, 1e-9);
+  EXPECT_DOUBLE_EQ(firstCommand(*fixture_, straightPath(), 2.03, 2.5), kCruise);
+}
+
+// The same robot does not brake for a box 0.4 m BEHIND it (towards the plan start).
+TEST_F(LocalGoal, StaticPlanIgnoresAnObstacleBehind)
+{
+  EXPECT_DOUBLE_EQ(firstCommand(*fixture_, straightPath(), 2.03, 1.5), kCruise);
+}
+
+// A plan set once and the same line issued from the robot pose give the same
+// first command at every distance from the plan start (0.93 m and 1.03 m are the
+// two sides of lookahead_dist).
+TEST_F(LocalGoal, StaticPlanMatchesAPlanIssuedFromTheRobot)
+{
+  for (const double x : {0.53, 1.03, 1.43, 1.53, 1.63, 2.03, 2.53}) {
+    const double box = x - 0.03 + 0.4;
+    EXPECT_DOUBLE_EQ(
+      firstCommand(*fixture_, straightPath(), x, box),
+      firstCommand(*fixture_, pathFrom(x), x, box)) << x;
+    EXPECT_NEAR(firstCommand(*fixture_, straightPath(), x, box), kCruise - kBrakeStep, 1e-9) << x;
+  }
+}
+
+// Closed loop with a box at x = 3.0: the command sequence of a plan set once is
+// the sequence of a plan re-issued from the robot pose at 1 Hz, cycle for cycle.
+// Braking starts when the corridor probe 1 m ahead of the robot (towards the
+// local goal) enters the box, i.e. at x >= 2.0; three braking steps later the
+// fourth safety intervention latches HOLD, about 0.9 m before the box.
+TEST_F(LocalGoal, StaticPlanDrivesLikeA1HzReplan)
+{
+  const Drive replanned = drive(*fixture_, 20);
+  const Drive fixed = drive(*fixture_, 0);
+  for (size_t i = 0; i < replanned.v.size(); ++i) {
+    std::printf("REPLAN_1HZ_SEQ %zu %.6f\n", i, replanned.v[i]);
+  }
+  EXPECT_GE(replanned.first_brake_x, 2.0);
+  EXPECT_LT(replanned.first_brake_x, 2.0 + kCruise * 0.05);  // within one cycle of travel
+  EXPECT_DOUBLE_EQ(replanned.v.back(), 0.0);
+  EXPECT_GT(replanned.final_x, replanned.first_brake_x);
+  EXPECT_LT(replanned.final_x, 2.1);
+  ASSERT_EQ(fixed.v.size(), replanned.v.size());
+  for (size_t i = 0; i < fixed.v.size(); ++i) {
+    ASSERT_DOUBLE_EQ(fixed.v[i], replanned.v[i]) << "cycle " << i;
+  }
+  EXPECT_DOUBLE_EQ(fixed.first_brake_x, replanned.first_brake_x);
+  EXPECT_DOUBLE_EQ(fixed.final_x, replanned.final_x);
+}
+
+// lookahead_dist is the parameter that is used, and "ahead" follows the plan
+// round a corner. The plan runs along +x to (2.5, 2.5) and then along +y. A box
+// straight on, past the corner, is 0.4 m from the robot in the +x direction.
+// lookahead_dist 0.2: the local goal is still on the +x leg, the ray hits the
+// box, one braking step. Default 1.0: the local goal is up the +y leg, the ray
+// (about 62 degrees to the left) passes the box, cruise.
+TEST_F(LocalGoal, LookaheadDistParameterSelectsTheGoalAlongThePlan)
+{
+  nav_msgs::msg::Path corner = straightPath();
+  corner.poses.resize(21);  // x = 0.5 .. 2.5 at y = 2.5
+  for (int i = 1; i <= 20; ++i) {
+    auto p = corner.poses.back();
+    p.pose.position.y = 2.5 + 0.1 * i;
+    corner.poses.push_back(p);
+  }
+  Fixture & f = *fixture_;
+  putBox(f, 2.4);
+  double v[2];
+  for (int near = 0; near < 2; ++near) {
+    RuntimeProbe controller;
+    if (near) {
+      // Declared by the first configure; read again by the next one.
+      f.node->set_parameter(rclcpp::Parameter("FollowPath.lookahead_dist", 0.2));
+    }
+    f.configure(controller);
+    controller.setPlan(corner);
+    controller.deliver(nobody());
+    v[near] = controller.computeVelocityCommands(poseAt(2.03), speed(kCruise), nullptr)
+      .twist.linear.x;
+    controller.cleanup();
+  }
+  EXPECT_DOUBLE_EQ(v[0], kCruise);
+  EXPECT_NEAR(v[1], kCruise - kBrakeStep, 1e-9);
+}
+
+// What the controller remembers about the robot's place on the plan (the event
+// table in the README, one block per row):
+//   control cycle past the frame and people checks -> the segment the robot is on
+//   same geometry republished                      -> kept
+//   new geometry                                   -> back to the plan start
+//   reset(); on Humble a plan after an idle loop   -> back to the plan start
+//   cleanup + configure                            -> back to the plan start
+//   cycle stopped by the frame check or by "hold"  -> kept
+TEST_F(LocalGoal, RememberedPlanSegmentPerEvent)
+{
+  Fixture & f = *fixture_;
+  RuntimeProbe controller;
+  double t = 100.0;
+  controller.useSteady(&t);
+  f.configure(controller);
+  const auto cycle = [&](double x) {
+      t += 0.05;
+      controller.deliver(nobody());
+      controller.computeVelocityCommands(poseAt(x), speed(kCruise), nullptr);
+      return controller.planSegment();
+    };
+  controller.setPlan(straightPath());
+  EXPECT_EQ(controller.planSegment(), 0u);
+  EXPECT_EQ(cycle(0.53), 0u);    // 0.5 -> 0.6
+  EXPECT_EQ(cycle(2.03), 15u);   // 2.0 -> 2.1
+  EXPECT_EQ(cycle(1.03), 15u);   // moving back does not rewind it
+
+  auto republished = straightPath();
+  republished.header.stamp.sec = 7;
+  t += 0.05;
+  controller.setPlan(republished);
+  EXPECT_EQ(controller.planSegment(), 15u);
+
+  auto wrong_frame = poseAt(3.03);
+  wrong_frame.header.frame_id = "odom";
+  controller.computeVelocityCommands(wrong_frame, speed(kCruise), nullptr);
+  EXPECT_EQ(controller.planSegment(), 15u);
+
+  t += 0.05;
+  controller.setPlan(otherPath());
+  EXPECT_EQ(controller.planSegment(), 0u);
+  EXPECT_EQ(cycle(3.03), 25u);   // 3.0 -> 3.1, found in one cycle
+
+  controller.reset();
+  EXPECT_EQ(controller.planSegment(), 0u);
+  EXPECT_EQ(cycle(1.03), 5u);    // the same plan again, from its start
+
+  // Humble has no reset(): the same plan arriving after the loop was idle longer
+  // than task_gap_reset_s is a new task. On Jazzy it is a republished plan.
+  EXPECT_EQ(cycle(2.03), 15u);
+  t += 0.6;
+  controller.setPlan(otherPath());
+  EXPECT_EQ(controller.planSegment(), kHumbleTaskBoundary ? 0u : 15u);
+  EXPECT_EQ(cycle(2.03), 15u);
+
+  controller.cleanup();
+  f.node->set_parameter(rclcpp::Parameter("FollowPath.people_stale_action", "hold"));
+  f.configure(controller);
+  EXPECT_EQ(controller.planSegment(), 0u);
+
+  // people_stale_action: hold returns a zero twist before the local goal is taken.
+  controller.setPlan(straightPath());
+  EXPECT_EQ(cycle(2.03), 15u);
+  t += 10.0;  // the people input is now stale
+  const auto held = controller.computeVelocityCommands(poseAt(3.03), speed(kCruise), nullptr);
+  EXPECT_DOUBLE_EQ(held.twist.linear.x, 0.0);
+  EXPECT_EQ(controller.planSegment(), 15u);
+  EXPECT_EQ(cycle(3.03), 25u);   // fresh input: the robot is found again
   controller.cleanup();
 }
 

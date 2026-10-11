@@ -51,7 +51,9 @@ Runtime safety corrections also apply with both opt-ins disabled: legacy TTC
 uses the approaching relative-velocity sign, L/R ray offsets match command bias,
 missing maps/unknown/out-of-map queries are unavailable, and pose/plan headers
 must match the costmap frame. An immediately blocked/unobserved legacy ray yields
-a zero twist. These repairs do not turn the legacy ray/TTC estimates into a
+a zero twist. The local goal that directs the legacy ray is taken ahead of the
+robot along the plan, not from the plan start
+([details](compass_nav2/README.md#local-goal)). These repairs do not turn the legacy ray/TTC estimates into a
 swept-trajectory collision guarantee. Braking is `a_brake * dt` with `a_brake` in
 m/s². A genuine safety switch or HOLD-entry recommit clears cumulative progress
 for both legacy-proxy and measured modes. Declared accumulator-domain checks

@@ -108,6 +108,7 @@ void CompassController::configure(
     RCLCPP_WARN(logger_, "CompassController '%s': %s.", name.c_str(), vacuity.c_str());
   }
   state_ = compass::DecisionState{};
+  plan_segment_ = 0;
 
   // people_topic 구독 (기본 "/people") — 외부 트래커(또는 시뮬 지상 진실)가 보내는
   // 추적 사람 목록. sensor_data QoS(best-effort) 로 콜백에서 최신 메시지만 보관한다.
@@ -333,6 +334,8 @@ void CompassController::resetLocked(const char * why)
   state_ = compass::DecisionState{};
   has_last_now_ = false;
   measured_progress_.reset();
+  // The next task may reuse this geometry with the robot back at its start.
+  plan_segment_ = 0;
   if (before != compass::Mode::NORMAL) {
     RCLCPP_INFO(
       logger_, "CompassController: mode %s -> NORMAL: %s.", modeName(before), why);
@@ -495,6 +498,8 @@ void CompassController::setPlan(const nav_msgs::msg::Path & path)
   global_plan_ = path;
   // Republishing identical geometry with fresh stamps is not a new maneuver.
   if (geometry_changed) {
+    // Progress along the old geometry says nothing about the new one.
+    plan_segment_ = 0;
     measured_progress_.reset();
     if (use_measured_progress_) { state_.L_real = 0; state_.rho = 0; }
   }
@@ -508,28 +513,19 @@ void CompassController::setSpeedLimit(const double & speed_limit, const bool & p
   speed_limit_is_pct_ = percentage;
 }
 
-compass::Point2D CompassController::computeLocalGoal(const compass::SE2 & robot) const
+compass::Point2D CompassController::computeLocalGoal(
+  const compass::SE2 & robot, const std::vector<compass::Point2D> & path)
 {
-  // 전역 계획에서 로봇 전방으로 lookahead 거리만큼 떨어진 점을 로컬 목표로 쓴다.
-  // (이 로컬 목표는 결정 코어의 목표-진행 비용 항에 쓰인다 — 조향은 별도의
-  // 경로 추종 PD 가 담당한다.) 계획이 비면 로봇 헤딩 전방으로 그 거리를 둔다.
-  const double kLookahead = lookahead_dist_;  // m
-  if (global_plan_.poses.empty()) {
-    compass::Point2D g;
-    g.x = robot.x + kLookahead * std::cos(robot.theta);
-    g.y = robot.y + kLookahead * std::sin(robot.theta);
-    return g;
-  }
-  // 로봇에서 lookahead 이상 떨어진 첫 점, 없으면 마지막 점.
-  for (const auto & ps : global_plan_.poses) {
-    const double dx = ps.pose.position.x - robot.x;
-    const double dy = ps.pose.position.y - robot.y;
-    if (std::hypot(dx, dy) >= kLookahead) {
-      return {ps.pose.position.x, ps.pose.position.y};
-    }
-  }
-  const auto & last = global_plan_.poses.back().pose.position;
-  return {last.x, last.y};
+  // 전역 계획을 따라 로봇 앞쪽으로 lookahead 거리 이상 떨어진 첫 점을 로컬 목표로
+  // 쓴다 (localGoalAhead). 이 로컬 목표는 결정 코어의 목표-진행 비용 항과 legacy
+  // clearance ray·통로 폭 탐침의 방향에 쓰인다 — 조향은 별도의 경로 추종 PD 가
+  // 담당한다. 계획이 비면 로봇 헤딩 전방으로 그 거리를 둔다.
+  //
+  // The search starts at the robot's position along the plan (plan_segment_),
+  // not at the plan start: on a plan that is not re-issued, the first pose at
+  // least lookahead away counted from the start is the start itself once the
+  // robot has gone that far, i.e. a point behind the robot.
+  return localGoalAhead(robot, path, lookahead_dist_, plan_segment_);
 }
 
 std::vector<compass::Person> CompassController::extractPeople(const compass::SE2 & robot)
@@ -647,15 +643,15 @@ geometry_msgs::msg::TwistStamped CompassController::computeLocked(
   compass::DecisionInput in;
   in.robot_pose = robot;
   in.robot_vel = rvel;
-  in.local_goal = computeLocalGoal(robot);
-  in.people = extractPeople(robot);
-  people_applied_ = in.people.size();
-
   std::vector<compass::Point2D> path;
   path.reserve(global_plan_.poses.size());
   for (const auto & ps : global_plan_.poses) {
     path.push_back({ps.pose.position.x, ps.pose.position.y});
   }
+  in.local_goal = computeLocalGoal(robot, path);
+  in.people = extractPeople(robot);
+  people_applied_ = in.people.size();
+
   PathTrackGains gains;
   gains.k_e = k_e_;
   gains.k_theta = k_theta_;

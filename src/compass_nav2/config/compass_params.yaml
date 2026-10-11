@@ -38,6 +38,7 @@ controller_server:
       # ---- 조향: 경로 추종 cross-track + heading PD ----
       # ωn=√(cruise·k_e), ζ=k_theta/(2√(cruise·k_e)). 기본값은 ζ≈1.3 과감쇠로
       # 직선 복도에서 위빙 없이 수렴한다 (예전 베어링 비례 조향은 ±0.8 m 위빙).
+      # 로컬 목표 = 계획을 따라 로봇 앞쪽에서, 로봇과 lookahead_dist 이상 떨어진 첫 점.
       lookahead_dist: 1.0        # m; 로컬 목표(코어 입력) lookahead 거리
       k_e: 3.0                   # cross-track(횡오차) 이득
       k_theta: 3.0               # heading(헤딩오차) 이득

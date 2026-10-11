@@ -27,7 +27,8 @@ namespace compass_nav2
 //
 // 한 결정 주기 동안 컨트롤러가 현재 costmap·로봇 자세·로컬 목표를 주입하면
 // (setContext), 각 class c 에 대해 통과 통로 폭·clearance·TTC·실현 가능성을
-// 답한다. 보존적인 근사를 채택한다: clearance 는 로봇 자세에서 로컬 목표 방향
+// 답한다. 로컬 목표는 계획을 따라 로봇 앞쪽에 있는 점이다 (localGoalAhead).
+// 보존적인 근사를 채택한다: clearance 는 로봇 자세에서 로컬 목표 방향
 // 으로 진행하면서 만나는 lethal cell 까지의 거리, corridor_width 는 그 진행
 // 직교 방향으로 양측 lethal cell 사이 폭, TTC 는 사람 상대 접근에서 산출한다.
 // Missing maps, unknown cells and out-of-map points are unavailable. The legacy
