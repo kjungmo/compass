@@ -234,6 +234,11 @@ TEST(LocalGoalAhead, SparsePlan)
   EXPECT_POINT(localGoalAhead({6.0, 0, 0}, three, 1.0, segment), 8.0, 0.0);
   EXPECT_EQ(segment, 1u);  // the segment after the first is always searched
   EXPECT_POINT(goal({3.5, 0, 0}, three), 8.0, 0.0);  // (4,0) is only 0.5 away
+  // Found again on the first segment after the second was remembered: the goal
+  // is that segment's far end, not its near end 1.5 m behind the robot.
+  segment = 1;
+  EXPECT_POINT(localGoalAhead({1.5, 0, 0}, three, 1.0, segment), 4.0, 0.0);
+  EXPECT_EQ(segment, 0u);
 }
 
 // Which end of the closest segment the scan starts at. Robot on or before the
@@ -265,24 +270,229 @@ TEST(LocalGoalAhead, RobotNotAtThePlanStartIsFoundInOneCall)
   EXPECT_EQ(segment, 16u);  // 4.0 -> 4.25
 }
 
-// The remembered segment never decreases: a robot that moves back along the
-// plan keeps a goal at or ahead of where it had got to.
-TEST(LocalGoalAhead, SegmentNeverDecreases)
+// Case (c), moving back along the plan (reversing, or a pose that jumps back).
+// Up to the window (1.0 m) from the remembered segment the segment is kept and
+// the goal is the first point from there; further back the robot is found again
+// and the goal is lookahead ahead of where it now is.
+TEST(LocalGoalAhead, ReacquiresAfterMovingBackMoreThanTheWindow)
 {
   const auto path = quarterPath();
   std::size_t segment = 0;
   localGoalAhead({3.1, 0.0, 0.0}, path, 1.0, segment);
   ASSERT_EQ(segment, 12u);  // 3.0 -> 3.25
-  EXPECT_POINT(localGoalAhead({1.0, 0.0, 0.0}, path, 1.0, segment), 3.0, 0.0);
+  EXPECT_POINT(localGoalAhead({2.5, 0.0, 0.0}, path, 1.0, segment), 3.5, 0.0);
   EXPECT_EQ(segment, 12u);
+  EXPECT_POINT(localGoalAhead({2.0, 0.0, 0.0}, path, 1.0, segment), 3.0, 0.0);
+  EXPECT_EQ(segment, 12u);  // exactly 1.0 m back: kept
+  EXPECT_POINT(localGoalAhead({1.875, 0.0, 0.0}, path, 1.0, segment), 3.0, 0.0);
+  EXPECT_EQ(segment, 7u);   // 1.125 m back: found again on 1.75 -> 2.0
+  // A jump back by 2.6 m: the goal is 1 m ahead of the robot, not 2.5 m.
+  segment = 12;
+  EXPECT_POINT(localGoalAhead({0.5, 0.0, 0.0}, path, 1.0, segment), 1.5, 0.0);
+  EXPECT_EQ(segment, 1u);
   // A new task / new geometry starts again from 0 (the caller resets it).
   segment = 0;
   EXPECT_POINT(localGoalAhead({1.0, 0.0, 0.0}, path, 1.0, segment), 2.0, 0.0);
   EXPECT_EQ(segment, 3u);
 }
 
-// A remembered segment that is not a segment of this path is treated as 0
-// (n - 1 is the first index that is not a segment).
+namespace
+{
+// Out along y = 0 from x = 0 to 4, across to y = 2, back to x = 0 (legs 2 m
+// apart, 0.5 m steps): segments 0..7 out, 8 across, 9..16 back.
+std::vector<Point2D> wideOutAndBack()
+{
+  std::vector<Point2D> p;
+  for (int i = 0; i <= 8; ++i) {
+    p.push_back({0.5 * i, 0.0});
+  }
+  for (int i = 8; i >= 0; --i) {
+    p.push_back({0.5 * i, 2.0});
+  }
+  return p;
+}
+}  // namespace
+
+// When the whole plan is searched again, and when the result is taken. The robot
+// is at x = 1.2 between two legs 2 m apart, y from the out leg, 2 - y from the
+// back leg; the remembered segment is on the out leg.
+TEST(LocalGoalAhead, ReacquisitionNeedsANearerSegmentByMoreThanTheWindow)
+{
+  const auto path = wideOutAndBack();
+  const auto at = [&path](double y, std::size_t & segment) {
+      localGoalAhead({1.2, y, 0.0}, path, 1.0, segment);
+      return segment;
+    };
+  std::size_t segment = 0;
+  EXPECT_EQ(at(0.0, segment), 2u);    // on the out leg (1.0 -> 1.5)
+  EXPECT_EQ(at(1.0, segment), 2u);    // half way: 1.0 m from both
+  EXPECT_EQ(at(1.25, segment), 2u);   // further than the window, but only 0.5 m nearer the other
+  EXPECT_EQ(at(1.5, segment), 2u);    // nearer by exactly 1.0 m: not more than the window
+  EXPECT_EQ(at(1.75, segment), 14u);  // nearer by 1.5 m: the back leg (1.5 -> 1.0)
+  // Hysteresis: coming back, the back leg is kept through the same band.
+  EXPECT_EQ(at(1.0, segment), 14u);
+  EXPECT_EQ(at(0.5, segment), 14u);   // the out leg is nearer by exactly 1.0 m
+  EXPECT_EQ(at(0.25, segment), 2u);   // nearer by 1.5 m
+  // A wider window keeps the out leg at 1.75; with a narrower one 1.5 is enough.
+  segment = 2;
+  localGoalAhead({1.2, 1.75, 0.0}, path, 1.0, segment, 1.5);
+  EXPECT_EQ(segment, 2u);
+  segment = 2;
+  localGoalAhead({1.2, 1.5, 0.0}, path, 1.0, segment, 0.75);
+  EXPECT_EQ(segment, 14u);
+}
+
+// Re-acquisition between two passes at the same distance takes the earlier one,
+// the segment pathTrackingAngularZ steers on (first of the nearest).
+TEST(LocalGoalAhead, ReacquisitionTakesTheEarlierOfTwoEquallyNearPasses)
+{
+  // Leg A along y = 0, leg B back along y = 2, then far away to leg C at y = 10.
+  const std::vector<Point2D> path{{0, 0}, {4, 0}, {4, 2}, {0, 2}, {0, 10}, {4, 10}};
+  std::size_t segment = 4;  // on leg C
+  EXPECT_POINT(localGoalAhead({2.0, 1.0, 0.0}, path, 1.0, segment), 4.0, 0.0);
+  EXPECT_EQ(segment, 0u);   // A and B are both 1.0 m away, C is 9.0 m
+}
+
+// Case (a): a task restarted in the middle of a U-shaped plan. The robot is on
+// the return leg, 3 m across from the first leg; the search starts at 0.
+TEST(LocalGoalAhead, RestartOnTheReturnLegOfAUShapedPlan)
+{
+  std::vector<Point2D> path;
+  for (int i = 0; i <= 100; ++i) {
+    path.push_back({0.05 * i, 0.0});
+  }
+  for (int i = 1; i <= 60; ++i) {
+    path.push_back({5.0 + 1.5 * std::sin(M_PI * i / 60), 1.5 - 1.5 * std::cos(M_PI * i / 60)});
+  }
+  for (int i = 1; i <= 100; ++i) {
+    path.push_back({5.0 - 0.05 * i, 3.0});
+  }
+  std::size_t segment = 0;
+  const Point2D g = localGoalAhead({2.0, 3.0, M_PI}, path, 1.0, segment);
+  EXPECT_NEAR(g.x, 1.0, 1e-9);  // 1 m ahead along the return leg (heading -x)
+  EXPECT_DOUBLE_EQ(g.y, 3.0);
+  EXPECT_GE(segment, 218u);     // on the return leg near x = 2.0 (pose 220)
+  EXPECT_LE(segment, 220u);
+}
+
+// Case (b): a figure of eight (two circles of radius 1.5 m touching at the
+// origin). The robot drives the SECOND circle from the start. Near the crossing
+// the first pass is kept (both are within the window); once the first circle is
+// more than the window further away than the second, the second is taken and
+// the goal is ahead of the robot from then on.
+TEST(LocalGoalAhead, LaterPassOfAFigureOfEightIsTakenOnceTheRobotIsOnIt)
+{
+  std::vector<Point2D> path;
+  for (int i = 0; i <= 200; ++i) {
+    const double a = 2 * M_PI * i / 200;
+    path.push_back({1.5 * std::sin(a), 1.5 - 1.5 * std::cos(a)});
+  }
+  for (int i = 1; i <= 200; ++i) {
+    const double a = 2 * M_PI * i / 200;
+    path.push_back({1.5 * std::sin(a), -1.5 + 1.5 * std::cos(a)});
+  }
+  std::size_t segment = 0;
+  int on_second_from = -1;
+  for (int i = 0; i <= 180; i += 2) {
+    const double a = 2 * M_PI * i / 200;
+    const SE2 robot{1.5 * std::sin(a), -1.5 + 1.5 * std::cos(a), -a};
+    const Point2D g = localGoalAhead(robot, path, 1.0, segment);
+    const double forward =
+      (g.x - robot.x) * std::cos(robot.theta) + (g.y - robot.y) * std::sin(robot.theta);
+    if (segment >= 200 && on_second_from < 0) {
+      on_second_from = i;
+    }
+    if (on_second_from >= 0) {
+      EXPECT_GE(segment, 200u) << i;      // no return to the first pass
+      EXPECT_NEAR(static_cast<double>(segment), 200.0 + i, 1.5) << i;
+      EXPECT_GT(forward, 0.5) << i;
+    }
+  }
+  // Distance from the robot to the first circle exceeds 1.0 m from i = 32 on.
+  EXPECT_GE(on_second_from, 30);
+  EXPECT_LE(on_second_from, 34);
+}
+
+// Case (d): one NaN pose in the middle of the plan. The robot drives the whole
+// plan; the remembered segment follows it across the gap and the goal is a
+// finite point ahead in every cycle.
+TEST(LocalGoalAhead, NaNPoseInThePlanIsBridged)
+{
+  std::vector<Point2D> path;
+  for (int i = 0; i <= 120; ++i) {
+    path.push_back({0.05 * i, 0.0});
+  }
+  path[40].x = kNaN;  // x = 2.0
+  std::size_t segment = 0;
+  for (double x = 0.0; x <= 5.0; x += 0.0225) {
+    const Point2D g = localGoalAhead({x, 0.0, 0.0}, path, 1.0, segment);
+    ASSERT_TRUE(std::isfinite(g.x) && std::isfinite(g.y)) << x;
+    ASSERT_GE(g.x - x, 1.0 - 1e-9) << x;
+    ASSERT_LT(g.x - x, 1.1 + 1e-9) << x;   // next point at 0.05 m, 0.1 m across the gap
+    ASSERT_NE(segment, 40u) << x;
+    ASSERT_NEAR(0.05 * segment, x, 0.1 + 1e-9) << x;
+  }
+  EXPECT_EQ(segment, 99u);  // 4.95 -> 5.0
+}
+
+// While the robot is within the window of the remembered segment the whole
+// plan is not searched, even when another pass is nearer: tracking a plan uses
+// the forward search alone.
+TEST(LocalGoalAhead, NoReacquisitionWhileWithinTheWindowOfTheRememberedSegment)
+{
+  // Legs 1.0 m apart, the back leg 2.0 m of path after the end of segment 0.
+  const std::vector<Point2D> path{{0, 0}, {0.5, 0}, {2, 0}, {2, 1}, {0, 1}};
+  std::size_t segment = 0;
+  localGoalAhead({0.25, 0.9, 0.0}, path, 0.5, segment);  // 0.9 from the out leg, 0.1 from the back leg
+  EXPECT_EQ(segment, 0u);
+  localGoalAhead({0.25, 1.0, 0.0}, path, 0.5, segment);  // ON the back leg, exactly 1.0 from the out leg
+  EXPECT_EQ(segment, 0u);
+}
+
+namespace
+{
+using Shape = Point2D (*)(double);
+Point2D line(double a);
+Point2D leftArc(double a);
+Point2D rightArc(double a);
+double heading(Shape shape, double a);
+}  // namespace
+
+// A plan set once and followed with a lateral error: in every cycle the
+// remembered segment is the one the robot is on (so nothing was re-acquired
+// from elsewhere), it never decreases, and the goal is ahead of the robot.
+TEST(LocalGoalAhead, PlanSetOnceIsTrackedForItsWholeLength)
+{
+  for (const Shape shape : {&line, &leftArc, &rightArc}) {
+    for (const double offset : {0.0, 0.3, -0.3}) {
+      std::vector<Point2D> plan;
+      for (int i = 0; i <= 200; ++i) {
+        plan.push_back(shape(0.05 * i));
+      }
+      std::size_t segment = 0, before = 0;
+      for (int i = 0; i * 0.0225 < 9.9; ++i) {
+        const double a = i * 0.0225, th = heading(shape, a);
+        const Point2D on = shape(a);
+        const SE2 robot{on.x - offset * std::sin(th), on.y + offset * std::cos(th), th};
+        const Point2D g = localGoalAhead(robot, plan, 1.0, segment);
+        ASSERT_GE(segment, before) << a;
+        before = segment;
+        // The middle of the 0.05 m segment is within 0.04 m of the robot's place
+        // along the plan (0.025 m, plus what the offset shifts on a chord).
+        ASSERT_NEAR(0.05 * segment + 0.025, a, 0.04) << a << " offset " << offset;
+        const double forward = (g.x - robot.x) * std::cos(th) + (g.y - robot.y) * std::sin(th);
+        if (a < 8.9) {
+          ASSERT_GT(forward, 0.8) << a << " offset " << offset;
+        } else {
+          ASSERT_GT(forward, 0.0) << a << " offset " << offset;  // towards the last point
+        }
+      }
+    }
+  }
+}
+
+// A remembered segment that is not the start of a segment of this path is
+// treated as the plan start (n - 1 is the first index that starts no segment).
 TEST(LocalGoalAhead, OutOfRangeSegmentRestartsFromThePlanStart)
 {
   const auto path = quarterPath();  // 25 points: segments 0..23
@@ -291,8 +501,8 @@ TEST(LocalGoalAhead, OutOfRangeSegmentRestartsFromThePlanStart)
     EXPECT_POINT(localGoalAhead({1.0, 0.0, 0.0}, path, 1.0, segment), 2.0, 0.0);
     EXPECT_EQ(segment, 3u) << stale;
   }
-  std::size_t last = 23;  // a real segment: kept
-  EXPECT_POINT(localGoalAhead({1.0, 0.0, 0.0}, path, 1.0, last), 5.75, 0.0);
+  std::size_t last = 23;  // a real segment, 0.75 m ahead of the robot: kept
+  EXPECT_POINT(localGoalAhead({5.0, 0.0, 0.0}, path, 1.0, last), 6.0, 0.0);
   EXPECT_EQ(last, 23u);
 }
 
@@ -329,23 +539,36 @@ TEST(LocalGoalAhead, LaterPassOfThePlanIsNotTakenBeyondTheWindow)
   segment = 0;
   localGoalAhead(robot, longer, 0.5, segment, 2.0);
   EXPECT_EQ(segment, 3u);
-  // Zero, negative or NaN window: a segment and the one after it only. That is
-  // still enough to follow the robot from one segment to the next.
+  // NaN window: a segment and the one after it only, and no re-acquisition.
+  // That is still enough to follow the robot from one segment to the next.
   const std::vector<Point2D> three{{0, 0}, {4, 0}, {8, 0}};
   // Out 2 m along +x, then back to a point 0.1 m from the robot: that last
   // segment starts 1.0 m of path after the end of segment 0.
   const std::vector<Point2D> hook{{0, 0}, {1, 0}, {2, 0}, {0.5, 0.2}};
-  for (const double window : {0.0, -1.0, kNaN}) {
+  segment = 0;
+  localGoalAhead(robot, path, 0.5, segment, kNaN);
+  EXPECT_EQ(segment, 0u);
+  segment = 0;
+  localGoalAhead({0.5, 0.3, 0.0}, hook, 0.5, segment, kNaN);
+  EXPECT_EQ(segment, 0u);  // not the one after the next, although it is closer
+  // Zero or negative window: the same forward search, then the nearest segment
+  // of the whole plan whenever it is nearer at all.
+  for (const double window : {0.0, -1.0}) {
     segment = 0;
     localGoalAhead(robot, path, 0.5, segment, window);
-    EXPECT_EQ(segment, 0u) << window;
+    EXPECT_EQ(segment, 4u) << window;
+    segment = 0;
+    localGoalAhead({0.5, 0.3, 0.0}, hook, 0.5, segment, window);
+    EXPECT_EQ(segment, 2u) << window;
+  }
+  // A negative window counts as zero: an equally near earlier pass is not taken.
+  segment = 4;
+  localGoalAhead({0.25, 0.25, 0.0}, path, 0.5, segment, -1.0);
+  EXPECT_EQ(segment, 4u);
+  for (const double window : {0.0, -1.0, kNaN}) {
     segment = 0;
     EXPECT_POINT(localGoalAhead({6.0, 0.0, 0.0}, three, 1.0, segment, window), 8.0, 0.0);
     EXPECT_EQ(segment, 1u) << window;
-    // ... but not to the one after the next, although it is closer.
-    segment = 0;
-    localGoalAhead({0.5, 0.3, 0.0}, hook, 0.5, segment, window);
-    EXPECT_EQ(segment, 0u) << window;
   }
   segment = 0;
   localGoalAhead({0.5, 0.3, 0.0}, hook, 0.5, segment);  // default window 1.0: in range
@@ -388,6 +611,9 @@ TEST(LocalGoalAhead, DuplicateAndUnorderedPoints)
   std::size_t segment = 2;
   EXPECT_POINT(localGoalAhead({0.0, 0.0, 0.0}, same, 1.0, segment), 1.0, 1.0);
   EXPECT_EQ(segment, 2u);
+  segment = 4;  // the last index starts no segment: back to the first point
+  EXPECT_POINT(localGoalAhead({0.0, 0.0, 0.0}, same, 1.0, segment), 1.0, 1.0);
+  EXPECT_EQ(segment, 0u);
   // Zig-zag in x: 0, 1, 0.5, 1.5, 1, 2, ...
   std::vector<Point2D> zigzag;
   for (int i = 0; i < 8; ++i) {
@@ -402,7 +628,8 @@ TEST(LocalGoalAhead, DuplicateAndUnorderedPoints)
   EXPECT_GT(g.x, robot.x);
 }
 
-// Non-finite input does not throw or loop, and is never preferred.
+// Non-finite input does not throw or loop. Non-finite plan points are treated as
+// absent and are never returned.
 TEST(LocalGoalAhead, NonFiniteInput)
 {
   auto path = quarterPath();
@@ -410,26 +637,47 @@ TEST(LocalGoalAhead, NonFiniteInput)
   std::size_t segment = 0;
   EXPECT_POINT(localGoalAhead({kNaN, 0.0, 0.0}, path, 1.0, segment), 6.0, 0.0);
   EXPECT_EQ(segment, 0u);
-  // A NaN point at index 3 ends the forward search there: a robot beyond it is
-  // not found, the scan from the last finite segment skips the NaN point.
-  path[3].x = kNaN;
-  segment = 0;
-  EXPECT_POINT(localGoalAhead({0.3, 0.0, 0.0}, path, 1.0, segment), 1.5, 0.0);
-  EXPECT_EQ(segment, 1u);
-  segment = 0;
-  const Point2D g = localGoalAhead({3.0, 0.0, 0.0}, path, 1.0, segment);
-  EXPECT_EQ(segment, 1u);
-  EXPECT_POINT(g, 0.5, 0.0);  // from the far end of segment 1; documented limit
-  // An infinite point likewise (it is "at least lookahead away", but not a goal).
-  path[3].x = kInf;
-  segment = 0;
-  EXPECT_POINT(localGoalAhead({0.3, 0.0, 0.0}, path, 1.0, segment), 1.5, 0.0);
-  EXPECT_EQ(segment, 1u);
-  path[3].x = 0.75;
-  // A non-finite LAST point is returned only as the fallback.
+  for (const double bad : {kNaN, kInf, -kInf}) {
+    // Point 3 (x = 0.75) is not finite: segment 2 runs from 0.5 to 1.0.
+    path[3].x = bad;
+    segment = 0;
+    EXPECT_POINT(localGoalAhead({0.3, 0.0, 0.0}, path, 1.0, segment), 1.5, 0.0);
+    EXPECT_EQ(segment, 1u);
+    segment = 0;
+    EXPECT_POINT(localGoalAhead({0.8, 0.0, 0.0}, path, 1.0, segment), 2.0, 0.0);
+    EXPECT_EQ(segment, 2u);   // on the joined segment; point 3 is not its end
+    segment = 0;
+    EXPECT_POINT(localGoalAhead({3.0, 0.0, 0.0}, path, 1.0, segment), 4.0, 0.0);
+    EXPECT_EQ(segment, 11u);  // found beyond the gap
+    segment = 3;              // a remembered index that is now not finite
+    EXPECT_POINT(localGoalAhead({0.3, 0.0, 0.0}, path, 1.0, segment), 1.5, 0.0);
+    EXPECT_EQ(segment, 1u);
+    // The same in y.
+    path[3].x = 0.75;
+    path[3].y = bad;
+    segment = 0;
+    EXPECT_POINT(localGoalAhead({0.8, 0.0, 0.0}, path, 1.0, segment), 2.0, 0.0);
+    EXPECT_EQ(segment, 2u);
+    path[3].y = 0.0;
+  }
+  // Non-finite first and last points: the plan is the finite part.
+  path.front().x = kNaN;
   path.back().y = kNaN;
+  segment = 0;
+  EXPECT_POINT(localGoalAhead({0.0, 0.0, 0.0}, path, 1.0, segment), 1.0, 0.0);
+  EXPECT_EQ(segment, 1u);     // starts at the first finite point (0.25)
   EXPECT_POINT(goal({1.0, 0.0, 0.0}, path), 2.0, 0.0);
-  EXPECT_TRUE(std::isnan(goal({5.9, 0.0, 0.0}, path).y));
+  EXPECT_POINT(goal({5.9, 0.0, 0.0}, path), 5.75, 0.0);  // the last FINITE point
+  // One finite point among non-finite ones: that point. None: as an empty plan.
+  const std::vector<Point2D> one{{kNaN, 0.0}, {2.0, 1.0}, {0.0, kInf}};
+  segment = 2;
+  EXPECT_POINT(localGoalAhead({0.0, 0.0, 0.0}, one, 1.0, segment), 2.0, 1.0);
+  EXPECT_EQ(segment, 1u);
+  const std::vector<Point2D> none{{kNaN, 0.0}, {0.0, kNaN}, {kInf, kInf}};
+  segment = 2;
+  const Point2D ahead = localGoalAhead({1.0, 2.0, 0.0}, none, 1.5, segment);
+  EXPECT_POINT(ahead, 2.5, 2.0);
+  EXPECT_EQ(segment, 0u);
   // Very large coordinates.
   std::vector<Point2D> big;
   for (int i = 0; i <= 24; ++i) {
@@ -440,47 +688,71 @@ TEST(LocalGoalAhead, NonFiniteInput)
 
 namespace
 {
-// Paths parametrised by path length a (m), 10 m long, starting at the origin
-// along +x: a line, a left arc of radius 2 m and a right arc of radius 3 m.
-using Shape = Point2D (*)(double);
+// Paths parametrised by path length a (m), starting at the origin along +x: a
+// line, a left arc of radius 2 m and a right arc of radius 3 m.
 Point2D line(double a) {return {a, 0.0};}
 Point2D leftArc(double a) {return {2.0 * std::sin(a / 2.0), 2.0 * (1.0 - std::cos(a / 2.0))};}
 Point2D rightArc(double a) {return {3.0 * std::sin(a / 3.0), -3.0 * (1.0 - std::cos(a / 3.0))};}
+double heading(Shape shape, double a)
+{
+  return shape == &line ? 0.0 : shape == &leftArc ? a / 2.0 : -a / 3.0;
+}
 
-// A plan as a planner issues it: from the robot's position along the shape.
-std::vector<Point2D> planFrom(Shape shape, double a0)
+// A plan as a planner issues it: along the shape up to 10 m, from `a0` (the
+// robot's position along the shape minus what the plan starts behind it),
+// every 0.05 m; with snap > 0 each point is moved to the centre of its cell.
+std::vector<Point2D> planFrom(Shape shape, double a0, double snap = 0.0)
 {
   std::vector<Point2D> p;
   for (double a = a0; a < 10.0; a += 0.05) {
     p.push_back(shape(a));
   }
   p.push_back(shape(10.0));
+  if (snap > 0.0) {
+    for (auto & q : p) {
+      q.x = (std::floor(q.x / snap) + 0.5) * snap;
+      q.y = (std::floor(q.y / snap) + 0.5) * snap;
+    }
+  }
   return p;
 }
 
-// Drives 8 m at 0.45 m/s and 20 Hz with a new plan every `replan_cycles`, the
-// robot `offset` m beside the path (in y), and counts the cycles in which the
-// goal differs from the rule that counts from the plan start.
-int cyclesDifferingFromPlanStartRule(Shape shape, int replan_cycles, double offset)
+struct Differences
 {
-  int differing = 0;
+  int cycles = 0;           // cycles in which the two rules select different points
+  int old_goal_behind = 0;  // of those: the plan-start rule's goal is behind the robot
+  int new_goal_ahead = 0;   // of those: localGoalAhead's goal is ahead of the robot
+};
+
+// Drives 8 m at 0.45 m/s and 20 Hz with a new plan every `replan_cycles`, the
+// robot `offset` m beside the path (in y) and the plan starting `back` m behind
+// the robot, and compares the goal with the rule that counts from the plan start.
+Differences compareWithPlanStartRule(
+  Shape shape, int replan_cycles, double offset, double back = 0.0, double snap = 0.0)
+{
+  Differences d;
   std::vector<Point2D> plan;
   std::size_t segment = 0;
   for (int i = 0; i * 0.45 * 0.05 < 8.0; ++i) {
     const double a = i * 0.45 * 0.05;
     const Point2D on_path = shape(a);
-    const SE2 robot{on_path.x, on_path.y + offset, 0.0};
+    const SE2 robot{on_path.x, on_path.y + offset, heading(shape, a)};
     if (i % replan_cycles == 0) {
-      plan = planFrom(shape, a);
+      plan = planFrom(shape, a - back, snap);
       segment = 0;  // what setPlan does for a new geometry
     }
     const Point2D now = localGoalAhead(robot, plan, 1.0, segment);
     const Point2D before = ruleFromPlanStart(robot, plan, 1.0);
     if (now.x != before.x || now.y != before.y) {
-      ++differing;
+      const auto forward = [&robot](const Point2D & g) {
+          return (g.x - robot.x) * std::cos(robot.theta) + (g.y - robot.y) * std::sin(robot.theta);
+        };
+      ++d.cycles;
+      d.old_goal_behind += forward(before) < 0.0;
+      d.new_goal_ahead += forward(now) > 0.0;
     }
   }
-  return differing;
+  return d;
 }
 }  // namespace
 
@@ -496,14 +768,62 @@ TEST(LocalGoalAhead, SameAsThePlanStartRuleWhenReplannedWithinTheLookahead)
   for (const Shape shape : {&line, &leftArc, &rightArc}) {
     for (const int replan_cycles : {1, 20}) {
       for (const double offset : {0.0, 0.3, -0.3}) {
-        EXPECT_EQ(cyclesDifferingFromPlanStartRule(shape, replan_cycles, offset), 0)
+        EXPECT_EQ(compareWithPlanStartRule(shape, replan_cycles, offset).cycles, 0)
           << "shape " << n << " every " << replan_cycles << " cycles, offset " << offset;
       }
     }
-    EXPECT_EQ(cyclesDifferingFromPlanStartRule(shape, 40, 0.0), 0) << "shape " << n;
-    EXPECT_EQ(cyclesDifferingFromPlanStartRule(shape, 44, 0.0), 0) << "shape " << n;
+    EXPECT_EQ(compareWithPlanStartRule(shape, 40, 0.0).cycles, 0) << "shape " << n;
+    EXPECT_EQ(compareWithPlanStartRule(shape, 44, 0.0).cycles, 0) << "shape " << n;
     // Replanned every 4 s (1.8 m) the two rules differ: that is the defect.
-    EXPECT_GT(cyclesDifferingFromPlanStartRule(shape, 80, 0.0), 0) << "shape " << n;
+    EXPECT_GT(compareWithPlanStartRule(shape, 80, 0.0).cycles, 0) << "shape " << n;
+    ++n;
+  }
+}
+
+// A planner does not start the plan exactly at the robot: the start may lie
+// behind it (the pose used for planning is older than the pose used for
+// control) and the points sit on cell centres. At 1 Hz the two rules still
+// agree bit for bit with the start 0.05 m and 0.3 m behind, with and without
+// 5 cm snapping, on a line and on two arcs, on the path and 0.15 m beside it.
+TEST(LocalGoalAhead, SameAsThePlanStartRuleAt1HzWithThePlanStartBehindTheRobot)
+{
+  int n = 0;
+  for (const Shape shape : {&line, &leftArc, &rightArc}) {
+    for (const double back : {0.05, 0.3}) {
+      for (const double snap : {0.0, 0.05}) {
+        for (const double offset : {0.0, 0.15, -0.15}) {
+          EXPECT_EQ(compareWithPlanStartRule(shape, 20, offset, back, snap).cycles, 0)
+            << "shape " << n << " back " << back << " snap " << snap << " offset " << offset;
+        }
+      }
+    }
+    ++n;
+  }
+}
+
+// Where they stop agreeing. The agreement holds while the plan start is nearer
+// than lookahead_dist, so the room is lookahead_dist minus what the plan starts
+// behind the robot: 0.6 m behind leaves 0.4 m, less than the 0.4275 m driven
+// between 1 Hz replans; 0.15 m behind leaves 0.85 m, less than the 0.8775 m
+// driven in 2 s. In every cycle that differs, the plan-start rule's goal is
+// behind the robot and the new goal is ahead of it.
+TEST(LocalGoalAhead, DiffersFromThePlanStartRuleOnlyWhereThatRulePointsBackwards)
+{
+  int n = 0;
+  for (const Shape shape : {&line, &leftArc, &rightArc}) {
+    for (const double snap : {0.0, 0.05}) {
+      const Differences hz1 = compareWithPlanStartRule(shape, 20, 0.0, 0.6, snap);
+      const Differences s2 = compareWithPlanStartRule(shape, 40, 0.0, 0.15, snap);
+      for (const Differences & d : {hz1, s2}) {
+        EXPECT_GT(d.cycles, 0) << "shape " << n << " snap " << snap;
+        EXPECT_EQ(d.old_goal_behind, d.cycles) << "shape " << n << " snap " << snap;
+        EXPECT_EQ(d.new_goal_ahead, d.cycles) << "shape " << n << " snap " << snap;
+      }
+      // Just inside the room: 0.55 m behind at 1 Hz (0.9775 m at most), no snapping.
+      if (snap == 0.0) {
+        EXPECT_EQ(compareWithPlanStartRule(shape, 20, 0.0, 0.55).cycles, 0) << "shape " << n;
+      }
+    }
     ++n;
   }
 }

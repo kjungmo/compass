@@ -18,8 +18,8 @@ idle longer than `task_gap_reset_s` resets the decision state (STOP/HOLD,
 commitment, evidence, ρ and decision clock), as Jazzy's `reset()` does (see
 [STOP and HOLD](#stop-and-hold-are-latched)). On both distributions, the local
 goal is taken ahead of the robot along the plan instead of from the plan start
-(see [Local goal](#local-goal); no change when the plan is re-issued from the
-robot pose at 1 Hz). Everything else added here only reports, or is an option
+(see [Local goal](#local-goal); no change when the plan is re-issued at 1 Hz
+from a pose up to 0.3 m behind the robot). Everything else added here only reports, or is an option
 that is off by default.
 
 | Parameter | Default | Meaning |
@@ -113,24 +113,33 @@ only at task boundaries, as on Jazzy.
 ## Local goal
 
 The decision core's local goal (`g` in the paper, `lookahead_dist` in the
-parameter table) is the first plan pose that is **ahead of the robot along the
-plan** and at least `lookahead_dist` (straight-line distance) from the robot;
-the last plan pose when there is none, and the point `lookahead_dist` in front
-of the robot heading when the plan is empty. On the default (legacy) path the
-direction from the robot to the local goal is the direction of the clearance
-ray (the `d_safe` test) and of the corridor probe 1 m ahead, and the local goal
-enters the goal cost. With `use_candidate_trajectories` it enters the goal cost
-only.
+parameter table) is the first plan pose that comes **after the robot's place on
+the plan** and is at least `lookahead_dist` (straight-line distance) from the
+robot; the last plan pose when there is none, and the point `lookahead_dist` in
+front of the robot heading when the plan is empty. On the default (legacy) path
+the direction from the robot to the local goal is the direction of the
+clearance ray (the `d_safe` test) and of the corridor probe 1 m ahead, and the
+local goal enters the goal cost. With `use_candidate_trajectories` it enters
+the goal cost only.
 
-"Ahead" is counted from the plan segment closest to the robot. The plugin
-remembers that segment and searches forwards from it: the segment, the next
-one, and later segments that start within 1.0 m of path length, repeated until
-nothing in range is closer. The poses before the robot's projection on that
-segment are behind the robot and are never the local goal.
+The robot's place on the plan is the plan segment closest to it, found in two
+steps. The plugin remembers the segment of the last cycle.
+
+1. Forward search from the remembered segment: the segment, the next one, and
+   later segments that start within 1.0 m of path length, repeated until
+   nothing in range is closer. This is the only step while the robot is within
+   1.0 m of the remembered segment, that is, while it follows the plan.
+2. Re-acquisition: when the segment found by step 1 is more than 1.0 m from the
+   robot, every segment of the plan is compared, and the nearest one (the
+   earliest on a tie, the same segment the steering term uses) is taken if it
+   is nearer by more than 1.0 m.
+
+The poses before the robot's projection on that segment are never the local
+goal.
 
 | Event | Remembered segment |
 |---|---|
-| Control cycle that gets past the frame and people-freshness checks | The closest segment at or after the remembered one (never earlier) |
+| Control cycle that gets past the frame and people-freshness checks | Result of steps 1 and 2: the segment the robot is on. It stays where it was while the robot is up to 1.0 m behind it, and moves back only through step 2 |
 | `setPlan()` with the same frame and the same x, y of every pose | Kept |
 | `setPlan()` with any other geometry | Plan start |
 | `reset()` (Iron and later), new task on Humble (`task_gap_reset_s`), configure | Plan start |
@@ -144,28 +153,61 @@ robot: the ray and the probe looked backwards. An obstacle ahead on the path
 then caused no braking until the robot's own cell was occupied, and an obstacle
 behind the robot could cause braking.
 
-- **Plan re-issued from the robot pose before the robot is `lookahead_dist`
-  from its first pose** (the default Nav2 behaviour tree replans at 1 Hz, 0.45 m
-  at the default cruise speed): the local goal is the same pose as before, so
-  nothing changes. The old and the new rule select the same pose whenever every
-  plan pose behind the robot is nearer than `lookahead_dist`.
+- **Plan re-issued from near the robot pose at 1 Hz** (the default Nav2
+  behaviour tree): the local goal is the same pose as before, so nothing
+  changes. The old and the new rule select the same pose whenever every plan
+  pose behind the robot is nearer than `lookahead_dist`. The robot may
+  therefore travel `lookahead_dist` minus the distance by which the plan starts
+  behind it before the rules differ: with the plan starting at the robot that
+  is 1.0 m, 2.2 s at the default cruise speed of 0.45 m/s; with the plan
+  starting 0.3 m behind the robot it is 0.7 m, about 1.5 s; with the plan
+  starting 0.6 m behind it is 0.4 m, about 0.9 s, less than one 1 Hz period. Tested equal at
+  1 Hz with the start up to 0.3 m behind the robot and poses snapped to 5 cm
+  cells. Where the rules differ, the old one pointed backwards.
 - **Plan set once** (a FollowPath client without periodic replanning), or
-  replaced less often than about `lookahead_dist / speed` (2.2 s at the
-  defaults): the ray and the probe now point along the plan ahead of the robot
-  for the whole path.
+  replaced less often than that: while the robot follows the plan (stays
+  within 1.0 m of it), the local goal is a plan pose after the robot's place on
+  the plan in every cycle, from the first pose to the last, and the ray and the
+  probe point at it. Near the end it is the last pose.
 
 There is no parameter that restores the old rule.
 
-Limits. A robot away from the plan start is found in one cycle as long as the
-plan keeps getting closer to it within each 1.0 m of path; otherwise the
-remembered segment stays at the nearest point reached and the local goal is
-taken from there. A later pass of a plan that crosses itself, or runs back
-beside itself, is taken once it starts within 1.0 m of path length and is closer
-than the current segment. The search stops at a non-finite pose. The steering
-term and the goal-speed taper do not use the local goal: steering uses the
-segment closest to the robot over the whole plan, and the taper uses the
-straight-line distance to the last pose. Pose and plan must be in the costmap
-frame, as before; nothing is transformed.
+Limits, and what happens in each case.
+
+- **Reversing, or a pose that moves back along the plan** (relocalization):
+  up to 1.0 m back, the remembered segment is kept and the local goal is the
+  first pose from there that is `lookahead_dist` from the robot, so it is up to
+  1.0 m further ahead than usual. More than 1.0 m back, step 2 finds the robot
+  and the local goal is again `lookahead_dist` ahead of it.
+- **Task restarted away from the plan start, or a pose that jumps forwards:**
+  step 1 follows the plan to the robot when the plan keeps getting closer to it
+  within each 1.0 m of path; otherwise step 2 finds it, provided the nearest
+  segment is more than 1.0 m nearer than where step 1 stopped.
+- **Plans that cross themselves or run back beside themselves:** the pass the
+  robot has been following is kept while the other pass is not more than 1.0 m
+  nearer. At a crossing the earlier pass is therefore kept. A robot that
+  follows the later pass instead is moved to it once the earlier pass is more
+  than 1.0 m further away; until then the local goal is on the earlier pass.
+  Two passes less than 1.0 m apart are told apart by step 1 only: the forward
+  search takes the later one when it starts within 1.0 m of path length and is
+  closer.
+- **A robot more than 1.0 m from every segment:** step 2 runs every cycle (one
+  pass over the plan) and changes the segment only for one that is more than
+  1.0 m nearer.
+- **Bends tighter than `lookahead_dist`:** the first pose `lookahead_dist` from
+  the robot in a straight line can be beyond the bend, to the side of or behind
+  the robot heading. It is still a later pose of the plan.
+- **Non-finite poses** (NaN or infinite x or y) are treated as absent: the
+  segments join the finite poses on either side, and such a pose is never the
+  local goal. A plan with no finite pose is treated as empty. Steering and the
+  candidate rollout are unchanged: steering ignores segments that touch a
+  non-finite pose, the rollout rejects the plan.
+- The steering term and the goal-speed taper do not use the local goal:
+  steering uses the segment closest to the robot over the whole plan in every
+  cycle (no memory), and the taper uses the straight-line distance to the last
+  pose.
+- Pose and plan must be in the costmap frame, as before; nothing is
+  transformed.
 
 ## Other zero-twist cases
 

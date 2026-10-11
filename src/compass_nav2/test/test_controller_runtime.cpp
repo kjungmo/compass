@@ -30,6 +30,7 @@
 #include "nav2_costmap_2d/cost_values.hpp"
 #include "compass_nav2/param_checks.hpp"
 #include "compass_nav2/task_boundary.hpp"
+#include "test_costmap.hpp"
 
 namespace
 {
@@ -112,7 +113,7 @@ using Params = std::vector<rclcpp::Parameter>;
 struct Fixture
 {
   rclcpp_lifecycle::LifecycleNode::SharedPtr node;
-  std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap;
+  std::shared_ptr<TestCostmap> costmap;
   std::shared_ptr<tf2_ros::Buffer> tf;
 
   explicit Fixture(
@@ -121,11 +122,12 @@ struct Fixture
     rclcpp::NodeOptions options;
     options.parameter_overrides(overrides);
     node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("controller_server", ns, options);
-    costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("runtime_probe_costmap");
+    costmap = std::make_shared<TestCostmap>("runtime_probe_costmap");
     costmap->configure();
     tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   }
-  ~Fixture() {costmap->cleanup();}
+  // Not costmap->cleanup(): that can stall right after configure (test_costmap.hpp).
+  ~Fixture() {costmap->cleanupOnceSpinning();}
 
   void configure(compass_nav2::CompassController & c)
   {
@@ -867,7 +869,9 @@ TEST_F(LocalGoal, LookaheadDistParameterSelectsTheGoalAlongThePlan)
 
 // What the controller remembers about the robot's place on the plan (the event
 // table in the README, one block per row):
-//   control cycle past the frame and people checks -> the segment the robot is on
+//   control cycle past the frame and people checks -> the segment the robot is on;
+//                                                     kept when the robot is up to 1.0 m
+//                                                     behind it, found again further back
 //   same geometry republished                      -> kept
 //   new geometry                                   -> back to the plan start
 //   reset(); on Humble a plan after an idle loop   -> back to the plan start
@@ -890,7 +894,9 @@ TEST_F(LocalGoal, RememberedPlanSegmentPerEvent)
   EXPECT_EQ(controller.planSegment(), 0u);
   EXPECT_EQ(cycle(0.53), 0u);    // 0.5 -> 0.6
   EXPECT_EQ(cycle(2.03), 15u);   // 2.0 -> 2.1
-  EXPECT_EQ(cycle(1.03), 15u);   // moving back does not rewind it
+  EXPECT_EQ(cycle(1.03), 15u);   // 0.97 m back: within 1.0 m, kept
+  EXPECT_EQ(cycle(0.83), 3u);    // 1.17 m back: found again on 0.8 -> 0.9
+  EXPECT_EQ(cycle(2.03), 15u);
 
   auto republished = straightPath();
   republished.header.stamp.sec = 7;
