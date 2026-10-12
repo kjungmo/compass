@@ -117,8 +117,11 @@ protected:
   // parameter (ns.key), its value and the allowed range.
   void validateParameters(const std::string & ns) const;
 
-  // 전역 계획의 마지막 점(또는 robot 전방 lookahead)을 로컬 목표로 환산.
-  compass::Point2D computeLocalGoal(const compass::SE2 & robot) const;
+  // Local goal for the core: the plan point at least lookahead_dist ahead of the
+  // robot along `path` (global_plan_ as points), see localGoalAhead. Advances
+  // plan_segment_; the caller holds mutex_.
+  compass::Point2D computeLocalGoal(
+    const compass::SE2 & robot, const std::vector<compass::Point2D> & path);
 
   // 최신 /people 메시지를 costmap global_frame 기준 compass::Person 목록으로
   // 환산 (트래커 미수신 시 빈 목록). 변환은 toPersons 자유 함수에 위임한다.
@@ -148,6 +151,10 @@ protected:
   std::string base_frame_;
 
   nav_msgs::msg::Path global_plan_;
+  // Segment of global_plan_ the robot was last found closest to (mutex_). Back
+  // to 0 when the plan geometry changes and when the task ends (resetLocked);
+  // kept when the same geometry is republished.
+  std::size_t plan_segment_{0};
 
   // /people 구독 + 최신 메시지 (people_mutex_ 보호).
   rclcpp::Subscription<compass_msgs::msg::People>::SharedPtr people_sub_;
@@ -210,7 +217,7 @@ protected:
   double goal_decel_dist_{0.6};    // m; 목표 근처 감속 시작 거리
 
   // 조향(경로 추종 cross-track + heading PD) 노브. lookahead_dist_ 는 결정
-  // 코어용 로컬 목표 거리이고, k_e/k_theta/k_side 는 pathTrackingAngularZ 의
+  // 코어용 로컬 목표 거리(계획을 따라 로봇 앞쪽으로, localGoalAhead)이고, k_e/k_theta/k_side 는 pathTrackingAngularZ 의
   // 횡오차·헤딩·측면 편향 이득이다 (과감쇠 기본값, 직선에서 위빙 없음).
   double lookahead_dist_{1.0};     // m; 로컬 목표(코어 입력) lookahead 거리
   double k_e_{3.0};                // cross-track 이득

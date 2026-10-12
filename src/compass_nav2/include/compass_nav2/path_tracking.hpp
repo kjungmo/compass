@@ -15,6 +15,7 @@
 #ifndef COMPASS_NAV2__PATH_TRACKING_HPP_
 #define COMPASS_NAV2__PATH_TRACKING_HPP_
 
+#include <cstddef>
 #include <vector>
 
 #include "compass_core/types.hpp"
@@ -54,6 +55,63 @@ double pathTrackingAngularZ(
   const std::vector<compass::Point2D> & path,
   double side_bias,
   const PathTrackGains & gains);
+
+// How far past a segment the closest-segment search looks for a closer one, as
+// path length (m); also how far the remembered segment may be from the robot,
+// and by how much another segment must be nearer, before the whole plan is
+// searched again. See localGoalAhead.
+inline constexpr double kPlanSearchWindow = 1.0;
+
+// Local goal for the decision core: the first plan point AHEAD of the robot along
+// the plan that is at least `lookahead` (m, straight-line) from the robot.
+//
+// `segment` is the caller's memory of where the robot is along this plan: the
+// index i of the point where the segment found closest by the last call starts
+// (it runs from path[i] to the next finite point). Set it to 0 whenever the
+// plan geometry changes or a new task starts.
+//
+//   1. Closest segment, searched forwards. Starting at `segment`: look at it,
+//      the one after it, and later segments that start within `window` of path
+//      length after its end; move to the closest of those (the earliest wins a
+//      tie) and repeat from there until nothing in range is closer. A robot
+//      that follows the plan, or has jumped ahead, is found this way, and a
+//      later pass of a plan that crosses itself or runs back along itself is
+//      not taken while it is more than `window` of path length away.
+//  1b. Re-acquisition. If the segment found by 1 is further than `window` from
+//      the robot, every segment of the plan is looked at (the earliest wins a
+//      tie, as in pathTrackingAngularZ) and the nearest one replaces it when it
+//      is nearer by MORE than `window`. This is what finds a robot that moved
+//      back along the plan by more than `window`, was restarted away from the
+//      plan start, or follows a later pass of a self-crossing plan. The margin
+//      is the hysteresis: two passes about equally far from the robot do not
+//      take turns. It never runs while the robot is within `window` of the
+//      remembered segment, so normal tracking is the forward search alone.
+//   2. From that segment's far end (its near end when the robot projects on or
+//      before the near end), the first point at straight-line distance >=
+//      lookahead from the robot; the last finite plan point if there is none.
+//
+// `segment` is set to the result of 1 and 1b. It decreases only in 1b.
+//
+// While every plan point behind the robot is nearer than `lookahead` (a plan
+// issued from the robot pose and replaced before the robot has gone `lookahead`
+// along it), this is the first plan point at distance >= lookahead counted from
+// the plan start: the rule used before `segment` existed.
+//
+// Non-finite points (NaN or infinite x or y) are treated as absent: segments
+// join the finite points on either side, and such a point is never returned.
+// Empty path, or no finite point: the point `lookahead` in front of the robot
+// heading, segment = 0. One finite point, or no segment of at least 1e-6 m in
+// the search range: rule 2 from point `segment`, which is left unchanged. A
+// `segment` that is not the start of a segment of this path is treated as the
+// first finite point. A zero or negative `window` makes 1b take the nearest
+// segment of the whole plan whenever it is nearer; a NaN `window` disables 1b.
+// path and robot are in one frame; the caller checks that.
+compass::Point2D localGoalAhead(
+  const compass::SE2 & robot,
+  const std::vector<compass::Point2D> & path,
+  double lookahead,
+  std::size_t & segment,
+  double window = kPlanSearchWindow);
 
 }  // namespace compass_nav2
 

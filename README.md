@@ -183,7 +183,8 @@ Decision-label metrics in that battery are unchanged. Numerical checks cover the
 they do not validate every prose claim or certify physical performance.
 Default knob values and both opt-in flags are preserved; runtime safety-defect
 corrections intentionally change Nav2 behavior, including legacy TTC/occupancy,
-frame checks and time-scaled braking. This is not a binary or behavioral rollback
+frame checks, time-scaled braking and a local goal taken ahead of the robot
+along the plan ([details](src/compass_nav2/README.md#local-goal)). This is not a binary or behavioral rollback
 to the original archive.
 
 <div align="center">

@@ -70,7 +70,10 @@ not a guarantee that hardware realizes that deceleration.
 The default-mode legacy environment is also corrected: approaching TTC has the
 proper sign, L/R ray offsets agree with emitted steering, missing/unobserved map
 queries are unavailable, and an immediately blocked/unobserved legacy ray results
-in a complete zero twist. These intentional safety corrections retain the default
+in a complete zero twist. The local goal, which directs the legacy ray and enters
+the goal cost of both paths, is the first plan pose at least `lookahead_dist`
+ahead of the robot along the plan, not counted from the plan start
+(`src/compass_nav2/README.md`, "Local goal"). These intentional safety corrections retain the default
 knob values, not all historical runtime behavior. The legacy ray/TTC estimates
 are still proxies, not equivalent to the candidate swept-trajectory contract.
 

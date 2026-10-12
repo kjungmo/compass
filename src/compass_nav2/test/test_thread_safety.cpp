@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 
 #include "compass_nav2/compass_controller.hpp"
+#include "test_costmap.hpp"
 
 using namespace std::chrono_literals;
 
@@ -63,7 +64,7 @@ bool blocksOn(Mutex & m, Call call)
 
 TEST(ThreadSafety, ControlCallHoldsTheCostmapMutex)
 {
-  auto costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("lock_probe_costmap");
+  auto costmap = std::make_shared<TestCostmap>("lock_probe_costmap");
   costmap->configure();
   ASSERT_NE(costmap->getCostmap(), nullptr);
   LockProbe controller(costmap);
@@ -74,7 +75,7 @@ TEST(ThreadSafety, ControlCallHoldsTheCostmapMutex)
     blocksOn(
       *costmap->getCostmap()->getMutex(),
       [&] {controller.computeVelocityCommands(pose, geometry_msgs::msg::Twist(), nullptr);}));
-  costmap->cleanup();
+  costmap->cleanupOnceSpinning();  // see test_costmap.hpp
 }
 
 TEST(ThreadSafety, SetSpeedLimitTakesTheControllerMutex)
