@@ -96,7 +96,7 @@ def scenario_table(rows):
                      for i, (_, label) in enumerate(VARIANTS))
     return r"""\begin{table}[t]
 \centering
-\caption{\textbf{Switches per encounter by scenario} (mean\stdv{SD}, $N=50$ per cell; no column is marked best) --- the table in which oscillatory regression is most clearly evident. Fewer switches is not uniformly better: \texttt{clean\_commit} and \texttt{intermittent} contain one warranted switch (\cref{subsec:ablation}).}
+\caption{\textbf{Switches per encounter by scenario} (mean\stdv{SD}, $N=50$ per cell; no column is marked best) --- the table in which oscillatory regression is most clearly evident. Fewer switches is not uniformly better: \texttt{clean\_commit} and \texttt{intermittent} contain one switch toward the scripted-advantage label (\cref{subsec:ablation}).}
 \label{tab:scenario}
 \small
 \resizebox{\linewidth}{!}{%
@@ -226,11 +226,11 @@ def rho_figure():
   tick label style={font=\small}, label style={font=\small},
 ]
 \fill[red!12] (axis cs:0.20,-0.05) rectangle (axis cs:0.35,1.1);
-\node[font=\scriptsize,align=center] at (axis cs:0.275,0.5) {blocking\\interval};
+\node[font=\scriptsize,align=center] at (axis cs:0.275,0.5) {transition\\(unmeasured)};
 \addplot[only marks, mark=*, mark size=2.5pt, teal!70!black] coordinates {""" + " ".join(frac) + r"""};
 \end{axis}
 \end{tikzpicture}
-\caption{\textbf{Offline transition blocking under fast progress saturation} (\texttt{clean\_commit}, Full, 50 seeds per point, measured only at the five marked inputs; data from \texttt{R5\_rho\_sweep.md}). Every seed commits the warranted switch for $v_{\text{lat}}\le0.20$~m/s and none does for $v_{\text{lat}}\ge0.35$~m/s, so the transition-blocking interval is $v_{\text{lat}}\in(0.20,0.35)$~m/s. This is a sensitivity of the scripted progress input, not a physical freezing threshold.}
+\caption{\textbf{Offline transition blocking under fast progress saturation} (\texttt{clean\_commit}, Full, 50 seeds per point, measured only at the five marked inputs; data from \texttt{R5\_rho\_sweep.md}). Every seed commits the switch toward the scripted-advantage label for $v_{\text{lat}}\le0.20$~m/s and none does for $v_{\text{lat}}\ge0.35$~m/s, so the transition-blocking interval is $v_{\text{lat}}\in(0.20,0.35)$~m/s. This is a sensitivity of the scripted progress input, not a physical freezing threshold.}
 \label{fig:rhosweep}
 \end{figure}
 """
