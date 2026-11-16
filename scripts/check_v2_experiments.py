@@ -71,7 +71,7 @@ def main():
         for ln in body:
             if ln not in main_tex:
                 bad += fail(f"{name}: row missing from paper/arxiv/main.tex: {ln[:60]}")
-        ref = (ROOT / "paper/arxiv_ref/sections/4_experiments.tex").read_text(encoding="utf-8")
+        ref = (ROOT / "paper/arxiv_ref/sections/4b_v2_experiments.tex").read_text(encoding="utf-8")
         if f"\\input{{tables/{name}}}" not in ref and name not in ref:
             bad += fail(f"{name}: not included in arxiv_ref sections")
     if not bad:

@@ -232,7 +232,7 @@ def build():
         r"Rule & Switches & Sign changes (/s) & Entropy (bits) & $t_{\text{sfx}}$ (s) & Censored & Correct final side \\",
         tab_native(L))
     t["v2_native_scn"] = wrap(
-        r"\textbf{Added in v2 after review (post hoc): per scenario, mean switches per encounter; runs with the scripted final side (of 50).} Cell = mean switches; correct final side. Targets (scripted, \cref{subsec:v2plan}): tie none (marked --), spike R, rev L, clean L, interm.\ L. Switch counts exclude the initial class to first output, so a rule that commits on its first output shows 0 switches and is scored by the final-side count. Scenario names: tie = \texttt{near\_tie}, spike = \texttt{transient\_spike}, rev = \texttt{mid\_reversal}, clean = \texttt{clean\_commit}, interm. = \texttt{intermittent}.",
+        r"\textbf{Added in v2 after review (post hoc): per scenario, mean switches per encounter; runs with the scripted final side (of 50).} Cell = mean switches; correct final side. Targets (scripted, \cref{subsec:v2}): tie none (marked --), spike R, rev L, clean L, interm.\ L. Switch counts exclude the initial class to first output, so a rule that commits on its first output shows 0 switches and is scored by the final-side count. Scenario names: tie = \texttt{near\_tie}, spike = \texttt{transient\_spike}, rev = \texttt{mid\_reversal}, clean = \texttt{clean\_commit}, interm. = \texttt{intermittent}.",
         "tab:v2native_scn", "lccccc",
         "Rule & " + " & ".join(SHORT[s] for s in SCN) + r" \\",
         tab_native_scn(L))
