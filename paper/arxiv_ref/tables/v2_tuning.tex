@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): tuning procedure and selected values.} One procedure for all rules: grid search on tuning seeds 1000--1049 (disjoint from the evaluation seeds), loss = excess switches $+\,3\times$ [wrong final side] averaged over the five scenarios at native noise; ties go to the earlier grid point. The selected point is applied unchanged to the evaluation seeds. Evaluation loss uses seeds 0--49. Selected values at the edge of a grid are not extended.}
+\label{tab:v2tuning}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllcc}
+\toprule
+Rule & Grid & Selected & Tuning loss & Evaluation loss \\
+\midrule
+COMPASS $E_0$ & \{0.10, 0.15, 0.20, 0.30, 0.40\} & 0.15 & 0.024 & 0.048 \\
+Simple dwell $T_{\mathrm{dwell}}$ (s) & \{0.2, 0.4, 0.6, 1.0, 1.5, 2.0\} & 0.4 & 0.468 & 0.476 \\
+CW bonus $b$ & \{0, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40\} & 0.4 & 0.628 & 0.608 \\
+LI $(T_{\min}$ s, $r)$ & $\{0.3, 0.6, 1, 2\}\times\{0.05, 0.10, 0.20, 0.40\}$ & 2, 0.4 & 1.024 & 1.056 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): comparison with two further selection rules and tuned variants, native noise.} Mean$\pm$SD over $N=250$ runs per row (5 scenarios $\times$ 50 seeds, seeds 0--49), $\sigma=0.12$ in \texttt{near\_tie} and $0.03$ elsewhere. Censored = number of the 250 runs without a reported $t_{\text{sfx}}$. Correct final side = runs whose last decision equals the scripted target side (\cref{tab:v2native_scn}), pooled over the four scenarios with a target (out of 200). The first six rows repeat the archived rows of \cref{tab:main} unchanged; no column is marked best. Tuned rows use the single procedure of \cref{tab:v2tuning}.}
+\label{tab:v2native}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Rule & Switches & Sign changes (/s) & Entropy (bits) & $t_{\text{sfx}}$ (s) & Censored & Correct final side \\
+\midrule
+Full (proposed) & 0.40$\pm$0.49 & 0.040$\pm$0.049 & 0.018$\pm$0.022 & 1.33$\pm$1.66 & 0 & 150 \\
+$-$Hysteresis & 0.40$\pm$0.49 & 0.040$\pm$0.049 & 0.018$\pm$0.022 & 1.00$\pm$1.20 & 0 & 150 \\
+$-$Progress hardening & 0.40$\pm$0.49 & 0.040$\pm$0.049 & 0.018$\pm$0.022 & 1.31$\pm$1.65 & 0 & 150 \\
+$-$Accumulator (argmin) & 29.74$\pm$36.70 & 2.974$\pm$3.670 & 0.420$\pm$0.374 & 3.60$\pm$4.64 & 72 & 200 \\
+Simple dwell (0.6 s) & 0.80$\pm$0.75 & 0.080$\pm$0.075 & 0.034$\pm$0.031 & 2.26$\pm$3.90 & 50 & 150 \\
+$-$Class correspondence & 37.20$\pm$36.12 & 3.720$\pm$3.612 & 0.515$\pm$0.401 & 3.60$\pm$4.63 & 71 & 200 \\
+COMPASS, $\lambda=1$ & 0.60$\pm$0.49 & 0.060$\pm$0.049 & 0.027$\pm$0.022 & 2.81$\pm$3.71 & 50 & 200 \\
+COMPASS, tuned $E_0=0.15$ & 0.65$\pm$0.53 & 0.065$\pm$0.053 & 0.029$\pm$0.023 & 2.49$\pm$3.80 & 50 & 200 \\
+Simple dwell, tuned $T_{\mathrm{dwell}}=0.4$ s & 1.08$\pm$0.57 & 0.108$\pm$0.057 & 0.047$\pm$0.023 & 2.82$\pm$4.09 & 58 & 200 \\
+CW, tuned $b=0.4$ & 0.11$\pm$0.32 & 0.011$\pm$0.032 & 0.005$\pm$0.014 & 0.14$\pm$0.82 & 1 & 150 \\
+LI, tuned $T_{\min}=2$ s, $r=0.4$ & 0.78$\pm$0.82 & 0.078$\pm$0.082 & 0.033$\pm$0.032 & 4.13$\pm$4.40 & 58 & 160 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

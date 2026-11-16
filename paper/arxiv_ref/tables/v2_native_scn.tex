@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): per scenario, mean switches per encounter; runs with the scripted final side (of 50).} Cell = mean switches; correct final side. Targets (scripted, \cref{subsec:v2plan}): tie none (marked --), spike R, rev L, clean L, interm.\ L. Switch counts exclude the initial class to first output, so a rule that commits on its first output shows 0 switches and is scored by the final-side count. Scenario names: tie = \texttt{near\_tie}, spike = \texttt{transient\_spike}, rev = \texttt{mid\_reversal}, clean = \texttt{clean\_commit}, interm. = \texttt{intermittent}.}
+\label{tab:v2native_scn}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Rule & tie & spike & rev & clean & interm. \\
+\midrule
+Full (proposed) & 0.00; -- & 0.00; 50 & 0.00; 0 & 1.00; 50 & 1.00; 50 \\
+$-$Hysteresis & 0.00; -- & 0.00; 50 & 0.00; 0 & 1.00; 50 & 1.00; 50 \\
+$-$Progress hardening & 0.00; -- & 0.00; 50 & 0.00; 0 & 1.00; 50 & 1.00; 50 \\
+$-$Accumulator (argmin) & 98.16; -- & 2.00; 50 & 13.44; 50 & 0.00; 50 & 35.12; 50 \\
+Simple dwell (0.6 s) & 0.00; -- & 2.00; 50 & 1.00; 50 & 1.00; 50 & 0.00; 0 \\
+$-$Class correspondence & 98.12; -- & 2.00; 50 & 46.00; 50 & 0.00; 50 & 39.88; 50 \\
+COMPASS, $\lambda=1$ & 0.00; -- & 0.00; 50 & 1.00; 50 & 1.00; 50 & 1.00; 50 \\
+COMPASS, tuned $E_0=0.15$ & 0.00; -- & 0.24; 50 & 1.00; 50 & 1.00; 50 & 1.00; 50 \\
+Simple dwell, tuned $T_{\mathrm{dwell}}=0.4$ s & 0.38; -- & 2.00; 50 & 1.00; 50 & 1.00; 50 & 1.00; 50 \\
+CW, tuned $b=0.4$ & 0.04; -- & 0.00; 50 & 0.00; 0 & 0.50; 50 & 0.02; 50 \\
+LI, tuned $T_{\min}=2$ s, $r=0.4$ & 1.68; -- & 1.20; 10 & 1.00; 50 & 0.00; 50 & 0.00; 50 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

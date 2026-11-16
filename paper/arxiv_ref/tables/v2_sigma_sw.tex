@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): noise sweep, mean switches per encounter.} Cell = mean over the five scenarios (mean in \texttt{near\_tie}), 250 runs per cell (50 in \texttt{near\_tie}). The same $\sigma$ is used in all five scenarios. Tuned rules keep the value tuned at native noise. Reference: the stationary SD of the unclipped leaky accumulation, $\sigma\,dt/\sqrt{1-\lambda^2}$, is $0.006$, $0.012$, $0.025$, $0.041$, $0.062$ for the five $\sigma$ against $E_0=0.30$.}
+\label{tab:v2sigma_sw}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Rule & $\sigma=0.03$ & 0.06 & 0.12 & 0.20 & 0.30 \\
+\midrule
+Full (proposed) & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) \\
+$-$Hysteresis & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.47 (0.00) \\
+$-$Progress hardening & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.40 (0.00) & 0.45 (0.00) \\
+COMPASS, $\lambda=1$ & 0.60 (0.00) & 0.58 (0.00) & 0.57 (0.00) & 0.57 (0.00) & 0.59 (0.00) \\
+COMPASS, tuned $E_0=0.15$ & 0.65 (0.00) & 0.71 (0.00) & 0.74 (0.00) & 0.82 (0.00) & 0.85 (0.00) \\
+$-$Accumulator (argmin) & 29.74 (98.16) & 33.73 (98.16) & 40.40 (98.16) & 53.87 (98.16) & 68.11 (98.16) \\
+Simple dwell (0.6 s) & 0.80 (0.00) & 0.81 (0.00) & 0.88 (0.00) & 0.68 (0.00) & 0.46 (0.00) \\
+Simple dwell, tuned $T_{\mathrm{dwell}}=0.4$ s & 1.08 (0.38) & 1.08 (0.38) & 1.08 (0.38) & 1.00 (0.38) & 0.92 (0.38) \\
+CW, tuned $b=0.4$ & 0.10 (0.00) & 0.16 (0.00) & 0.77 (0.04) & 2.99 (5.12) & 10.89 (18.46) \\
+LI, tuned $T_{\min}=2$ s, $r=0.4$ & 0.44 (0.00) & 0.61 (0.04) & 1.09 (1.68) & 2.57 (3.98) & 3.92 (4.72) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

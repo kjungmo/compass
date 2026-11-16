@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): late spurious reversal.} Scripted burst of advantage toward R for $N_b$ cycles from cycle 150, after the maneuver toward L has progressed ($v_{\text{lat}}=0.15$~m/s, $\sigma=0.03$, 50 seeds per cell). Cell = mean switches; number of the 50 runs that left L during or after the burst. $\rho$ = mean progress variable at the start of the burst (core rows only). Target: stay on L (the burst is spurious by construction).}
+\label{tab:v2late}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Rule & $\rho$ at burst start & $N_b=20$ & 30 & 40 & 60 \\
+\midrule
+Full (proposed) & 0.94 & 1.00; 0 & 1.00; 0 & 1.00; 0 & 1.00; 0 \\
+$-$Progress hardening & 0.95 & 1.00; 0 & 2.00; 50 & 2.00; 50 & 2.00; 50 \\
+$-$Hysteresis & 0.98 & 1.00; 0 & 1.00; 0 & 1.00; 0 & 1.00; 0 \\
+COMPASS, $\lambda=1$ & 1.00 & 1.00; 0 & 1.00; 0 & 1.00; 0 & 1.00; 0 \\
+$-$Accumulator (argmin) & -- & 2.00; 50 & 2.00; 50 & 2.00; 50 & 1.00; 50 \\
+Simple dwell (0.6 s) & -- & 3.00; 50 & 3.00; 50 & 2.00; 50 & 2.00; 50 \\
+Simple dwell, tuned $T_{\mathrm{dwell}}=0.4$ s & -- & 3.00; 50 & 3.00; 50 & 3.00; 50 & 2.00; 50 \\
+CW, tuned $b=0.4$ & -- & 2.50; 50 & 2.50; 50 & 2.50; 50 & 1.50; 50 \\
+LI, tuned $T_{\min}=2$ s, $r=0.4$ & -- & 2.00; 50 & 2.00; 50 & 2.00; 50 & 1.00; 50 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
