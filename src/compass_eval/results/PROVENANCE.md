@@ -23,6 +23,12 @@ new result file fails the gate until this record is updated.
 | `stdlib_sensitivity/R1_ablation_libcxx.md` | `6098911ed39e1cd356a2bb0962df811bc4cff1b787381e7f2a2466521250eaf8` | R1 tables, current harness built against LLVM libc++ (CPU line removed; raw-CSV pointer names `ablation_raw_libcxx.csv`) | `scripts/check_stdlib_sensitivity.sh --write`; base `6ea9ac3`, clang 23.1.2 / libc++ 230102 |
 | `stdlib_sensitivity/R5_rho_sweep_libcxx.md` | `5c80555210ab9c7696ef57df7936c857ba52a75911c838fd2e8c2961dfd2342f` | R5 sweep, LLVM libc++ build | as above |
 | `stdlib_sensitivity/ablation_raw_libcxx.csv` | `a702c7feeccee7aff4a93b1d421214245300770cc21555938235e42b4006e2d8` | R1 raw, LLVM libc++ build (sensitivity record, not canonical) | as above |
+| `v2_experiments/V2_results.md` | `3b16dc310b27cc527986a1d18a5b533b79da119957b73defca1c673f8d3c9c88` | generated summary of the v2 experiments (tables, full tuning grids) | `paper/arxiv_ref/tools/gen_v2_tables.py --write` |
+| `v2_experiments/selected_params.csv` | `ff10b42e9b5ae9177c02c88547ba3964d439c4240bdec271f410faccb9198258` | v2: selected parameter per rule (tuning seeds 1000-1049) | `compass_eval_v2 all <dir>`; plan `141c993`, g++ 9.4 |
+| `v2_experiments/tuning_grid.csv` | `5d8245c8dbec7e0e7a0d1a147a9a71243a89d8223fcc76e1f4f1528edcadef41` | v2: every grid point on tuning and evaluation seeds | as above |
+| `v2_experiments/v2_late_reversal_raw.csv` | `3ccd830b098ca36ee5730472c170daa8a41419fac881d257f053341cd37ba257` | v2: late spurious reversal raw, 9 policies x N_b x 50 seeds | as above |
+| `v2_experiments/v2_native_raw.csv` | `bb66cab77804c28d8177b5b5f452f008894cbc8598411bb1fbd6b9d54199d091` | v2: native-noise raw, 11 policies x 250 runs, with final side | as above |
+| `v2_experiments/v2_sigma_raw.csv` | `e5a76aaf2458bdc9127416ce2a302e55f149f42b4e645091a7105b5d96ab798d` | v2: uniform noise sweep raw, 10 policies x 5 sigma x 250 runs | as above |
 <!-- provenance-hashes:end -->
 
 ## Build, parameters and seeds

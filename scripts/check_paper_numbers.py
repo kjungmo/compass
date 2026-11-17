@@ -141,6 +141,17 @@ def main() -> int:
         require_literal("R5", f"전환 봉쇄 구간 하한 v_lat={lo}", lo)
         require_literal("R5", f"전환 봉쇄 구간 상한 v_lat={hi}", hi)
 
+    # ---------- v2 post hoc tables (only when the text carries them) ----------
+    if "tab:v2native" in paper or "Experiments Added in v2" in paper:
+        import importlib.util
+        tools = ROOT / "paper" / "arxiv_ref" / "tools" / "gen_v2_tables.py"
+        spec = importlib.util.spec_from_file_location("gen_v2_tables", tools)
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        for name, text in gen.build().items():
+            for row in (ln for ln in text.splitlines() if " & " in ln and ln.endswith("\\\\")):
+                require_literal("v2", f"{name} row", row)
+
     # ---------- 퇴역 수치 금지 목록 ----------
     forbidden = [
         (r"64\.1", "퇴역: K=3 p99 64.1 µs (실측 58.642)"),

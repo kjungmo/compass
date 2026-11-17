@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Added in v2 after review (post hoc): noise sweep, share of runs with the scripted final side.} Share of the 200 runs (four scenarios with a target $\times$ 50 seeds) whose last decision equals the target side of \cref{tab:v2native_scn}; same runs as \cref{tab:v2sigma_sw}.}
+\label{tab:v2sigma_hit}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Rule & $\sigma=0.03$ & 0.06 & 0.12 & 0.20 & 0.30 \\
+\midrule
+Full (proposed) & 0.75 & 0.75 & 0.75 & 0.75 & 0.75 \\
+$-$Hysteresis & 0.75 & 0.75 & 0.75 & 0.75 & 0.82 \\
+$-$Progress hardening & 0.75 & 0.75 & 0.75 & 0.75 & 0.81 \\
+COMPASS, $\lambda=1$ & 1.00 & 0.97 & 0.96 & 0.96 & 0.96 \\
+COMPASS, tuned $E_0=0.15$ & 1.00 & 0.99 & 0.96 & 0.96 & 0.97 \\
+$-$Accumulator (argmin) & 1.00 & 1.00 & 0.98 & 0.93 & 0.89 \\
+Simple dwell (0.6 s) & 0.75 & 0.76 & 0.89 & 0.84 & 0.72 \\
+Simple dwell, tuned $T_{\mathrm{dwell}}=0.4$ s & 1.00 & 1.00 & 1.00 & 0.98 & 0.95 \\
+CW, tuned $b=0.4$ & 0.75 & 0.74 & 0.98 & 1.00 & 0.97 \\
+LI, tuned $T_{\min}=2$ s, $r=0.4$ & 0.80 & 1.00 & 0.99 & 0.83 & 0.65 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

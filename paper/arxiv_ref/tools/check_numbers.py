@@ -125,7 +125,16 @@ def n_resp(d, ebar, lam=0.97, dt=0.05, df=0.05):
     return math.ceil(math.log(1 - ebar * (1 - lam) / a) / math.log(lam))
 
 
-ENV = {"math": math, "ceil": math.ceil, "sqrt": math.sqrt, "log": math.log,
+sys.path.insert(0, str(PKG / "tools"))
+import gen_v2_tables as v2  # noqa: E402  (experiments added in v2 after review)
+
+
+def hit_share(policy, sg):
+    return v2.sigma(policy, sg, "*", "hit", "sum") / v2.sigma(policy, sg, "*", "hit", "count")
+
+
+ENV = {"min": min, "max": max, "sum": sum, "native": v2.native, "sigma": v2.sigma, "late": v2.late,
+       "grid": v2.grid, "sigma_ss": v2.sigma_ss, "hit_share": hit_share, "math": math, "ceil": math.ceil, "sqrt": math.sqrt, "log": math.log,
        "n_resp": n_resp, "ramp_end_evidence": ramp_end_evidence, "ramp_cycles_above": ramp_cycles_above}
 
 
@@ -157,6 +166,11 @@ def check_numbers_md(tex, raw):
         try:
             if kind == "table":
                 pass  # verified cell-by-cell in check_tables
+            elif kind == "v2table":
+                body = [ln for ln in v2.build()[arg].splitlines() if " & " in ln and ln.endswith("\\\\")]
+                missing = [ln for ln in body if ln not in tex]
+                if not body or missing:
+                    failures.append(f"{rid}: v2 table {arg} rows not in manuscript: {missing[:1]}")
             elif kind == "lit":
                 path, _, needle = arg.partition("::")
                 txt = (ROOT / path).read_text(encoding="utf-8")

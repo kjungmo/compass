@@ -12,6 +12,11 @@ target_include_directories(compass_eval PUBLIC
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(compass_eval compass_core)
 
+# v2 experiments added after review (post hoc); see paper/arxiv_ref/V2_EXPERIMENT_PLAN.md.
+add_executable(compass_eval_v2 src/v2_main.cpp)
+target_include_directories(compass_eval_v2 PRIVATE include)
+ament_target_dependencies(compass_eval_v2 compass_core)
+
 add_executable(compass_trace src/trace_main.cpp)
 target_include_directories(compass_trace PRIVATE include)
 ament_target_dependencies(compass_trace compass_core)
@@ -32,5 +37,5 @@ if(BUILD_TESTING)
   add_test(NAME observer_regression COMMAND test_observer)
 endif()
 
-install(TARGETS compass_eval compass_trace DESTINATION lib/${PROJECT_NAME})
+install(TARGETS compass_eval compass_eval_v2 compass_trace DESTINATION lib/${PROJECT_NAME})
 ament_package()
