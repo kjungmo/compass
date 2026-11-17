@@ -71,7 +71,7 @@ def main_table(rows):
     body = "\n".join(lines)
     return r"""\begin{table}[t]
 \centering
-\caption{\textbf{Aggregate behavioral consistency and endpoint-suffix observer statistic} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The $t_{\text{sfx}}$ mean\stdv{SD} (\cref{subsec:setup}; not $t_{\text{legible}}$ with a fixed hold) includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the censoring-rate column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation.}
+\caption{\textbf{Aggregate behavioral consistency and endpoint-suffix observer statistic} (mean\stdv{SD} across all scenarios, $N=250$ per variant; best per column in bold, ties included) --- all columns measured in the offline decision-core harness. Performance metrics that depend on physical simulation (social distance, collision, success rate, lateral jerk) are not yet measured and are therefore not included; their definitions and protocols are in \cref{app:planned}. The pooled $N=250$ mean\stdv{SD} is a mixture statistic across 5 heterogeneous scenarios; the SD includes cross-scenario mixture variance in addition to seed-to-seed variance (per-scenario breakdown in \cref{tab:scenario,tab:legibility}). The $t_{\text{sfx}}$ mean\stdv{SD} (\cref{subsec:setup}; not $t_{\text{legible}}$ with a fixed hold) includes right-censored trials imputed at the horizon value of 10.0~s, so it must be read together with the censoring-rate column; the no-imputation, survival-analysis-based aggregation of \cref{app:planned} applies in the planned evaluation. Scripted Gaussian perturbation: $\sigma=0.12$ in \texttt{near\_tie}, $\sigma=0.03$ in the other four scenarios (\cref{subsec:setup}).}
 \label{tab:main}
 \small
 \resizebox{\linewidth}{!}{%
@@ -96,7 +96,7 @@ def scenario_table(rows):
                      for i, (_, label) in enumerate(VARIANTS))
     return r"""\begin{table}[t]
 \centering
-\caption{\textbf{Switches per encounter by scenario} (mean\stdv{SD}, $N=50$ per cell; no column is marked best) --- the table in which oscillatory regression is most clearly evident. Fewer switches is not uniformly better: \texttt{clean\_commit} and \texttt{intermittent} contain one warranted switch (\cref{subsec:ablation}).}
+\caption{\textbf{Switches per encounter by scenario} (mean\stdv{SD}, $N=50$ per cell; no column is marked best) --- the table in which oscillatory regression is most clearly evident. Fewer switches is not uniformly better: \texttt{clean\_commit} and \texttt{intermittent} contain one switch toward the scripted-advantage label, and \texttt{mid\_reversal} has the same kind of scripted late-horizon target, but whether zero switches there is a missed switch cannot be scored without an independently labelled opportunity (\cref{subsec:ablation}). Scripted Gaussian perturbation: $\sigma=0.12$ in \texttt{near\_tie}, $\sigma=0.03$ in the other four scenarios (\cref{subsec:setup}).}
 \label{tab:scenario}
 \small
 \resizebox{\linewidth}{!}{%
@@ -226,11 +226,11 @@ def rho_figure():
   tick label style={font=\small}, label style={font=\small},
 ]
 \fill[red!12] (axis cs:0.20,-0.05) rectangle (axis cs:0.35,1.1);
-\node[font=\scriptsize,align=center] at (axis cs:0.275,0.5) {blocking\\interval};
+\node[font=\scriptsize,align=center] at (axis cs:0.275,0.5) {transition\\(unmeasured)};
 \addplot[only marks, mark=*, mark size=2.5pt, teal!70!black] coordinates {""" + " ".join(frac) + r"""};
 \end{axis}
 \end{tikzpicture}
-\caption{\textbf{Offline transition blocking under fast progress saturation} (\texttt{clean\_commit}, Full, 50 seeds per point, measured only at the five marked inputs; data from \texttt{R5\_rho\_sweep.md}). Every seed commits the warranted switch for $v_{\text{lat}}\le0.20$~m/s and none does for $v_{\text{lat}}\ge0.35$~m/s, so the transition-blocking interval is $v_{\text{lat}}\in(0.20,0.35)$~m/s. This is a sensitivity of the scripted progress input, not a physical freezing threshold.}
+\caption{\textbf{Offline transition blocking under fast progress saturation} (\texttt{clean\_commit}, Full, 50 seeds per point, measured only at the five marked inputs; data from \texttt{R5\_rho\_sweep.md}). Every seed commits the switch toward the scripted-advantage label for $v_{\text{lat}}\le0.20$~m/s and none does for $v_{\text{lat}}\ge0.35$~m/s, so the transition-blocking interval is $v_{\text{lat}}\in(0.20,0.35)$~m/s. This is a sensitivity of the scripted progress input, not a physical freezing threshold.}
 \label{fig:rhosweep}
 \end{figure}
 """
